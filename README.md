@@ -15,9 +15,20 @@ all'analisi di contratti, bandi e documenti di gara.
 ## Stack
 
 ### Frontend
+
+Il frontend utilizza:
+
 - React
 - TypeScript
 - Vite
+- CSS
+
+### Avvio locale
+
+```bash
+cd frontend
+npm install
+npm run dev
 
 ### Backend
 - FastAPI
