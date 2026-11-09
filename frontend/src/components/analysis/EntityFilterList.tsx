@@ -1,58 +1,71 @@
-import { ENTITY_COLORS, ENTITY_LABELS, type EntityLabel } from '../../data/analysisDemo'
+import type { EntityDefinition } from '../../types/analysis'
 
 
 type EntityFilterListProps = {
-    activeLabels: EntityLabel[]
-
-    onToggleLabel: (label: EntityLabel) => void
+    definitions: EntityDefinition[]
+    activeLabels: string[]
+    
+    onToggleLabel: (label: string) => void
     onShowAll: () => void
     onHideAll: () => void
 }
 
 
-function EntityFilterList({ activeLabels, onToggleLabel, onShowAll, onHideAll }: EntityFilterListProps) {
+function EntityFilterList({ definitions, activeLabels, onToggleLabel, onShowAll, onHideAll }: EntityFilterListProps) {
     return (
         <div className="entity-filter-list">
             <div className="entity-filter-list__heading">
                 <h3>Entità</h3>
 
                 <div>
-                    <button type="button" onClick={onShowAll}>
+                    <button
+                        type="button"
+                        onClick={onShowAll}
+                    >
                         Tutte
                     </button>
 
-                    <button type="button" onClick={onHideAll}>
+                    <button
+                        type="button"
+                        onClick={onHideAll}
+                    >
                         Nessuna
                     </button>
                 </div>
             </div>
 
             <div className="entity-filter-list__items">
-                {ENTITY_LABELS.map((label) => {
-                    const checked = activeLabels.includes(label)
+                {definitions.map(
+                    (definition) => {
+                        const checked =
+                            activeLabels.includes(definition.label)
 
-                    return (
-                        <label
-                            key={label}
-                            className="entity-filter-item"
-                        >
-                            <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => onToggleLabel(label)}
-                            />
+                        return (
+                            <label
+                                key={definition.label}
+                                className="entity-filter-item"
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() =>
+                                        onToggleLabel(definition.label)
+                                    }
+                                />
 
-                            <span
-                                className="entity-filter-item__color"
-                                style={{
-                                    backgroundColor: ENTITY_COLORS[label],
-                                }}
-                            />
+                                <span
+                                    className="entity-filter-item__color"
+                                    style={{
+                                        backgroundColor:
+                                            definition.color,
+                                    }}
+                                />
 
-                            <span>{label}</span>
-                        </label>
-                    )
-                })}
+                                <span>{definition.label}</span>
+                            </label>
+                        )
+                    },
+                )}
             </div>
         </div>
     )
