@@ -2,19 +2,20 @@ import { ENTITY_COLORS, type DocumentPage, type EntityLabel } from '../../data/a
 
 
 type AnnotatedDocumentMockProps = {
+    documentName: string
     page: DocumentPage
     activeLabels: EntityLabel[]
-    selectedEntityId: string | null
+    selectedEntityId: string | null    
 
     onSelectEntity: (entityId: string) => void
 }
 
 
-function AnnotatedDocumentMock({ page, activeLabels, selectedEntityId, onSelectEntity }: AnnotatedDocumentMockProps) {
+function AnnotatedDocumentMock({ documentName, page, activeLabels, selectedEntityId, onSelectEntity }: AnnotatedDocumentMockProps) {
     return (
         <div className="document-viewer">
             <div className="document-viewer__header">
-                <strong>Disciplinare_di_gara.pdf</strong>
+                <strong>{documentName}</strong>
                 <span>Pagina {page.pageNumber}</span>
             </div>
 
