@@ -30,3 +30,19 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+### React state and hooks
+
+The frontend currently demonstrates:
+
+- `useState` for local UI state
+- functional state updates
+- event handlers
+- controlled inputs
+- lifting state up
+- derived values
+- `useEffect`
+- custom Hooks
+
+The analysis viewer currently uses mock data.
+Backend integration will be introduced in a later step.
