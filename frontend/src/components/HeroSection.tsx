@@ -1,3 +1,6 @@
+import { Link } from 'react-router'
+
+
 function HeroSection() {
   return (
     <section className="hero">
@@ -7,13 +10,19 @@ function HeroSection() {
         <p className="hero__description">DocuEntitySeek identifica entità e informazioni rilevanti all'interno di bandi, disciplinari, capitolati e contratti, mantenendo sempre il collegamento con il documento originale.</p>
 
         <div className="hero__actions">
-          <button type="button" className="button button--primary">
-            Analizza documento
-          </button>
+          <Link
+            to="/documents"
+            className="button button--primary"
+          >
+            Esplora i documenti
+          </Link>
 
-          <button type="button" className="button button--secondary">
+          <a
+            href="#features"
+            className="button button--secondary"
+          >
             Scopri le funzionalità
-          </button>
+          </a>
         </div>
       </div>
     </section>
