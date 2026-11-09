@@ -7,13 +7,18 @@ import EntityFilterList from './EntityFilterList'
 import ExtractedFieldsPanel from './ExtractedFieldsPanel'
 
 
-function AnalysisDemoSection() {
+type AnalysisDemoSectionProps = {
+  documentName: string
+}
+
+
+function AnalysisDemoSection({ documentName }: AnalysisDemoSectionProps) {
     const [currentPageIndex, setCurrentPageIndex] = useState(0)
     const [activeLabels, setActiveLabels] = useState<EntityLabel[]>(ENTITY_LABELS)
     const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null)
     const currentPage = MOCK_DOCUMENT_PAGES[currentPageIndex]
 
-    useDocumentTitle(`DocuEntitySeek · Pagina ${currentPage.pageNumber}`)
+    useDocumentTitle(`${documentName} · Pagina ${currentPage.pageNumber} | DocuEntitySeek`)
 
 
     function handlePreviousPage() {
@@ -69,6 +74,7 @@ function AnalysisDemoSection() {
             <div className="analysis-demo__workspace">
                 <div className="analysis-demo__main">
                     <AnnotatedDocumentMock
+                        documentName={documentName}
                         page={currentPage}
                         activeLabels={activeLabels}
                         selectedEntityId={selectedEntityId}

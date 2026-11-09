@@ -1,26 +1,43 @@
-import './App.css'
-import Header from './components/Header'
-import HeroSection from './components/HeroSection'
-import FeaturesSection from './components/FeaturesSection'
-import AnalysisDemoSection from './components/analysis/AnalysisDemoSection'
-import PlansSection from './components/PlansSection'
-import Footer from './components/Footer'
+import { Route, Routes } from 'react-router'
+
+import AppLayout from './components/layout/AppLayout'
+import DocumentDetailPage from './pages/DocumentDetailPage'
+import DocumentsPage from './pages/DocumentsPage'
+import HomePage from './pages/HomePage'
+import NotFoundPage from './pages/NotFoundPage'
+import SchemasPage from './pages/SchemasPage'
 
 
 function App() {
   return (
-    <>
-      <Header />
+    <Routes>
+      <Route element={<AppLayout />}>
+        <Route
+          index
+          element={<HomePage />}
+        />
 
-      <main>
-        <HeroSection />
-        <FeaturesSection />
-        <AnalysisDemoSection />
-        <PlansSection />
-      </main>
+        <Route
+          path="documents"
+          element={<DocumentsPage />}
+        />
 
-      <Footer />
-    </>
+        <Route
+          path="documents/:documentId"
+          element={<DocumentDetailPage />}
+        />
+
+        <Route
+          path="schemas"
+          element={<SchemasPage />}
+        />
+
+        <Route
+          path="*"
+          element={<NotFoundPage />}
+        />
+      </Route>
+    </Routes>
   )
 }
 
