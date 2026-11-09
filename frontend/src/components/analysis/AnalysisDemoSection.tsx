@@ -1,60 +1,80 @@
 import { useState } from 'react'
 
-import { ENTITY_LABELS, MOCK_DOCUMENT_PAGES, MOCK_EXTRACTED_FIELDS, type EntityLabel } from '../../data/analysisDemo'
-import useDocumentTitle from '../../hooks/useDocumentTitle'
+import type { DocumentAnalysis } from '../../types/analysis'
 import AnnotatedDocumentMock from './AnnotatedDocumentMock'
 import EntityFilterList from './EntityFilterList'
 import ExtractedFieldsPanel from './ExtractedFieldsPanel'
 
 
 type AnalysisDemoSectionProps = {
-  documentName: string
+    documentName: string
+    analysis: DocumentAnalysis
 }
 
 
-function AnalysisDemoSection({ documentName }: AnalysisDemoSectionProps) {
+function AnalysisDemoSection({ documentName, analysis }: AnalysisDemoSectionProps) {
+    const availableLabels =
+        analysis.entityDefinitions.map(
+            (definition) =>
+                definition.label,
+        )
     const [currentPageIndex, setCurrentPageIndex] = useState(0)
-    const [activeLabels, setActiveLabels] = useState<EntityLabel[]>(ENTITY_LABELS)
+    const [activeLabels, setActiveLabels] = useState<string[]>(availableLabels)
     const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null)
-    const currentPage = MOCK_DOCUMENT_PAGES[currentPageIndex]
-
-    useDocumentTitle(`${documentName} · Pagina ${currentPage.pageNumber} | DocuEntitySeek`)
+    const currentPage = analysis.pages[currentPageIndex]
 
 
     function handlePreviousPage() {
-        setCurrentPageIndex((currentIndex) =>
-            Math.max(0, currentIndex - 1),
+        setCurrentPageIndex(
+            (currentIndex) =>
+                Math.max(
+                    0,
+                    currentIndex - 1,
+                ),
         )
+
         setSelectedEntityId(null)
     }
 
 
     function handleNextPage() {
-        setCurrentPageIndex((currentIndex) =>
-            Math.min(MOCK_DOCUMENT_PAGES.length - 1, currentIndex + 1),
+        setCurrentPageIndex(
+            (currentIndex) =>
+                Math.min(
+                    analysis.pages.length - 1,
+                    currentIndex + 1,
+                ),
         )
+
         setSelectedEntityId(null)
     }
 
 
-    function handleToggleLabel(label: EntityLabel) {
-        setActiveLabels((currentLabels) => {
-            const isActive = currentLabels.includes(label)
+    function handleToggleLabel(label: string) {
+        setActiveLabels(
+            (currentLabels) => {
+                if (
+                    currentLabels.includes(label)
+                ) {
+                    return currentLabels.filter(
+                        (currentLabel) =>
+                            currentLabel !== label,
+                    )
+                }
 
-            if (isActive) {
-                return currentLabels.filter(
-                    (currentLabel) =>
-                        currentLabel !== label,
-                )
-            }
-
-            return [...currentLabels, label]
-        })
+                return [
+                    ...currentLabels,
+                    label,
+                ]
+            },
+        )
     }
 
 
     function handleShowAllLabels() {
-        setActiveLabels(ENTITY_LABELS)
+        setActiveLabels(
+            availableLabels,
+        )
     }
 
 
@@ -62,13 +82,22 @@ function AnalysisDemoSection({ documentName }: AnalysisDemoSectionProps) {
         setActiveLabels([])
     }
 
+    if (!currentPage) {
+        return (
+            <section className="analysis-demo">
+                <div className="empty-state">
+                    <h2>Nessuna pagina disponibile</h2>
+                </div>
+            </section>
+        )
+    }
 
     return (
         <section className="analysis-demo">
             <div className="section-heading">
-                <span className="section-heading__eyebrow">Interactive demo</span>
-                <h2>Esplora il documento attraverso entità e informazioni strutturate</h2>
-                <p>Attiva o disattiva le categorie NER e naviga tra le pagine del documento.</p>
+                <span className="section-heading__eyebrow">Document analysis</span>
+
+                <h2>Entità e informazioni strutturate</h2>
             </div>
 
             <div className="analysis-demo__workspace">
@@ -76,6 +105,7 @@ function AnalysisDemoSection({ documentName }: AnalysisDemoSectionProps) {
                     <AnnotatedDocumentMock
                         documentName={documentName}
                         page={currentPage}
+                        entityDefinitions={analysis.entityDefinitions}
                         activeLabels={activeLabels}
                         selectedEntityId={selectedEntityId}
                         onSelectEntity={setSelectedEntityId}
@@ -84,20 +114,26 @@ function AnalysisDemoSection({ documentName }: AnalysisDemoSectionProps) {
                     <div className="analysis-demo__pagination">
                         <button
                             type="button"
-                            onClick={handlePreviousPage}
-                            disabled={currentPageIndex === 0}
+                            onClick={
+                                handlePreviousPage
+                            }
+                            disabled={
+                                currentPageIndex === 0
+                            }
                         >
                             ← Precedente
                         </button>
 
-                        <span>Pagina {currentPage.pageNumber}</span>
+                        <span>Pagina{' '}{currentPage.pageNumber}</span>
 
                         <button
                             type="button"
-                            onClick={handleNextPage}
+                            onClick={
+                                handleNextPage
+                            }
                             disabled={
                                 currentPageIndex ===
-                                MOCK_DOCUMENT_PAGES.length - 1
+                                analysis.pages.length - 1
                             }
                         >
                             Successiva →
@@ -107,6 +143,9 @@ function AnalysisDemoSection({ documentName }: AnalysisDemoSectionProps) {
 
                 <aside className="analysis-demo__sidebar">
                     <EntityFilterList
+                        definitions={
+                            analysis.entityDefinitions
+                        }
                         activeLabels={activeLabels}
                         onToggleLabel={handleToggleLabel}
                         onShowAll={handleShowAllLabels}
@@ -114,7 +153,7 @@ function AnalysisDemoSection({ documentName }: AnalysisDemoSectionProps) {
                     />
 
                     <ExtractedFieldsPanel
-                        fields={MOCK_EXTRACTED_FIELDS}
+                        fields={analysis.extractedFields}
                     />
                 </aside>
             </div>

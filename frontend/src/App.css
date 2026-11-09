@@ -764,3 +764,65 @@
   color: #69758b;
   line-height: 1.7;
 }
+
+
+/* ==========================================================
+   HTTP request states
+   ========================================================== */
+
+.request-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  padding: 40px;
+  border: 1px solid #dfe4ed;
+  border-radius: 16px;
+  background: white;
+  text-align: center;
+}
+
+.request-state p {
+  max-width: 520px;
+  margin: 12px 0 0;
+  color: #69758b;
+  line-height: 1.6;
+}
+
+.request-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e3e7ef;
+  border-top-color: #536ee8;
+  border-radius: 50%;
+  animation:
+    request-spinner-rotation
+    800ms linear infinite;
+}
+
+.request-state--error {
+  border-color: #f0caca;
+}
+
+.request-state__label {
+  color: #a33d3d;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.request-state--error h2 {
+  margin: 10px 0 0;
+}
+
+.request-state--error .button {
+  margin-top: 24px;
+}
+
+@keyframes request-spinner-rotation {
+  to {
+    transform: rotate(360deg);
+  }
+}

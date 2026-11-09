@@ -1,20 +1,38 @@
 import { Link, useParams } from 'react-router'
 
 import AnalysisDemoSection from '../components/analysis/AnalysisDemoSection'
-import { MOCK_DOCUMENTS } from '../data/documents'
+import ErrorState from '../components/feedback/ErrorState'
+import LoadingState from '../components/feedback/LoadingState'
+import useDocumentDetail from '../hooks/useDocumentDetail'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 
 function DocumentDetailPage() {
-    const { documentId } = useParams()
-    const document = MOCK_DOCUMENTS.find((item) => item.id === documentId)
+    const { documentId = '' } = useParams()
+    const { data, isLoading, error, reload } = useDocumentDetail(documentId)
 
-    if (!document) {
+    useDocumentTitle(
+        data
+            ? `${data.document.name} | DocuEntitySeek`
+            : 'Documento | DocuEntitySeek',
+    )
+
+    if (isLoading) {
+        return (
+            <section className="page-section">
+                <LoadingState
+                    message="Caricamento del documento..."
+                />
+            </section>
+        )
+    }
+
+    if (error?.status === 404) {
         return (
             <section className="page-section">
                 <div className="empty-state">
                     <span className="empty-state__code">Documento non trovato</span>
                     <h1>Il documento richiesto non esiste.</h1>
-                    <p>Controlla l'indirizzo oppure torna alla raccolta documenti.</p>
 
                     <Link
                         to="/documents"
@@ -27,7 +45,30 @@ function DocumentDetailPage() {
         )
     }
 
-    if (document.status !== 'READY') {
+    if (error) {
+        return (
+            <section className="page-section">
+                <ErrorState
+                    message={error.message}
+                    onRetry={reload}
+                />
+            </section>
+        )
+    }
+
+    if (!data) {
+        return null
+    }
+
+    const {
+        document,
+        analysis,
+    } = data
+
+    if (
+        document.status !== 'READY' ||
+        !analysis
+    ) {
         return (
             <section className="page-section">
                 <div className="empty-state">
@@ -58,12 +99,18 @@ function DocumentDetailPage() {
 
                     <span className="section-heading__eyebrow">{document.category}</span>
                     <h1>{document.name}</h1>
-                    <p>{document.pages} pagine · Analisi pronta</p>
+                    <p>
+                        {document.pages} pagine
+                        {' · '}
+                        Analisi pronta
+                    </p>
                 </div>
             </section>
 
             <AnalysisDemoSection
+                key={document.id}
                 documentName={document.name}
+                analysis={analysis}
             />
         </>
     )
