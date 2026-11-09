@@ -1,11 +1,11 @@
 
 # DocuEntitySeek
 
-**Document Intelligence Platform — Entity Discovery & Structured Information Extraction**
+**Document Intelligence Platform — Named Entity Recognition & Structured Information Extraction**
 
 DocuEntitySeek è una piattaforma di Document Intelligence progettata per analizzare documenti complessi mediante tecniche di Natural Language Processing (NLP) e Intelligenza Artificiale.
 
-L'applicazione si concentra inizialmente sul dominio **Procurement**, con particolare riferimento a:
+Il progetto si concentra inizialmente sul dominio **Procurement**, con particolare riferimento a:
 
 - Bandi di gara
 - Disciplinari di gara
@@ -13,58 +13,61 @@ L'applicazione si concentra inizialmente sul dominio **Procurement**, con partic
 - Contratti
 - Documentazione amministrativa
 
-L'obiettivo è trasformare documenti non strutturati in informazioni organizzate, consultabili e verificabili, mantenendo il collegamento tra ogni risultato estratto e il documento originale.
+L'obiettivo è trasformare documenti non strutturati in informazioni organizzate e verificabili, mantenendo il collegamento tra i risultati estratti e il documento originale.
 
-> **Stato del progetto:** in sviluppo. Il frontend dispone di un'interfaccia navigabile basata su dati dimostrativi. La pipeline AI è stata prototipata in un notebook Jupyter. Backend, database e integrazione end-to-end sono ancora da implementare.
+> **Stato attuale:** frontend React con routing, richieste HTTP tramite Fetch API, custom hook, tipizzazione TypeScript, gestione di loading/error/empty state e dati JSON mock. La pipeline AI è disponibile come prototipo Jupyter separato. Backend FastAPI, database e integrazione AI end-to-end non sono ancora implementati.
 
 ---
 
 ## 1. Obiettivi
 
-DocuEntitySeek nasce per semplificare l'analisi di documenti lunghi e complessi.
+Gli obiettivi principali di DocuEntitySeek sono:
 
-Gli obiettivi principali sono:
-
-1. Individuare automaticamente le entità rilevanti.
-2. Estrarre informazioni strutturate secondo uno schema configurabile.
+1. Riconoscere automaticamente le entità rilevanti.
+2. Estrarre informazioni strutturate secondo uno schema di dominio.
 3. Evidenziare le entità direttamente nel testo.
-4. Associare i risultati alle pagine e alle posizioni originali.
-5. Ridurre la necessità di consultare manualmente interi documenti.
-6. Consentire la futura personalizzazione degli schemi per domini differenti dal Procurement.
+4. Associare le estrazioni alle pagine originali.
+5. Ridurre il lavoro manuale di analisi documentale.
+6. Permettere la futura personalizzazione degli schemi di estrazione.
+7. Integrare frontend, backend e modelli AI in un'applicazione full-stack.
 
-Il sistema è progettato per distinguere chiaramente due funzionalità:
+Il sistema distingue due funzionalità principali:
 
-- **Entity Discovery (NER):** riconoscimento delle entità nel testo.
+- **Entity Discovery (NER):** riconoscimento delle entità nominate.
 - **Field Extraction (IE):** estrazione di informazioni strutturate.
 
-## 2. Funzionalità
+Le funzionalità di Information Retrieval e ricerca avanzata potranno essere integrate successivamente; non sono ancora implementate.
+
+---
+
+## 2. Funzionalità principali
 
 ### 2.1 Entity Discovery
 
-Individuazione automatica di entità nominate mediante Named Entity Recognition.
+La Named Entity Recognition individua informazioni rilevanti all'interno del testo.
 
-Lo schema Procurement prevede inizialmente:
+Lo schema Procurement prevede categorie come:
 
 | Entità | Descrizione |
 |---|---|
-| ORGANIZZAZIONE | Enti, amministrazioni, aziende e organizzazioni |
-| PERSONA | Nomi di persone fisiche |
+| ORGANIZZAZIONE | Enti, amministrazioni e aziende |
+| PERSONA | Persone fisiche |
 | LOCALITA | Luoghi e riferimenti geografici |
-| IMPORTO | Importi monetari e valori economici |
+| IMPORTO | Importi monetari |
 | DATA | Date e scadenze |
 | ORA | Orari |
-| RIFERIMENTO_NORMATIVO | Leggi, decreti e altri riferimenti normativi |
-| IDENTIFICATIVO_GARA | CIG, CUP, CPV e identificativi ufficiali |
+| RIFERIMENTO_NORMATIVO | Riferimenti legislativi |
+| IDENTIFICATIVO_GARA | CIG, CUP, CPV e altri identificativi |
 | CERTIFICAZIONE | Certificazioni e attestazioni |
 | PRODOTTO_SERVIZIO | Prodotti, servizi e forniture |
 
-Le entità sono associate a etichette e colori utilizzabili dal document viewer.
+Il viewer dimostrativo consente di evidenziare, filtrare e selezionare le entità.
 
 ### 2.2 Structured Field Extraction
 
-Estrazione di valori strutturati secondo uno schema di dominio.
+La Field Extraction produce informazioni strutturate.
 
-I campi previsti dal prototipo AI comprendono:
+Tra i campi Procurement previsti rientrano:
 
 - Stazione appaltante
 - Oggetto gara
@@ -74,7 +77,6 @@ I campi previsti dal prototipo AI comprendono:
 - Tipo procedura
 - Importo complessivo
 - Importo base d'asta
-- Numero lotti
 - Durata contratto
 - Scadenza offerte
 - Termine chiarimenti
@@ -82,90 +84,82 @@ I campi previsti dal prototipo AI comprendono:
 - Responsabile procedimento
 - Luogo esecuzione
 
-I risultati dell'estrazione sono destinati a una sidebar separata dalle annotazioni NER.
+Il prototipo AI include anche ulteriori campi, come il numero dei lotti.
+
+Le informazioni sono progettate per essere mostrate separatamente dalle annotazioni NER.
 
 ### 2.3 Document Viewer
 
-Il viewer è progettato per:
+Il viewer frontend attuale permette di:
 
-- Visualizzare il testo del documento.
-- Evidenziare le entità mediante colori.
-- Filtrare le categorie NER.
-- Navigare tra le pagine.
-- Selezionare le annotazioni.
-- Consultare le informazioni strutturate.
-- Mantenere il riferimento alla fonte.
+- Visualizzare segmenti di testo annotati.
+- Evidenziare le entità con colori differenti.
+- Attivare o disattivare le categorie NER.
+- Selezionare un'entità.
+- Navigare tra le pagine disponibili nella demo.
+- Consultare i campi strutturati.
 
-Nel frontend attuale queste interazioni utilizzano dati mock.
+Il viewer non visualizza ancora un PDF reale: riceve dati strutturati da un endpoint JSON mock.
 
-### 2.4 Provenienza delle informazioni
+### 2.4 Provenance
 
-La pipeline AI sperimentale conserva informazioni utili a verificare i risultati:
+La pipeline AI sperimentale prevede la conservazione di:
 
 - Testo estratto
-- Etichetta dell'entità o nome del campo
-- Confidence, quando disponibile
-- Offset iniziale e finale nel testo completo
-- Pagina di origine
+- Categoria dell'entità
+- Campo strutturato
+- Confidence
+- Offset globali
+- Pagina sorgente
 - Offset relativi alla pagina
 
-La provenienza permette di ricondurre le estrazioni al contenuto originale.
+Queste informazioni permetteranno di verificare le estrazioni nel documento originale.
 
-I risultati prodotti dall'AI devono essere considerati informazioni da verificare, non dati automaticamente certificati.
+Il contratto JSON attualmente usato dal frontend è semplificato rispetto ai risultati completi della pipeline AI.
 
 ---
 
-## 3. Modello di utilizzo previsto
+## 3. Modello applicativo previsto
 
-DocuEntitySeek prevede due livelli funzionali.
+DocuEntitySeek prevede due livelli di utilizzo.
 
 ### Base
 
-Pensato per analizzare documenti Procurement mediante uno schema predefinito.
-
-Funzionalità previste:
-
+- Schema Procurement predefinito
 - Entity Discovery
 - Field Extraction
-- Schema Procurement
 - Viewer annotato
-- Limite applicativo di 5 nuove analisi giornaliere
+- Limite applicativo previsto di 5 nuove analisi al giorno
 
 ### Premium
-
-Pensato per estendere l'analisi ad altri domini documentali.
-
-Funzionalità previste:
 
 - Tutte le funzionalità Base
 - Entità personalizzate
 - Campi personalizzati
 - Schemi di estrazione riutilizzabili
-- Analisi di documenti appartenenti a domini differenti
-- Assenza del limite giornaliero applicativo previsto per Base
+- Supporto a ulteriori domini documentali
+- Assenza del limite giornaliero applicativo Base
 
-**Nota:** la distinzione Base/Premium è attualmente rappresentata nell'interfaccia. Autenticazione, autorizzazioni, quote e gestione dei piani non sono ancora implementate nel backend.
+La distinzione Base/Premium è attualmente illustrata nel frontend. Non esistono ancora autenticazione, autorizzazioni, sottoscrizioni o enforcement delle quote.
 
 ---
 
 ## 4. Stack tecnologico
 
-### Frontend
+### Frontend implementato
 
-- React 19
-- TypeScript
-- Vite
-- React Router
-- CSS
-- Oxlint
+| Tecnologia | Ruolo |
+|---|---|
+| React 19 | UI |
+| TypeScript | Tipizzazione statica |
+| Vite 8 | Build e sviluppo |
+| React Router 8 | Client-side routing |
+| Fetch API | Richieste HTTP |
+| React Hooks | Gestione stato ed effetti |
+| CSS | Layout e componenti |
+| Oxlint | Analisi statica |
 
-### Backend previsto
-
-- Python
-- FastAPI
-- API REST
-
-### AI / NLP
+### AI / NLP prototipale
 
 - Python
 - PyMuPDF
@@ -174,60 +168,98 @@ Funzionalità previste:
 - NumPy
 - Jupyter Notebook
 
-Modello utilizzato nel notebook sperimentale:
+Modello sperimentale:
 
 `fastino/gliner2.5-multi-v1`
+
+### Backend previsto
+
+- Python
+- FastAPI
+- API REST
 
 ### Database previsto
 
 - PostgreSQL
 - SQLAlchemy
 
-### Infrastructure prevista
+### Infrastruttura prevista
 
 - Docker
 - Docker Compose
-
-Backend, persistenza e infrastruttura sono componenti architetturali pianificati, non servizi già disponibili nello stato attuale del repository.
+- Deployment cloud
 
 ---
 
-## 5. Architettura
+## 5. Architettura attuale
 
-L'architettura prevista separa tre componenti principali:
+Il passaggio 9 introduce un livello API nel frontend.
 
 ```text
-                  FRONTEND
-             React + TypeScript
+                 REACT FRONTEND
                        |
-                       | HTTP / REST
                        v
-                   BACKEND
-                    FastAPI
+                 React Pages
                        |
-             +---------+---------+
-             |                   |
-             v                   v
-         AI PIPELINE         DATABASE
-         PyMuPDF             PostgreSQL
-         GLiNER2.5           SQLAlchemy
-             |
-             v
-     Entity Discovery
-     Field Extraction
-             |
-             v
-       Risultati con
-         provenance
+                       v
+                  Custom Hooks
+                       |
+                       v
+                   API Layer
+                       |
+                       v
+                Fetch API (GET)
+                       |
+                       v
+             Mock HTTP Endpoints
+             Vite public/mock-api/
+                       |
+                       v
+                  JSON Response
+                       |
+                       v
+               Typed Application
+                     State
+                       |
+                       v
+                 React Components
 ```
 
-Questa rappresentazione descrive l'architettura obiettivo. Attualmente il frontend e il notebook AI sono separati.
+### Separazione delle responsabilità
+
+**Pages**
+
+Gestiscono la presentazione delle pagine e i differenti stati dell'interfaccia.
+
+**Custom Hooks**
+
+Gestiscono richieste asincrone, dati, loading, errori e retry.
+
+**API Layer**
+
+Contiene le funzioni che effettuano le richieste HTTP.
+
+**Types**
+
+Definiscono le strutture dati attese.
+
+**Mock API**
+
+Simula un servizio remoto mediante file JSON statici serviti da Vite.
+
+Questa separazione prepara il frontend alla futura integrazione con FastAPI.
+
+---
 
 ## 6. Pipeline AI
 
-Il notebook `Extraction_Pipeline.ipynb` implementa una pipeline sperimentale per l'analisi di documenti PDF.
+Il notebook:
 
-Flusso logico:
+`ai/notebooks/Extraction_Pipeline.ipynb`
+
+implementa un prototipo di analisi PDF.
+
+### Flusso
 
 ```text
 PDF
@@ -236,14 +268,10 @@ PDF
 PyMuPDF
  |
  v
-Estrazione del testo
-pagina per pagina
+Estrazione testo e pagine
  |
  v
-Mappatura pagine e offset
- |
- v
-GLiNER2.5 long-context
+GLiNER2.5
  |
  +-----------------------+
  |                       |
@@ -262,23 +290,11 @@ Risoluzione overlap  Selezione valori
  +-----------+-----------+
              |
              v
-       Risultati con
-         provenance
-             |
-             v
-     Viewer e sidebar
+      Risultati strutturati
+       con provenance
 ```
 
-### 6.1 Elaborazione long-context
-
-La pipeline utilizza:
-
-- `extract_entities_long()`
-- `extract_json_long()`
-
-Queste API consentono di analizzare testi lunghi mediante chunk sovrapposti.
-
-Configurazione sperimentale:
+### Configurazione sperimentale
 
 | Parametro | Valore |
 |---|---|
@@ -291,39 +307,26 @@ Configurazione sperimentale:
 | Model overlap policy | allow |
 | Viewer overlap policy | flat_confidence |
 
-I valori rappresentano una configurazione iniziale e richiedono validazione su documenti reali.
+La pipeline utilizza:
 
-### 6.2 Gestione degli overlap
+- `extract_entities_long()`
+- `extract_json_long()`
 
-La pipeline distingue:
+La configurazione è sperimentale e richiede validazione.
 
-- Chunk overlap: sovrapposizione tra segmenti utilizzati durante l'inferenza.
-- Entity overlap: sovrapposizione tra entità individuate nel testo.
+### Schemi di dominio
 
-Per il viewer viene adottata una politica deterministica che privilegia:
-
-1. Confidence maggiore.
-2. Span più lungo.
-3. Posizione iniziale nel documento.
-
-Lo scopo è produrre annotazioni non sovrapposte, mantenendo separati i risultati dell'estrazione strutturata.
-
-### 6.3 Separazione pipeline e schema
-
-Un principio architetturale fondamentale è separare la logica di analisi dalla definizione delle informazioni da cercare.
+La pipeline è progettata separando:
 
 ```text
-PIPELINE = come analizzare il documento
+PIPELINE = come elaborare il documento
 
 SCHEMA = quali entità e campi estrarre
 ```
 
-La stessa pipeline potrà essere riutilizzata con schemi differenti.
+Il notebook include lo schema Procurement e un esempio di schema personalizzato relativo al dominio immobiliare.
 
-Nel notebook sono presenti:
-
-- Schema Procurement predefinito
-- Esempio di schema Premium per il dominio immobiliare
+La pipeline non è ancora integrata con il frontend.
 
 ---
 
@@ -337,228 +340,392 @@ DocuEntitySeek/
 |       +-- Extraction_Pipeline.ipynb
 |
 +-- backend/
-|   +-- [codice applicativo da implementare]
+|   +-- [backend applicativo da implementare]
 |
 +-- docs/
 |   +-- DocuEntitySeek_Requisiti_Funzionali.pdf
 |   +-- DocuEntitySeek_User_Story.pdf
 |
 +-- frontend/
+|   |
 |   +-- public/
+|   |   +-- mock-api/
+|   |       +-- documents.json
+|   |       +-- documents/
+|   |           +-- disciplinare-palermo-2027.json
+|   |           +-- capitolato-servizi-cloud.json
+|   |           +-- contratto-servizio-demo.json
+|   |
 |   +-- src/
+|   |   +-- api/
+|   |   |   +-- http.ts
+|   |   |   +-- documentsApi.ts
+|   |   |
 |   |   +-- assets/
+|   |   |
 |   |   +-- components/
 |   |   |   +-- analysis/
+|   |   |   +-- feedback/
 |   |   |   +-- layout/
-|   |   +-- data/
+|   |   |
 |   |   +-- hooks/
+|   |   |   +-- useDocuments.ts
+|   |   |   +-- useDocumentDetail.ts
+|   |   |   +-- useDocumentTitle.ts
+|   |   |
 |   |   +-- pages/
+|   |   |
+|   |   +-- types/
+|   |   |   +-- document.ts
+|   |   |   +-- analysis.ts
+|   |   |
 |   |   +-- App.tsx
 |   |   +-- App.css
 |   |   +-- main.tsx
 |   |   +-- index.css
+|   |
+|   +-- .env.example
 |   +-- package.json
 |   +-- package-lock.json
-|   +-- vite.config.ts
 |   +-- README.md
 |
 +-- .gitignore
 +-- README.md
 ```
 
-Gli ambienti virtuali e le dipendenze installate localmente non fanno parte del codice applicativo da versionare.
+Sono omesse dalla rappresentazione le dipendenze installate, gli ambienti virtuali e i file generati automaticamente.
 
 ---
 
 ## 8. Avvio locale
 
-### 8.1 Requisiti
+### Requisiti
 
-Per il frontend:
-
-- Node.js compatibile con la versione di Vite utilizzata
+- Node.js compatibile con le dipendenze installate
 - npm
-- Git (consigliato)
+- Python per il notebook AI
+- Git consigliato
 
-Per i notebook AI:
+Per lo specifico stack frontend, utilizzare preferibilmente Node.js 22.22 o successivo: React Router 8.5.1 dichiara Node.js >=22.22.0 come requisito.
 
-- Python compatibile con le librerie utilizzate
-- Jupyter Notebook, JupyterLab oppure VS Code con supporto Jupyter
-- Ambiente virtuale Python consigliato
+### Installazione frontend
 
-### 8.2 Avviare il frontend
-
-Dalla cartella principale:
+Aprire un terminale nella directory principale del progetto.
 
 ```bash
 cd frontend
-npm install
+npm ci
+```
+
+### Configurazione API
+
+Creare, se assente, `frontend/.env.local` con:
+
+```env
+VITE_API_BASE_URL=/mock-api
+```
+
+Il file `.env.example` contiene la configurazione di riferimento.
+
+### Avvio
+
+```bash
 npm run dev
 ```
 
-Aprire nel browser l'indirizzo mostrato dal terminale, normalmente:
+Aprire l'indirizzo mostrato da Vite, normalmente:
 
 `http://localhost:5173`
 
-Per ulteriori dettagli consultare [frontend/README.md](frontend/README.md).
+### Build
 
-### 8.3 Eseguire il notebook AI
-
-Aprire:
-
-`ai/notebooks/Extraction_Pipeline.ipynb`
-
-Il notebook include una cella per installare le dipendenze principali:
-
-```python
-%pip install -U pymupdf pandas numpy "gliner2[local]"
+```bash
+npm run build
 ```
 
-Prima dell'esecuzione:
+### Controllo statico
 
-1. Selezionare un kernel Python compatibile.
-2. Installare le dipendenze.
-3. Modificare la variabile `PDF_PATH` indicando un PDF locale.
-4. Eseguire le celle in ordine.
-5. Verificare le entità e i campi estratti.
+```bash
+npm run lint
+```
 
-Il modello potrebbe richiedere un download alla prima esecuzione.
+### Preview della build
 
-La pipeline è un prototipo sperimentale e non è ancora esposta tramite API REST.
+```bash
+npm run preview
+```
 
 ---
 
-## 9. Frontend
+## 9. React API — Passaggio 9
 
-Il frontend comprende:
+Il passaggio 9 introduce la comunicazione HTTP nel frontend.
 
-- Landing page
-- Presentazione delle funzionalità
-- Presentazione dei piani Base/Premium
-- Elenco documenti dimostrativi
-- Dettaglio documento
-- Viewer NER interattivo basato su mock
-- Sidebar delle entità
-- Sidebar dei campi estratti
-- Pagina degli schemi
-- Gestione delle rotte non trovate
+### 9.1 HTTP Client
 
-### Routing
+File:
 
-| Percorso | Descrizione |
+`frontend/src/api/http.ts`
+
+Responsabilità:
+
+- Leggere la base URL.
+- Eseguire richieste GET tramite `fetch`.
+- Gestire risposte HTTP non riuscite.
+- Deserializzare risposte JSON.
+- Applicare i tipi TypeScript.
+- Supportare AbortSignal.
+- Normalizzare gli errori.
+
+Elementi principali:
+
+- `API_BASE_URL`
+- `HttpError`
+- `RequestError`
+- `getJson<T>()`
+- `isAbortError()`
+- `normalizeRequestError()`
+
+La tipizzazione TypeScript non costituisce validazione runtime del contenuto JSON.
+
+### 9.2 Document API
+
+File:
+
+`frontend/src/api/documentsApi.ts`
+
+Espone:
+
+- `getDocuments(signal?)`
+- `getDocumentDetail(documentId, signal?)`
+
+Entrambe le funzioni utilizzano il client HTTP condiviso.
+
+### 9.3 Custom Hooks
+
+File:
+
+- `frontend/src/hooks/useDocuments.ts`
+- `frontend/src/hooks/useDocumentDetail.ts`
+
+Gestiscono:
+
+- Esecuzione delle richieste.
+- Stato di caricamento.
+- Dati ricevuti.
+- Errori.
+- Retry.
+- Annullamento delle richieste durante il cleanup.
+
+### 9.4 Feedback UI
+
+Componenti:
+
+- `LoadingState`
+- `ErrorState`
+
+Le pagine gestiscono anche situazioni senza dati disponibili.
+
+### 9.5 Mock API
+
+Endpoint:
+
+```http
+GET /mock-api/documents.json
+```
+
+Restituisce l'elenco dei documenti.
+
+```http
+GET /mock-api/documents/{documentId}.json
+```
+
+Restituisce i dettagli di un documento e l'eventuale analisi.
+
+I file JSON sono serviti staticamente da Vite.
+
+**Non esiste ancora un backend HTTP applicativo.**
+
+---
+
+## 10. Contratti dei dati
+
+### DocumentSummary
+
+Contiene:
+
+- id
+- name
+- category
+- pages
+- status
+- uploadedAt
+
+Gli stati possibili sono:
+
+- READY
+- PROCESSING
+- ERROR
+
+### DocumentDetailResponse
+
+Contiene:
+
+- `document`: metadati del documento.
+- `analysis`: analisi del documento oppure `null`.
+
+### DocumentAnalysis
+
+Contiene:
+
+- `entityDefinitions`
+- `pages`
+- `extractedFields`
+
+La definizione TypeScript è presente in:
+
+`frontend/src/types/analysis.ts`
+
+Questi tipi rappresentano il contratto attuale della demo. Potranno essere estesi durante l'integrazione backend.
+
+---
+
+## 11. Frontend
+
+### Route implementate
+
+| Route | Pagina |
 |---|---|
-| `/` | Homepage |
-| `/documents` | Elenco documenti |
-| `/documents/:documentId` | Dettaglio e analisi dimostrativa |
-| `/schemas` | Schemi di estrazione |
-| `*` | Pagina 404 |
+| `/` | HomePage |
+| `/documents` | DocumentsPage |
+| `/documents/:documentId` | DocumentDetailPage |
+| `/schemas` | SchemasPage |
+| `*` | NotFoundPage |
 
-Il frontend utilizza React Router e componenti funzionali React.
+### Documenti dimostrativi
 
----
+Il progetto contiene tre documenti mock:
 
-## 10. Documentazione
+| Documento | Stato |
+|---|---|
+| Disciplinare_di_gara.pdf | READY |
+| Capitolato_servizi_cloud.pdf | PROCESSING |
+| Contratto_servizio_demo.pdf | ERROR |
 
-La cartella `docs/` contiene i documenti di progettazione:
+Il documento READY presenta due pagine annotate dimostrative, numerate 12 e 13.
 
-### Requisiti funzionali
-
-`docs/DocuEntitySeek_Requisiti_Funzionali.pdf`
-
-Descrive i requisiti dell'applicazione e le funzionalità previste.
-
-### User Story
-
-`docs/DocuEntitySeek_User_Story.pdf`
-
-Descrive le funzionalità dal punto di vista degli utenti, includendo criteri di accettazione.
-
-Questi documenti rappresentano il riferimento per le successive attività di implementazione e verifica.
+Non vengono caricati o elaborati PDF reali dal frontend.
 
 ---
 
-## 11. Stato di sviluppo
+## 12. Stato di sviluppo
 
 | Componente | Stato |
 |---|---|
 | Requisiti funzionali | Documentati |
 | User Story | Documentate |
 | Pipeline AI | Prototipo notebook |
-| Entity Discovery | Prototipo AI e demo frontend |
-| Field Extraction | Prototipo AI e demo frontend |
+| Routing React | Implementato |
 | Landing page | Implementata |
-| React Router | Implementato |
-| Elenco documenti | Implementato con mock |
-| Viewer annotato | Implementato con mock |
-| Pagina schemi | Implementata a livello UI |
+| Schema Procurement UI | Implementato |
+| Document Viewer | Demo funzionante |
+| API Layer frontend | Implementato |
+| Fetch API GET | Implementato |
+| Tipizzazione risposte | Implementata |
+| Custom hook richieste | Implementati |
+| Loading/error/empty state | Implementati |
+| Retry richieste | Implementato |
+| AbortController | Implementato |
+| Endpoint JSON mock | Implementati |
 | Backend FastAPI | Da implementare |
-| Integrazione frontend/backend | Da implementare |
 | Database PostgreSQL | Da implementare |
+| Upload documenti | Da implementare |
+| Analisi AI via API | Da implementare |
 | Autenticazione | Da implementare |
-| Gestione piani e quote | Da implementare |
-| Upload e analisi reali via web | Da implementare |
-| Containerizzazione | Da implementare |
-| Deployment | Da implementare |
-
-**Importante:** le funzionalità mostrate attraverso dati mock non devono essere considerate equivalenti a funzionalità integrate con il modello AI.
+| Gestione Base/Premium | Da implementare |
+| Testing automatico dedicato | Da implementare |
+| Docker Compose | Da implementare |
+| Deployment cloud | Da implementare |
 
 ---
 
-## 12. Prossimi sviluppi
+## 13. Prossimi sviluppi
 
-Le attività previste comprendono:
+Le attività successive seguiranno un approccio incrementale.
 
-1. Consolidamento e validazione della pipeline AI.
-2. Implementazione del backend FastAPI.
-3. Definizione delle API REST.
-4. Persistenza mediante PostgreSQL e SQLAlchemy.
-5. Gestione dei documenti PDF.
-6. Integrazione della pipeline AI nel backend.
-7. Collegamento frontend/backend.
-8. Autenticazione e autorizzazione degli utenti.
-9. Gestione dei piani Base/Premium.
-10. Creazione e gestione degli schemi personalizzati.
-11. Testing e validazione end-to-end.
-12. Containerizzazione e deployment.
+### Evoluzione frontend
 
----
+- Miglioramento dell'architettura React.
+- Introduzione di ulteriori componenti riutilizzabili.
+- Gestione dello stato applicativo quando necessaria.
+- Testing dei componenti.
+- Miglioramento dell'accessibilità.
 
-## 13. Considerazioni sull'affidabilità
+### Backend
 
-DocuEntitySeek utilizza modelli di AI che possono produrre:
+- Creazione del progetto FastAPI.
+- Definizione delle API REST.
+- Persistenza dei documenti.
+- Collegamento con PostgreSQL.
+- Integrazione della pipeline AI.
+- Autenticazione e autorizzazione.
 
-- Entità non riconosciute
-- Informazioni estratte in modo incompleto
-- Valori ambigui
-- Falsi positivi
-- Collegamenti errati alla fonte
+### Integrazione
 
-Per questo motivo la progettazione privilegia:
+- Sostituzione degli endpoint mock.
+- Upload PDF.
+- Analisi tramite backend.
+- Recupero dei risultati reali.
+- Gestione degli schemi.
+- Visualizzazione della provenance.
+- Testing end-to-end.
 
-- Tracciabilità delle estrazioni
-- Indicazione della pagina sorgente
-- Conservazione degli span quando disponibili
-- Separazione fra entità e campi strutturati
-- Gestione esplicita dei casi ambigui o non trovati
-- Verifica manuale dei risultati
+### Deployment
 
-Le informazioni prodotte dall'applicazione non sostituiscono la lettura e la verifica del documento originale.
+- Dockerizzazione dei componenti.
+- Docker Compose.
+- Configurazione degli ambienti.
+- Pubblicazione dell'applicazione.
 
 ---
 
-## 14. Finalità
+## 14. Documentazione
 
-DocuEntitySeek è un progetto software in evoluzione, sviluppato con finalità di sperimentazione e realizzazione di una piattaforma full-stack per Document Intelligence.
+Documentazione di progetto:
 
-L'obiettivo è integrare competenze di:
+- `docs/DocuEntitySeek_Requisiti_Funzionali.pdf`
+- `docs/DocuEntitySeek_User_Story.pdf`
 
-- Natural Language Processing
-- Information Extraction
-- Machine Learning
-- Backend Development
-- Frontend Development
-- Database Design
-- Software Architecture
-- Deployment
+Documentazione frontend:
 
-Il progetto segue un approccio incrementale, separando la sperimentazione dei modelli AI dall'implementazione e dall'integrazione dei componenti applicativi.
+- [frontend/README.md](frontend/README.md)
+
+Notebook AI:
+
+- `ai/notebooks/Extraction_Pipeline.ipynb`
+
+---
+
+## 15. Affidabilità e limiti
+
+I risultati prodotti dai modelli AI possono contenere:
+
+- Falsi positivi.
+- Entità non riconosciute.
+- Informazioni incomplete.
+- Valori ambigui.
+- Riferimenti non corretti.
+
+Il sistema è progettato per favorire la verificabilità delle informazioni.
+
+I dati mock del frontend hanno finalità dimostrative e non rappresentano risultati di analisi automatica su PDF caricati dall'utente.
+
+Le informazioni estratte dall'AI richiederanno sempre appropriate verifiche.
+
+---
+
+## 16. Finalità del progetto
+
+DocuEntitySeek è un progetto di sviluppo software e sperimentazione orientato alla realizzazione di una piattaforma full-stack di Document Intelligence.
+
+Lo sviluppo procede per passaggi incrementali, con particolare attenzione alla separazione delle responsabilità e alla manutenibilità.

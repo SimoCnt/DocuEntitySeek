@@ -1,95 +1,87 @@
 
 # DocuEntitySeek — Frontend
 
-Frontend di **DocuEntitySeek**, piattaforma di Document Intelligence dedicata al riconoscimento di entità e all'estrazione strutturata di informazioni da documenti complessi.
+Frontend React di **DocuEntitySeek**, piattaforma per l'analisi intelligente dei documenti mediante Named Entity Recognition (NER) e Structured Information Extraction (IE).
 
-L'interfaccia è sviluppata con React, TypeScript e Vite e rappresenta il livello di presentazione della futura applicazione full-stack.
+L'applicazione è sviluppata con React, TypeScript e Vite.
 
-> **Stato attuale:** frontend navigabile con dati mock. Le funzionalità di analisi visualizzate non sono ancora collegate al backend o alla pipeline AI.
+Il frontend presenta un'architettura modulare e utilizza richieste HTTP per recuperare i documenti e i relativi risultati di analisi.
+
+> **Stato attuale** implementati Fetch API, API Layer, custom hook per le richieste, tipizzazione TypeScript, loading state, error handling, retry, AbortController e mock API tramite file JSON statici. Non è ancora presente l'integrazione con FastAPI.
 
 ---
 
 ## 1. Stack tecnologico
 
-| Tecnologia | Utilizzo |
-|---|---|
-| React 19 | Interfaccia utente |
-| TypeScript | Tipizzazione statica |
-| Vite 8 | Development server e build |
-| React Router 8 | Routing client-side |
-| CSS | Stili e layout responsive |
-| Oxlint | Analisi statica del codice |
+| Tecnologia | Versione | Utilizzo |
+|---|---|---|
+| React | 19 | Componenti UI |
+| TypeScript | 7 | Tipizzazione |
+| Vite | 8 | Development server e build |
+| React Router | 8 | Client-side routing |
+| Fetch API | Browser API | Comunicazione HTTP |
+| CSS | - | Layout responsive |
+| Oxlint | 1 | Linting |
 
-L'applicazione utilizza componenti funzionali React e React Hooks.
+### Prerequisiti
+
+- Node.js 22.22 o successivo
+- npm
+
+La versione minima indicata soddisfa il requisito Node.js dichiarato da React Router 8.5.1.
 
 ---
 
 ## 2. Installazione
 
-### Prerequisiti
+Posizionarsi nella directory:
 
-- Node.js compatibile con Vite 8
-- npm
-
-### Installare le dipendenze
-
-Dalla cartella `frontend`:
-
-```bash
-npm install
+```text
+DocuEntitySeek/frontend
 ```
 
-### Avviare il development server
+Installare le dipendenze:
+
+```bash
+npm ci
+```
+
+### Configurare l'ambiente
+
+Creare il file `.env.local`, se non presente.
+
+Contenuto:
+
+```env
+VITE_API_BASE_URL=/mock-api
+```
+
+La variabile definisce il percorso base utilizzato dal client HTTP.
+
+Il file `.env.example` documenta la configurazione.
+
+### Avviare il progetto
 
 ```bash
 npm run dev
 ```
 
-Vite mostrerà l'indirizzo locale dell'applicazione, normalmente:
+Aprire l'indirizzo fornito dal terminale, normalmente:
 
 `http://localhost:5173`
 
-Il development server supporta Hot Module Replacement (HMR).
-
----
-
-## 3. Comandi disponibili
+### Comandi disponibili
 
 | Comando | Descrizione |
 |---|---|
-| `npm install` | Installa le dipendenze |
-| `npm run dev` | Avvia il server di sviluppo |
-| `npm run build` | Esegue i controlli TypeScript e genera la build |
-| `npm run preview` | Avvia l'anteprima locale della build |
-| `npm run lint` | Esegue Oxlint |
-
-### Build
-
-```bash
-npm run build
-```
-
-La build viene generata nella directory:
-
-`dist/`
-
-### Preview
-
-Dopo la build:
-
-```bash
-npm run preview
-```
-
-### Lint
-
-```bash
-npm run lint
-```
+| `npm run dev` | Avvia Vite |
+| `npm run build` | Type checking e build |
+| `npm run preview` | Preview build |
+| `npm run lint` | Controllo con Oxlint |
 
 ---
 
-## 4. Struttura del frontend
+## 3. Struttura del progetto
 
 ```text
 frontend/
@@ -97,8 +89,19 @@ frontend/
 +-- public/
 |   +-- favicon.svg
 |   +-- icons.svg
+|   |
+|   +-- mock-api/
+|       +-- documents.json
+|       +-- documents/
+|           +-- disciplinare-palermo-2027.json
+|           +-- capitolato-servizi-cloud.json
+|           +-- contratto-servizio-demo.json
 |
 +-- src/
+|   |
+|   +-- api/
+|   |   +-- http.ts
+|   |   +-- documentsApi.ts
 |   |
 |   +-- assets/
 |   |   +-- hero.png
@@ -113,6 +116,10 @@ frontend/
 |   |   |   +-- EntityFilterList.tsx
 |   |   |   +-- ExtractedFieldsPanel.tsx
 |   |   |
+|   |   +-- feedback/
+|   |   |   +-- LoadingState.tsx
+|   |   |   +-- ErrorState.tsx
+|   |   |
 |   |   +-- layout/
 |   |   |   +-- AppLayout.tsx
 |   |   |
@@ -124,12 +131,10 @@ frontend/
 |   |   +-- PlansSection.tsx
 |   |   +-- PlanCard.tsx
 |   |
-|   +-- data/
-|   |   +-- analysisDemo.ts
-|   |   +-- documents.ts
-|   |
 |   +-- hooks/
 |   |   +-- useDocumentTitle.ts
+|   |   +-- useDocuments.ts
+|   |   +-- useDocumentDetail.ts
 |   |
 |   +-- pages/
 |   |   +-- HomePage.tsx
@@ -138,11 +143,19 @@ frontend/
 |   |   +-- SchemasPage.tsx
 |   |   +-- NotFoundPage.tsx
 |   |
+|   +-- types/
+|   |   +-- document.ts
+|   |   +-- analysis.ts
+|   |
 |   +-- App.tsx
 |   +-- App.css
 |   +-- main.tsx
 |   +-- index.css
 |
++-- .env.example
++-- .env.local
++-- .gitignore
++-- .oxlintrc.json
 +-- index.html
 +-- package.json
 +-- package-lock.json
@@ -150,39 +163,83 @@ frontend/
 +-- tsconfig.json
 +-- tsconfig.app.json
 +-- tsconfig.node.json
-+-- .oxlintrc.json
 +-- README.md
 ```
 
+`.env.local` è una configurazione locale ignorata da Git.
+
 ---
 
-## 5. Architettura React
+## 4. Architettura frontend
 
-L'applicazione è organizzata in:
+L'applicazione è organizzata secondo una separazione delle responsabilità.
 
-- Pages
-- Reusable Components
-- Layout Components
-- Domain Components
-- Mock Data
-- Custom Hooks
+```text
+React Page
+    |
+    v
+Custom Hook
+    |
+    v
+Domain API
+    |
+    v
+HTTP Client
+    |
+    v
+Fetch API
+    |
+    v
+Mock HTTP Endpoint
+    |
+    v
+JSON Response
+    |
+    v
+Custom Hook State
+    |
+    v
+React Page
+    |
+    v
+UI Components
+```
 
-### 5.1 Entry point
+### Pages
 
-`src/main.tsx`
+Definiscono la presentazione delle schermate.
 
-Si occupa di:
+### Components
 
-- Creare il root React.
-- Attivare React Strict Mode.
-- Configurare BrowserRouter.
-- Renderizzare il componente App.
+Contengono elementi riutilizzabili e componenti del dominio.
 
-### 5.2 Routing
+### Hooks
+
+Gestiscono lo stato applicativo e gli effetti.
+
+### API
+
+Centralizzano la comunicazione HTTP.
+
+### Types
+
+Definiscono le strutture dati.
+
+### Mock API
+
+Fornisce dati dimostrativi attraverso richieste HTTP.
+
+Questa architettura permette di mantenere separata la UI dalle funzioni di accesso ai dati.
+
+---
+
+## 5. Routing
+
+Il routing è configurato in:
 
 `src/App.tsx`
 
-Definisce le rotte dell'applicazione attraverso React Router.
+React Router gestisce le seguenti rotte:
 
 | Route | Componente |
 |---|---|
@@ -192,11 +249,13 @@ Definisce le rotte dell'applicazione attraverso React Router.
 | `/schemas` | SchemasPage |
 | `*` | NotFoundPage |
 
-### 5.3 Layout condiviso
+### Layout condiviso
+
+File:
 
 `src/components/layout/AppLayout.tsx`
 
-Definisce la struttura comune:
+Struttura:
 
 ```text
 AppLayout
@@ -206,21 +265,676 @@ AppLayout
  +-- main
  |    |
  |    +-- Outlet
- |         |
- |         +-- Pagina corrente
  |
  +-- Footer
 ```
 
-L'utilizzo di `Outlet` permette di condividere Header e Footer tra le diverse pagine.
+Il componente `Outlet` permette alle pagine di condividere il layout.
 
 ---
 
-## 6. Pagine
+## 6. API Layer
+
+Il passaggio 9 introduce un livello dedicato alla comunicazione HTTP.
+
+Directory:
+
+`src/api/`
+
+### 6.1 http.ts
+
+Contiene il client HTTP condiviso.
+
+Responsabilità:
+
+- Configurazione della base URL.
+- Esecuzione delle richieste GET.
+- Deserializzazione del JSON.
+- Gestione delle risposte HTTP non riuscite.
+- Normalizzazione degli errori.
+- Supporto ad AbortSignal.
+
+#### API_BASE_URL
+
+La configurazione è recuperata tramite:
+
+```ts
+import.meta.env.VITE_API_BASE_URL
+```
+
+Se non viene configurata, è utilizzato il percorso di fallback `/mock-api`.
+
+Gli slash finali vengono rimossi dalla base URL.
+
+#### HttpError
+
+Classe che estende `Error`.
+
+Contiene:
+
+- `message`
+- `status`
+- `url`
+
+Viene utilizzata quando la risposta HTTP non è riuscita.
+
+#### RequestError
+
+Tipo che rappresenta gli errori utilizzati dall'interfaccia.
+
+```ts
+type RequestError = {
+    message: string
+    status?: number
+}
+```
+
+#### getJson<T>()
+
+Funzione asincrona generica che effettua una richiesta GET e restituisce il risultato tipizzato.
+
+Firma:
+
+```ts
+getJson<T>(
+    path: string,
+    signal?: AbortSignal
+): Promise<T>
+```
+
+Funzionamento:
+
+1. Compone l'URL.
+2. Esegue `fetch`.
+3. Richiede una risposta JSON.
+4. Verifica `response.ok`.
+5. Genera un `HttpError` per una risposta HTTP non riuscita.
+6. Legge il body mediante `response.json()`.
+7. Restituisce il dato come tipo `T`.
+
+**Nota:** il tipo generico `T` non valida a runtime la struttura della risposta. La validazione runtime dovrà essere valutata quando saranno disponibili API esterne reali.
+
+#### normalizeRequestError()
+
+Trasforma un errore generico in un oggetto `RequestError`.
+
+Gestisce:
+
+- Errori HTTP applicativi.
+- Errori JavaScript.
+- Valori inattesi.
+
+#### isAbortError()
+
+Riconosce gli errori di annullamento generati da una richiesta interrotta.
+
+Viene utilizzata dai custom hook per evitare di mostrare errori dovuti alla cancellazione intenzionale di una richiesta.
+
+---
+
+## 7. Document API
+
+File:
+
+`src/api/documentsApi.ts`
+
+Contiene le funzioni dedicate al recupero dei documenti.
+
+### getDocuments()
+
+Firma:
+
+```ts
+getDocuments(
+    signal?: AbortSignal
+)
+```
+
+Effettua la richiesta:
+
+```http
+GET /mock-api/documents.json
+```
+
+Restituisce:
+
+```ts
+Promise<DocumentSummary[]>
+```
+
+### getDocumentDetail()
+
+Firma:
+
+```ts
+getDocumentDetail(
+    documentId: string,
+    signal?: AbortSignal
+)
+```
+
+Effettua una richiesta al percorso:
+
+```http
+GET /mock-api/documents/{documentId}.json
+```
+
+Restituisce:
+
+```ts
+Promise<DocumentDetailResponse>
+```
+
+L'identificativo viene codificato mediante `encodeURIComponent()` prima di essere inserito nel percorso.
+
+### Perché separare documentsApi da http?
+
+`http.ts` contiene funzionalità HTTP generiche.
+
+`documentsApi.ts` contiene operazioni specifiche del dominio documentale.
+
+Questa distinzione evita di inserire direttamente `fetch` nei componenti React.
+
+---
+
+## 8. Custom Hooks
+
+### 8.1 useDocuments
+
+File:
+
+`src/hooks/useDocuments.ts`
+
+Si occupa del recupero dell'elenco dei documenti.
+
+Restituisce:
+
+```ts
+{
+    documents,
+    isLoading,
+    error,
+    reload
+}
+```
+
+#### documents
+
+Contiene i documenti ricevuti dall'API.
+
+#### isLoading
+
+Indica se è in corso una richiesta.
+
+#### error
+
+Contiene l'eventuale errore normalizzato.
+
+#### reload
+
+Permette di ripetere la richiesta.
+
+### Flusso
+
+```text
+Mount component
+      |
+      v
+useEffect
+      |
+      v
+AbortController
+      |
+      v
+setIsLoading(true)
+      |
+      v
+getDocuments()
+      |
+      +------------------+
+      |                  |
+      v                  v
+   Success             Error
+      |                  |
+      v                  v
+setDocuments()       setError()
+      |                  |
+      +--------+---------+
+               |
+               v
+       setIsLoading(false)
+```
+
+Nel cleanup viene invocato `controller.abort()`.
+
+### 8.2 useDocumentDetail
+
+File:
+
+`src/hooks/useDocumentDetail.ts`
+
+Recupera i dettagli e l'analisi di un singolo documento.
+
+Parametri:
+
+```ts
+useDocumentDetail(documentId)
+```
+
+Restituisce:
+
+```ts
+{
+    data,
+    isLoading,
+    error,
+    reload
+}
+```
+
+Il recupero viene ripetuto quando cambia:
+
+- `documentId`
+- `reloadToken`
+
+Il precedente risultato viene azzerato all'avvio di una nuova richiesta valida.
+
+Il cleanup annulla la richiesta precedente.
+
+### 8.3 useDocumentTitle
+
+File:
+
+`src/hooks/useDocumentTitle.ts`
+
+Aggiorna il titolo della pagina nel browser utilizzando `useEffect`.
+
+Durante il cleanup ripristina il titolo precedente.
+
+---
+
+## 9. Tipizzazione TypeScript
+
+Directory:
+
+`src/types/`
+
+### 9.1 document.ts
+
+Definisce i contratti relativi ai documenti.
+
+#### DocumentStatus
+
+```ts
+type DocumentStatus =
+    | 'READY'
+    | 'PROCESSING'
+    | 'ERROR'
+```
+
+#### DocumentSummary
+
+```ts
+type DocumentSummary = {
+    id: string
+    name: string
+    category: string
+    pages: number
+    status: DocumentStatus
+    uploadedAt: string
+}
+```
+
+#### DocumentDetailResponse
+
+```ts
+type DocumentDetailResponse = {
+    document: DocumentSummary
+    analysis: DocumentAnalysis | null
+}
+```
+
+### 9.2 analysis.ts
+
+Contiene i tipi dell'analisi.
+
+#### EntityDefinition
+
+```ts
+type EntityDefinition = {
+    label: string
+    color: string
+}
+```
+
+#### TextSegment
+
+Un segmento può essere:
+
+- Testo normale.
+- Entità annotata.
+
+#### DocumentPage
+
+Rappresenta una pagina di testo segmentato.
+
+#### ExtractedField
+
+Rappresenta un campo estratto.
+
+Contiene:
+
+- id
+- label
+- value
+- page
+- confidence
+- status
+
+#### ExtractedFieldStatus
+
+Stati supportati:
+
+- EXTRACTED
+- AMBIGUOUS
+- NOT_FOUND
+- ERROR
+
+#### DocumentAnalysis
+
+```ts
+type DocumentAnalysis = {
+    entityDefinitions: EntityDefinition[]
+    pages: DocumentPage[]
+    extractedFields: ExtractedField[]
+}
+```
+
+I tipi costituiscono il contratto frontend attuale.
+
+---
+
+## 10. Mock API
+
+Directory:
+
+`public/mock-api/`
+
+I file JSON simulano le risposte di un backend.
+
+### 10.1 Elenco documenti
+
+File:
+
+`public/mock-api/documents.json`
+
+Contiene tre documenti:
+
+| ID | Stato |
+|---|---|
+| disciplinare-palermo-2027 | READY |
+| capitolato-servizi-cloud | PROCESSING |
+| contratto-servizio-demo | ERROR |
+
+### 10.2 Dettaglio documento
+
+Directory:
+
+`public/mock-api/documents/`
+
+Ogni documento ha un file JSON associato.
+
+La struttura prevista è:
+
+```json
+{
+    "document": {
+        "id": "example",
+        "name": "Example.pdf",
+        "category": "Documento",
+        "pages": 10,
+        "status": "PROCESSING",
+        "uploadedAt": "09/11/2026"
+    },
+    "analysis": null
+}
+```
+
+Quando l'analisi è disponibile, `analysis` contiene:
+
+- entityDefinitions
+- pages
+- extractedFields
+
+### 10.3 Documento READY
+
+Il file:
+
+`disciplinare-palermo-2027.json`
+
+contiene una demo completa di NER e Field Extraction.
+
+Include:
+
+- Definizioni delle entità.
+- Due pagine di testo annotato.
+- Campi strutturati.
+
+Le pagine dimostrative hanno numerazione 12 e 13; non costituiscono la rappresentazione integrale delle 48 pagine dichiarate nei metadati.
+
+### 10.4 Stati non READY
+
+I documenti PROCESSING ed ERROR hanno:
+
+```json
+{
+    "analysis": null
+}
+```
+
+Non presentano quindi un'analisi disponibile.
+
+---
+
+## 11. Componenti feedback
+
+Directory:
+
+`src/components/feedback/`
+
+### LoadingState
+
+File:
+
+`LoadingState.tsx`
+
+Mostra:
+
+- Spinner.
+- Messaggio di caricamento.
+- Attributo `role="status"`.
+
+Esempio:
+
+```tsx
+<LoadingState
+    message="Caricamento dei documenti..."
+/>
+```
+
+### ErrorState
+
+File:
+
+`ErrorState.tsx`
+
+Mostra:
+
+- Titolo dell'errore.
+- Messaggio.
+- Pulsante Riprova, quando viene fornita una callback.
+- Attributo `role="alert"`.
+
+Esempio:
+
+```tsx
+<ErrorState
+    message={error.message}
+    onRetry={reload}
+/>
+```
+
+Il pulsante richiama la funzione `reload` del custom hook.
+
+---
+
+## 12. DocumentsPage
+
+File:
+
+`src/pages/DocumentsPage.tsx`
+
+La pagina utilizza:
+
+```ts
+useDocuments()
+```
+
+per recuperare i documenti.
+
+### Stati gestiti
+
+#### Loading
+
+Durante la richiesta viene mostrato `LoadingState`.
+
+#### Error
+
+Se la richiesta fallisce, viene mostrato `ErrorState`.
+
+Il pulsante Riprova permette di ripetere la chiamata.
+
+#### Empty
+
+Se la risposta contiene un array vuoto, viene mostrato un messaggio di assenza documenti.
+
+#### Success
+
+I documenti sono visualizzati in una griglia di card.
+
+Ogni card mostra:
+
+- Categoria.
+- Nome del documento.
+- Numero di pagine.
+- Data di caricamento.
+- Stato.
+
+I documenti READY possono essere aperti.
+
+I documenti PROCESSING ed ERROR mostrano un pulsante disabilitato.
+
+---
+
+## 13. DocumentDetailPage
+
+File:
+
+`src/pages/DocumentDetailPage.tsx`
+
+La pagina legge il parametro `documentId` dalla route mediante `useParams()`.
+
+Utilizza:
+
+```ts
+useDocumentDetail(documentId)
+```
+
+per richiedere i dati.
+
+### Stati gestiti
+
+#### Loading
+
+Visualizza `LoadingState`.
+
+#### HTTP 404
+
+Mostra un messaggio dedicato quando il documento non viene trovato.
+
+#### Errore generico
+
+Visualizza `ErrorState` e permette di ripetere la richiesta.
+
+#### Analisi non disponibile
+
+Se il documento non è READY oppure `analysis` è `null`, viene mostrato un messaggio dedicato.
+
+#### Analisi disponibile
+
+Viene renderizzato:
+
+```tsx
+<AnalysisDemoSection
+    key={document.id}
+    documentName={document.name}
+    analysis={analysis}
+/>
+```
+
+L'utilizzo della chiave basata sull'identificativo permette di reinizializzare lo stato locale del viewer quando cambia documento.
+
+---
+
+## 14. Componenti di analisi
+
+Directory:
+
+`src/components/analysis/`
+
+### AnalysisDemoSection
+
+Gestisce:
+
+- Pagina selezionata.
+- Categorie NER attive.
+- Entità selezionata.
+- Navigazione.
+- Filtri.
+
+Riceve i dati tramite props e non esegue direttamente richieste HTTP.
+
+### AnnotatedDocumentMock
+
+Visualizza il testo annotato.
+
+Le entità vengono rappresentate come elementi selezionabili con colore associato alla categoria.
+
+### EntityFilterList
+
+Permette di:
+
+- Attivare una categoria.
+- Disattivare una categoria.
+- Mostrare tutte le categorie.
+- Nascondere tutte le categorie.
+
+### ExtractedFieldsPanel
+
+Visualizza:
+
+- Nome del campo.
+- Valore.
+- Pagina sorgente, se disponibile.
+- Stato dell'estrazione.
+
+La confidence è presente nel contratto dati, ma non viene visualizzata dal componente attuale.
+
+---
+
+## 15. Pagine aggiuntive
 
 ### HomePage
-
-`src/pages/HomePage.tsx`
 
 Contiene:
 
@@ -228,392 +942,271 @@ Contiene:
 - FeaturesSection
 - PlansSection
 
-Presenta gli obiettivi e le funzionalità previste di DocuEntitySeek.
-
-### DocumentsPage
-
-`src/pages/DocumentsPage.tsx`
-
-Visualizza un elenco di documenti dimostrativi.
-
-Ogni documento presenta:
-
-- Nome
-- Categoria
-- Numero di pagine
-- Data di caricamento
-- Stato di elaborazione
-
-Gli stati previsti sono:
-
-| Stato | Significato |
-|---|---|
-| READY | Analisi disponibile |
-| PROCESSING | Elaborazione in corso |
-| ERROR | Errore di elaborazione |
-
-Attualmente gli stati sono simulati.
-
-Solo i documenti in stato `READY` possono essere aperti attraverso il pulsante della relativa card.
-
-### DocumentDetailPage
-
-`src/pages/DocumentDetailPage.tsx`
-
-Recupera l'identificativo del documento dalla rotta mediante `useParams`.
-
-Gestisce tre situazioni:
-
-1. Documento non trovato.
-2. Analisi non disponibile.
-3. Documento pronto per la visualizzazione.
-
-Nel terzo caso viene renderizzato il componente `AnalysisDemoSection`.
-
 ### SchemasPage
-
-`src/pages/SchemasPage.tsx`
 
 Presenta:
 
-- Schema Procurement predefinito.
-- Elenco delle categorie NER.
-- Elenco dei campi strutturati.
-- Presentazione degli schemi personalizzati Premium.
+- Schema Procurement.
+- Categorie NER previste.
+- Campi strutturati.
+- Funzionalità Premium pianificate.
 
-L'editor Premium è attualmente disabilitato.
+L'editor Premium non è ancora utilizzabile.
 
 ### NotFoundPage
 
-`src/pages/NotFoundPage.tsx`
-
-Gestisce gli indirizzi che non corrispondono alle rotte disponibili mediante una pagina 404.
+Gestisce le rotte non riconosciute.
 
 ---
 
-## 7. Componenti di analisi
+## 16. Gestione richieste asincrone
 
-I componenti di dominio sono organizzati in:
+Il frontend utilizza `async/await` e Promise.
 
-`src/components/analysis/`
+### Flusso standard
 
-### 7.1 AnalysisDemoSection
+1. Il componente viene montato.
+2. Il custom hook avvia un effetto.
+3. Viene creato un AbortController.
+4. Lo stato loading viene attivato.
+5. Il servizio API esegue la richiesta GET.
+6. La risposta viene verificata.
+7. Il JSON viene letto e tipizzato.
+8. Lo stato React viene aggiornato.
+9. Il loading viene disattivato.
 
-`AnalysisDemoSection.tsx`
+### Error handling
 
-Componente principale della dimostrazione interattiva.
+Gli errori HTTP vengono rappresentati da `HttpError`.
 
-Gestisce:
+Gli errori vengono convertiti in `RequestError` prima di essere mostrati nell'interfaccia.
 
-- Pagina corrente.
-- Categorie NER attive.
-- Entità selezionata.
-- Navigazione tra le pagine.
-- Filtri delle annotazioni.
+### AbortController
 
-Utilizza `useState` per la gestione dello stato locale.
+Le richieste possono essere annullate quando:
 
-Le informazioni vengono passate ai componenti figli attraverso props.
+- Il componente viene smontato.
+- Cambia il documento richiesto.
+- L'effetto viene rieseguito.
 
-### 7.2 AnnotatedDocumentMock
+L'annullamento evita che una richiesta precedente aggiorni normalmente un componente dopo il cleanup.
 
-`AnnotatedDocumentMock.tsx`
+### Retry
 
-Simula il viewer di un documento annotato.
+Entrambi i custom hook espongono `reload()`.
 
-Funzionalità:
-
-- Visualizzazione del testo.
-- Evidenziazione delle entità.
-- Colori associati alle categorie.
-- Selezione delle annotazioni.
-- Visualizzazione del testo normale quando una categoria è disattivata.
-
-Il componente non renderizza ancora un PDF reale.
-
-### 7.3 EntityFilterList
-
-`EntityFilterList.tsx`
-
-Visualizza i controlli per filtrare le categorie NER.
-
-Permette di:
-
-- Attivare singole categorie.
-- Disattivare singole categorie.
-- Selezionare tutte le categorie.
-- Deselezionare tutte le categorie.
-
-È un componente controllato: riceve lo stato e le callback dal componente padre.
-
-### 7.4 ExtractedFieldsPanel
-
-`ExtractedFieldsPanel.tsx`
-
-Visualizza le informazioni strutturate estratte.
-
-Per ogni campo mostra:
-
-- Nome del campo.
-- Valore.
-- Pagina di origine.
-- Stato.
-
-Attualmente visualizza informazioni dimostrative.
+La funzione incrementa un contatore interno che provoca la riesecuzione dell'effetto.
 
 ---
 
-## 8. Gestione dei dati
+## 17. Test manuali
 
-I dati utilizzati dall'interfaccia sono contenuti nella directory:
+I seguenti test possono essere eseguiti in locale.
 
-`src/data/`
+### Test 1 — Avvio
 
-### documents.ts
-
-Definisce:
-
-- `DocumentStatus`
-- `DocumentSummary`
-- `MOCK_DOCUMENTS`
-
-Contiene un insieme di documenti dimostrativi con stati differenti.
-
-### analysisDemo.ts
-
-Contiene i dati necessari alla dimostrazione del viewer, incluse:
-
-- Etichette NER.
-- Associazioni tra categorie e colori.
-- Pagine dimostrative.
-- Segmenti di testo.
-- Annotazioni.
-- Campi strutturati.
-
-Questi dati permettono di sviluppare e verificare il comportamento dell'interfaccia indipendentemente dal backend.
-
-### Limitazioni attuali
-
-- Nessun caricamento reale di documenti.
-- Nessuna chiamata HTTP al backend.
-- Nessuna persistenza dei dati.
-- Nessuna esecuzione del modello AI dal frontend.
-- Nessuna autenticazione.
-- Nessuna gestione effettiva dei piani Base/Premium.
-
----
-
-## 9. React Hooks
-
-Il progetto utilizza React Hooks per gestire lo stato e il comportamento dei componenti.
-
-### useState
-
-Utilizzato principalmente in `AnalysisDemoSection` per:
-
-- Indice della pagina.
-- Categorie attive.
-- Entità selezionata.
-
-Gli aggiornamenti dipendenti dallo stato precedente utilizzano functional updates.
-
-### useEffect
-
-Utilizzato nel custom Hook `useDocumentTitle`.
-
-### useDocumentTitle
-
-Percorso:
-
-`src/hooks/useDocumentTitle.ts`
-
-Permette di aggiornare il titolo della scheda del browser.
-
-Esempio:
-
-```tsx
-useDocumentTitle('Documenti | DocuEntitySeek')
+```bash
+npm run dev
 ```
 
-L'Hook utilizza `useEffect` e ripristina il titolo precedente durante il cleanup.
+Verificare l'apertura della homepage.
 
-### State lifting
+### Test 2 — Elenco documenti
 
-Lo stato condiviso tra viewer e filtri è gestito dal componente padre `AnalysisDemoSection`.
+Aprire:
 
-I componenti figli ricevono:
+`http://localhost:5173/documents`
 
-- Dati da visualizzare.
-- Stato corrente.
-- Callback per comunicare le interazioni.
+Risultato previsto:
 
-Questo permette di mantenere un'unica fonte di verità per lo stato dell'interfaccia.
+- Richiesta GET a `/mock-api/documents.json`.
+- Comparsa delle tre card.
+- Visualizzazione dei relativi stati.
+
+### Test 3 — Dettaglio documento
+
+Aprire:
+
+`http://localhost:5173/documents/disciplinare-palermo-2027`
+
+Risultato previsto:
+
+- Richiesta GET al JSON di dettaglio.
+- Visualizzazione del viewer.
+- Visualizzazione delle entità.
+- Visualizzazione dei campi estratti.
+
+### Test 4 — Documento inesistente
+
+Aprire:
+
+`http://localhost:5173/documents/documento-inesistente`
+
+Risultato previsto:
+
+- Richiesta a un endpoint inesistente.
+- Gestione del relativo errore HTTP 404.
+- Messaggio Documento non trovato.
+
+### Test 5 — Errore HTTP
+
+Configurare temporaneamente:
+
+```env
+VITE_API_BASE_URL=/percorso-inesistente
+```
+
+Riavviare Vite.
+
+Aprire la pagina documenti.
+
+Risultato previsto:
+
+- Fallimento della richiesta.
+- Visualizzazione di ErrorState.
+- Disponibilità del pulsante Riprova.
+
+Ripristinare successivamente:
+
+```env
+VITE_API_BASE_URL=/mock-api
+```
+
+### Test 6 — Build
+
+```bash
+npm run build
+```
+
+### Test 7 — Lint
+
+```bash
+npm run lint
+```
+
+I test manuali non sostituiscono una suite automatizzata.
 
 ---
 
-## 10. Stili
+## 18. Integrazione backend futura
 
-La gestione degli stili utilizza CSS.
+L'architettura è predisposta per sostituire le Mock API con servizi FastAPI.
 
-File principali:
-
-### src/index.css
-
-Contiene gli stili globali.
-
-### src/App.css
-
-Contiene gli stili dell'applicazione, delle pagine e dei componenti.
-
-L'interfaccia utilizza classi CSS con una nomenclatura descrittiva e organizzata per componente.
-
-Sono presenti layout responsive per adattare le sezioni principali a differenti dimensioni dello schermo.
-
----
-
-## 11. Accessibilità e usabilità
-
-Il frontend include alcune pratiche di accessibilità:
-
-- Elementi HTML semantici.
-- Pulsanti per le azioni.
-- Link per la navigazione.
-- Checkbox per i filtri NER.
-- Attributi di disabilitazione per azioni non disponibili.
-- Etichetta di navigazione principale.
-- Titoli delle pagine aggiornati dinamicamente.
-
-L'accessibilità complessiva richiederà ulteriori verifiche e test dedicati.
-
----
-
-## 12. Integrazione futura con il backend
-
-Il frontend sarà successivamente collegato alle API REST sviluppate con FastAPI.
-
-Flusso previsto:
+### Architettura prevista
 
 ```text
-React Frontend
-      |
-      | HTTP Requests
-      v
-FastAPI Backend
-      |
-      +------------------+
-      |                  |
-      v                  v
+React Pages
+     |
+     v
+Custom Hooks
+     |
+     v
+Domain API Layer
+     |
+     v
+HTTP Client
+     |
+     v
+FastAPI REST Backend
+     |
+     +------------------+
+     |                  |
+     v                  v
 PostgreSQL          AI Pipeline
                     PyMuPDF
                     GLiNER2.5
-                         |
-                         v
-                  Risultati NER/IE
-                         |
-                         v
-                  Risposta JSON
-                         |
-                         v
-                  React Frontend
 ```
 
-L'integrazione dovrà permettere di sostituire i dati mock con risultati reali.
+Per l'integrazione saranno necessari:
 
-Attività previste:
+- Contratti API definitivi.
+- Configurazione della base URL backend.
+- Endpoint per i documenti.
+- Endpoint per l'upload.
+- Endpoint per le analisi.
+- Gestione degli stati di elaborazione.
+- Gestione degli errori backend.
+- Autenticazione.
+- Eventuale configurazione CORS.
+- Validazione delle risposte.
 
-1. Introduzione di un client API.
-2. Gestione delle richieste HTTP.
-3. Recupero dei documenti.
-4. Upload dei PDF.
-5. Avvio delle analisi.
-6. Recupero dei risultati.
-7. Rendering delle annotazioni reali.
-8. Visualizzazione dei campi estratti.
-9. Gestione degli stati loading, error ed empty.
-10. Autenticazione e controllo degli accessi.
-
-Le API e i relativi contratti non sono ancora implementati.
+I servizi attuali costituiscono la base didattica, non un'integrazione già disponibile.
 
 ---
 
-## 13. Stato di sviluppo
+## 19. Stato di sviluppo
 
 | Funzionalità | Stato |
 |---|---|
-| Struttura React | Implementata |
+| React | Implementato |
 | TypeScript | Configurato |
 | Vite | Configurato |
-| Routing | Implementato |
+| React Router | Implementato |
 | Layout condiviso | Implementato |
 | Landing page | Implementata |
-| Elenco documenti | Implementato con mock |
-| Dettaglio documento | Implementato con mock |
-| Viewer NER | Demo interattiva |
-| Filtri categorie | Implementati nella demo |
-| Navigazione pagine | Implementata nella demo |
-| Selezione annotazioni | Implementata nella demo |
-| Sidebar Field Extraction | Implementata con mock |
-| Pagina schemi | Implementata a livello UI |
-| Schemi Premium personalizzati | Da implementare |
-| HTTP API Client | Da implementare |
-| Integrazione FastAPI | Da implementare |
+| Elenco documenti | Implementato |
+| Dettaglio documento | Implementato |
+| Viewer NER | Demo |
+| Filtri NER | Implementati |
+| Sidebar campi | Demo |
+| API Layer | Implementato |
+| HTTP Client | Implementato |
+| Fetch GET | Implementato |
+| Tipi response | Implementati |
+| Custom Hooks API | Implementati |
+| Loading State | Implementato |
+| Error State | Implementato |
+| Empty State | Implementato |
+| HTTP 404 handling | Implementato |
+| Retry | Implementato |
+| AbortController | Implementato |
+| Mock JSON API | Implementata |
+| FastAPI Integration | Da implementare |
 | Upload PDF | Da implementare |
 | Analisi AI reale | Da integrare |
 | Autenticazione | Da implementare |
-| Testing automatico frontend | Da implementare |
+| Schemi personalizzati | Da implementare |
+| Test automatizzati | Da implementare |
+| Deployment | Da implementare |
 
 ---
 
-## 14. Prossimi sviluppi
+## 20. Prossimi sviluppi
 
-Le principali attività previste per il frontend sono:
+Le attività frontend successive comprenderanno:
 
-- Collegamento alle API REST.
-- Separazione tra dati mock e dati remoti.
-- Gestione centralizzata delle richieste HTTP.
-- Componenti per upload documenti.
-- Gestione dello stato delle analisi.
-- Viewer basato su risultati AI reali.
-- Navigazione verso le fonti dei risultati.
-- Editor degli schemi personalizzati.
-- Gestione delle sessioni utente.
-- Protezione delle rotte riservate.
-- Testing dei componenti.
-- Testing end-to-end.
-- Ottimizzazione delle prestazioni.
-- Ulteriori verifiche di accessibilità.
+1. Approfondimento di componenti React avanzati.
+2. Miglioramento della riutilizzabilità del codice.
+3. Gestione di stati applicativi più complessi.
+4. Introduzione di ulteriori custom hook quando necessari.
+5. Integrazione con il backend FastAPI.
+6. Sostituzione dei file JSON mock.
+7. Gestione dell'upload PDF.
+8. Recupero dei risultati della pipeline AI.
+9. Autenticazione e rotte protette.
+10. Testing automatico.
+11. Ottimizzazione e deployment.
 
----
-
-## 15. Documentazione correlata
-
-Il frontend fa parte del progetto DocuEntitySeek.
-
-Documentazione disponibile nel repository principale:
-
-- `../README.md`
-- `../docs/DocuEntitySeek_Requisiti_Funzionali.pdf`
-- `../docs/DocuEntitySeek_User_Story.pdf`
-- `../ai/notebooks/Extraction_Pipeline.ipynb`
-
-Questi documenti descrivono i requisiti applicativi, le funzionalità previste e la sperimentazione della pipeline AI.
+L'evoluzione seguirà il piano di sviluppo incrementale di DocuEntitySeek.
 
 ---
 
-## 16. Finalità
+## 21. Documentazione correlata
 
-Il frontend viene sviluppato progressivamente con l'obiettivo di realizzare un'interfaccia modulare, manutenibile ed estendibile.
+README principale:
 
-Le principali competenze coinvolte sono:
+`../README.md`
 
-- React
-- TypeScript
-- Component-Based Architecture
-- React Hooks
-- Client-Side Routing
-- State Management
-- UI/UX Design
-- API Integration
-- Frontend Testing
+Requisiti funzionali:
 
-L'obiettivo finale è integrare il frontend con la pipeline AI e il backend di DocuEntitySeek, realizzando un'applicazione full-stack per l'analisi intelligente dei documenti.
+`../docs/DocuEntitySeek_Requisiti_Funzionali.pdf`
+
+User Story:
+
+`../docs/DocuEntitySeek_User_Story.pdf`
+
+Notebook AI:
+
+`../ai/notebooks/Extraction_Pipeline.ipynb`
+
+---
