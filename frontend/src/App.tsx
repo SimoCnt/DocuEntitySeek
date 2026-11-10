@@ -6,6 +6,7 @@ import DocumentsPage from './pages/DocumentsPage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
 import SchemasPage from './pages/SchemasPage'
+import NewDocumentPage from './pages/NewDocumentPage'
 
 
 function App() {
@@ -37,6 +38,11 @@ function App() {
           element={<NotFoundPage />}
         />
       </Route>
+
+        <Route
+          path="documents/new"
+          element={<NewDocumentPage />}
+        />
     </Routes>
   )
 }
