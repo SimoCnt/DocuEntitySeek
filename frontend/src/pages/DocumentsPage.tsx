@@ -49,11 +49,15 @@ function DocumentsPage() {
 
     return (
         <section className="page-section">
-            <div className="page-heading">
-                <span className="section-heading__eyebrow">Workspace</span>
-                <h1>I tuoi documenti</h1>
-                <p>Consulta i documenti caricati e apri quelli per cui l'analisi è già disponibile.</p>
+            <div className="page-heading__top">
+                <div>
+                    <span className="section-heading__eyebrow">Workspace</span>
+                    <h1>I tuoi documenti</h1>
+                </div>
+                <Link to="/documents/new" className="button button--primary">Nuovo documento</Link>                
             </div>
+
+            <p>Consulta i documenti caricati e apri quelli per cui l'analisi è già disponibile.</p>
 
             {documents.length === 0 ? (
                 <div className="empty-state">
