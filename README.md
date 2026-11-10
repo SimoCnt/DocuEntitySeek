@@ -15,7 +15,7 @@ Il progetto si concentra inizialmente sul dominio **Procurement**, con particola
 
 L'obiettivo è trasformare documenti non strutturati in informazioni organizzate e verificabili, mantenendo il collegamento tra i risultati estratti e il documento originale.
 
-> **Stato attuale:** frontend React con routing, richieste HTTP tramite Fetch API, custom hook, tipizzazione TypeScript, gestione di loading/error/empty state e dati JSON mock. La pipeline AI è disponibile come prototipo Jupyter separato. Backend FastAPI, database e integrazione AI end-to-end non sono ancora implementati.
+> **Stato attuale:** frontend React con routing, richieste HTTP tramite Fetch API, custom hook, tipizzazione TypeScript, gestione di loading/error/empty state e dati JSON mock. La pipeline AI è stata già implementata come prototipo separato, con relativi risultati. Backend FastAPI, database e integrazione AI end-to-end non sono ancora implementati.
 
 ---
 
@@ -36,7 +36,7 @@ Il sistema distingue due funzionalità principali:
 - **Entity Discovery (NER):** riconoscimento delle entità nominate.
 - **Field Extraction (IE):** estrazione di informazioni strutturate.
 
-Le funzionalità di Information Retrieval e ricerca avanzata potranno essere integrate successivamente; non sono ancora implementate.
+Ulteriori funzionalità di Information Retrieval potranno essere integrate successivamente.
 
 ---
 
@@ -253,12 +253,6 @@ Questa separazione prepara il frontend alla futura integrazione con FastAPI.
 
 ## 6. Pipeline AI
 
-Il notebook:
-
-`ai/notebooks/Extraction_Pipeline.ipynb`
-
-implementa un prototipo di analisi PDF.
-
 ### Flusso
 
 ```text
@@ -312,32 +306,46 @@ La pipeline utilizza:
 - `extract_entities_long()`
 - `extract_json_long()`
 
-La configurazione è sperimentale e richiede validazione.
+---
 
-### Schemi di dominio
+## 7. Elaborazione AI self-hosted e riservatezza dei dati
 
-La pipeline è progettata separando:
+DocuEntitySeek è progettato secondo un approccio self-hosted AI, privilegiando l'esecuzione dei modelli di Intelligenza Artificiale direttamente nell'infrastruttura applicativa, senza dipendere da API di inferenza di provider esterni, come OpenAI.
 
-```text
-PIPELINE = come elaborare il documento
+La pipeline sperimentale utilizza **GLiNER2.5** per le attività di Named Entity Recognition (NER) e Structured Information Extraction (IE).
 
-SCHEMA = quali entità e campi estrarre
-```
+Questa scelta architetturale offre diversi vantaggi:
 
-Il notebook include lo schema Procurement e un esempio di schema personalizzato relativo al dominio immobiliare.
+- **Riservatezza dei documenti:** l'elaborazione AI può avvenire all'interno dell'infrastruttura applicativa, senza trasmettere i contenuti a servizi esterni di inferenza.
 
-La pipeline non è ancora integrata con il frontend.
+- **Maggiore controllo sui dati:** il gestore della piattaforma può definire le politiche di conservazione, accesso ed eliminazione dei documenti.
+
+- **Indipendenza dai provider AI:** le funzionalità di analisi non richiedono l'utilizzo di API commerciali per ogni richiesta.
+
+- **Prevedibilità dei costi:** l'inferenza non comporta tariffe a consumo per token o chiamate API esterne, pur richiedendo risorse computazionali e infrastrutturali proprie.
+
+### 7.1 Gestione dei dati degli utenti
+
+L'esecuzione locale del modello AI non implica che i documenti rimangano sul dispositivo dell'utente.
+
+Nell'architettura full-stack prevista, i documenti caricati saranno trasmessi al backend di DocuEntitySeek ed eventualmente conservati nell'infrastruttura server, secondo le politiche di persistenza e conservazione che verranno definite.
+
+L'obiettivo è mantenere l'elaborazione AI sotto il controllo dell'infrastruttura applicativa, limitando la condivisione dei contenuti con servizi di inferenza di terze parti.
+
+### 7.2 Sicurezza e limitazioni
+
+L'adozione di modelli AI self-hosted costituisce una scelta architetturale favorevole alla riservatezza e al controllo dei dati, ma non garantisce automaticamente la sicurezza delle informazioni o la conformità alla normativa sulla protezione dei dati personali.
+
+La futura implementazione dovrà prevedere adeguati meccanismi di autenticazione, autorizzazione, isolamento dei dati tra utenti, cifratura delle comunicazioni, protezione dello storage e gestione della conservazione e cancellazione dei documenti.
+
+**Stato di implementazione:** attualmente l'inferenza AI è disponibile come prototipo sperimentale in ambiente Jupyter. L'integrazione del modello all'interno del backend applicativo e i relativi meccanismi di sicurezza sono previsti nelle successive fasi di sviluppo.
 
 ---
 
-## 7. Struttura del repository
+## 8. Struttura del repository
 
 ```text
 DocuEntitySeek/
-|
-+-- ai/
-|   +-- notebooks/
-|       +-- Extraction_Pipeline.ipynb
 |
 +-- backend/
 |   +-- [backend applicativo da implementare]
@@ -397,7 +405,7 @@ Sono omesse dalla rappresentazione le dipendenze installate, gli ambienti virtua
 
 ---
 
-## 8. Avvio locale
+## 9. Avvio locale
 
 ### Requisiti
 
@@ -457,11 +465,11 @@ npm run preview
 
 ---
 
-## 9. React API — Passaggio 9
+## 10. React API — Passaggio 9
 
 Il passaggio 9 introduce la comunicazione HTTP nel frontend.
 
-### 9.1 HTTP Client
+### 10.1 HTTP Client
 
 File:
 
@@ -488,7 +496,7 @@ Elementi principali:
 
 La tipizzazione TypeScript non costituisce validazione runtime del contenuto JSON.
 
-### 9.2 Document API
+### 10.2 Document API
 
 File:
 
@@ -501,7 +509,7 @@ Espone:
 
 Entrambe le funzioni utilizzano il client HTTP condiviso.
 
-### 9.3 Custom Hooks
+### 10.3 Custom Hooks
 
 File:
 
@@ -517,7 +525,7 @@ Gestiscono:
 - Retry.
 - Annullamento delle richieste durante il cleanup.
 
-### 9.4 Feedback UI
+### 10.4 Feedback UI
 
 Componenti:
 
@@ -526,7 +534,7 @@ Componenti:
 
 Le pagine gestiscono anche situazioni senza dati disponibili.
 
-### 9.5 Mock API
+### 10.5 Mock API
 
 Endpoint:
 
@@ -548,7 +556,7 @@ I file JSON sono serviti staticamente da Vite.
 
 ---
 
-## 10. Contratti dei dati
+## 11. Contratti dei dati
 
 ### DocumentSummary
 
@@ -590,7 +598,7 @@ Questi tipi rappresentano il contratto attuale della demo. Potranno essere estes
 
 ---
 
-## 11. Frontend
+## 12. Frontend
 
 ### Route implementate
 
@@ -618,13 +626,14 @@ Non vengono caricati o elaborati PDF reali dal frontend.
 
 ---
 
-## 12. Stato di sviluppo
+## 13. Stato di sviluppo
 
 | Componente | Stato |
 |---|---|
 | Requisiti funzionali | Documentati |
 | User Story | Documentate |
 | Pipeline AI | Prototipo notebook |
+| Analisi e risultati AI | Prototipo notebook |
 | Routing React | Implementato |
 | Landing page | Implementata |
 | Schema Procurement UI | Implementato |
@@ -649,7 +658,7 @@ Non vengono caricati o elaborati PDF reali dal frontend.
 
 ---
 
-## 13. Prossimi sviluppi
+## 14. Prossimi sviluppi
 
 Le attività successive seguiranno un approccio incrementale.
 
@@ -689,7 +698,7 @@ Le attività successive seguiranno un approccio incrementale.
 
 ---
 
-## 14. Documentazione
+## 15. Documentazione
 
 Documentazione di progetto:
 
@@ -700,13 +709,9 @@ Documentazione frontend:
 
 - [frontend/README.md](frontend/README.md)
 
-Notebook AI:
-
-- `ai/notebooks/Extraction_Pipeline.ipynb`
-
 ---
 
-## 15. Affidabilità e limiti
+## 16. Affidabilità e limiti
 
 I risultati prodotti dai modelli AI possono contenere:
 
@@ -724,7 +729,7 @@ Le informazioni estratte dall'AI richiederanno sempre appropriate verifiche.
 
 ---
 
-## 16. Finalità del progetto
+## 17. Finalità del progetto
 
 DocuEntitySeek è un progetto di sviluppo software e sperimentazione orientato alla realizzazione di una piattaforma full-stack di Document Intelligence.
 

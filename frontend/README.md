@@ -1205,8 +1205,4 @@ User Story:
 
 `../docs/DocuEntitySeek_User_Story.pdf`
 
-Notebook AI:
-
-`../ai/notebooks/Extraction_Pipeline.ipynb`
-
 ---
