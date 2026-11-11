@@ -16,3 +16,9 @@ class ErrorDetail(ApiModel):
 
 class ErrorResponse(ApiModel):
     error: ErrorDetail
+
+
+class DatabaseHealthResponse(ApiModel):
+    status: str
+    database: str
+    user: str

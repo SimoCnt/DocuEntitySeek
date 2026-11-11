@@ -1,3 +1,4 @@
+from uuid import UUID
 from enum import Enum
 from datetime import date
 from pydantic import Field
@@ -21,7 +22,7 @@ class DocumentCategory(str, Enum):
 
 
 class DocumentSummary(ApiModel):
-    id: str
+    id: UUID
     name: str = Field(min_length=1, max_length=255)
     category: DocumentCategory
     pages: int = Field(ge=0)
