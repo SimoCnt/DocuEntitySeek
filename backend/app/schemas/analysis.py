@@ -1,3 +1,4 @@
+from uuid import UUID
 from enum import Enum
 from pydantic import Field
 from typing import Annotated, Literal
@@ -16,7 +17,7 @@ class TextOnlySegment(ApiModel):
 
 class EntitySegment(ApiModel):
     type: Literal["entity"]
-    id: str
+    id: UUID
     text: str
     label: str
 
@@ -37,7 +38,7 @@ class ExtractedFieldStatus(str, Enum):
 
 
 class ExtractedField(ApiModel):
-    id: str
+    id: UUID
     label: str
     value: str | None = None
     page: int | None = Field(default=None, ge=1)

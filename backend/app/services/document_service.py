@@ -1,51 +1,55 @@
-import re
-from uuid import uuid4
-from pathlib import Path
-from datetime import date
+
+from uuid import UUID
+from sqlalchemy.orm import Session
 
 from app.core.exceptions import DocumentNotFoundError
-from app.data.mock_documents import INITIAL_DOCUMENTS
-from app.schemas.document import DocumentCategory, DocumentDetailResponse, DocumentStatus, DocumentSummary
+from app.repositories.analysis_repository import AnalysisRepository
+from app.repositories.document_repository import DocumentRepository
+from app.schemas.document import DocumentCategory, DocumentDetailResponse, DocumentSummary
+from app.services.document_mapper import build_document_analysis, to_document_summary
 
 
 class DocumentService:
-    def __init__(self) -> None:
-        self._documents = {item.document.id: item for item in INITIAL_DOCUMENTS}
+    def __init__(self, session: Session) -> None:
+        self.session = session
+        self.documents = DocumentRepository(session)
+        self.analyses = AnalysisRepository(session)
 
 
-    def list_documents(self) -> list[DocumentSummary]:
-        return [item.document for item in self._documents.values()]
+    def list_documents(self, owner_user_id: UUID) -> list[DocumentSummary]:
+        documents = self.documents.list_by_owner(owner_user_id)
+
+        return [to_document_summary(document) for document in documents]
 
 
-    def get_document(self, document_id: str) -> DocumentDetailResponse:
-        document = self._documents.get(document_id)
-        if document is None: raise DocumentNotFoundError(document_id)
+    def get_document(self, document_id: UUID, owner_user_id: UUID) -> DocumentDetailResponse:
+        document = self.documents.get_by_id_and_owner(document_id, owner_user_id)
 
-        return document
+        if document is None:
+            raise DocumentNotFoundError(str(document_id))
+
+        analysis = self.analyses.get_latest_completed(document.id)
+        api_analysis = build_document_analysis(document, analysis) if analysis is not None else None
+
+        return DocumentDetailResponse(document=to_document_summary(document), analysis=api_analysis)
 
 
-    def create_document(self, *, file_name: str, category: DocumentCategory) -> DocumentSummary:
-        document_id = self._build_document_id(file_name)
-        summary = DocumentSummary(
-            id=document_id,
-            name=file_name,
-            category=category,
-            pages=0,
-            status=DocumentStatus.PROCESSING,
-            uploaded_at=date.today()            
+    def create_document(
+        self,
+        *,
+        owner_user_id: UUID,
+        file_name: str,
+        category: DocumentCategory,
+        mime_type: str | None,
+        size_bytes: int | None,
+    ) -> DocumentSummary:
+        document = self.documents.create(
+            owner_user_id=owner_user_id,
+            original_name=file_name,
+            category=category.value,
+            mime_type=mime_type,
+            size_bytes=size_bytes,
         )
-        self._documents[document_id] = DocumentDetailResponse(document=summary, analysis=None)        
-
-        return summary
-
-
-    @staticmethod
-    def _build_document_id(file_name: str) -> str:
-        stem = Path(file_name).stem.lower()
-        slug = re.sub(r"[^a-z0-9]+", "-", stem).strip("-")
-
-        if not slug: slug = "document"
-
-        suffix = uuid4().hex[:8]
-
-        return f"{slug}-{suffix}"
+        self.session.commit()
+        self.session.refresh(document)
+        return to_document_summary(document)

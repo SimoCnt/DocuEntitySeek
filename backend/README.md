@@ -1325,9 +1325,7 @@ fields           15
 
 ## 28. Stato della persistenza
 
-PostgreSQL esiste ed è configurato, ma FastAPI non lo utilizza ancora direttamente.
-
-La situazione attuale è:
+Livello architetturale:
 
 ```text
 FastAPI
@@ -1336,28 +1334,7 @@ FastAPI
 DocumentService
    |
    v
-Python dictionary
-```
-
-Separatamente:
-
-```text
-PostgreSQL
-   |
-   v
-Relational schema
-```
-
-Il prossimo livello architetturale sarà:
-
-```text
-FastAPI
-   |
-   v
-DocumentService
-   |
-   v
-SQLAlchemy
+SQLAlchemy Session
    |
    v
 PostgreSQL
@@ -1526,9 +1503,10 @@ VALIDATION_ERROR
 | Seed PostgreSQL | Implementato |
 | pgAdmin 4 | Configurato |
 | SQL CRUD didattico | Implementato |
-| SQLAlchemy | Da implementare |
-| FastAPI ↔ PostgreSQL | Da integrare |
-| Persistenza PDF | Da implementare |
+| SQLAlchemy | Implementato |
+| FastAPI ↔ PostgreSQL | Implementato |
+| Repository layer | Implementato
+| Database Session dependency | Implementata
 | Autenticazione | Da implementare |
 | Autorizzazione | Da implementare |
 | Quote BASE/PREMIUM | Modellate nel DB, da applicare |
