@@ -39,6 +39,7 @@ DO UPDATE SET
 -- 2. UTENTE DEMO
 -- ============================================================
 
+/*
 INSERT INTO users (
     email,
     role,
@@ -53,6 +54,7 @@ WHERE NOT EXISTS (
     FROM users
     WHERE LOWER(email) = LOWER('demo@docuentityseek.local')
 );
+*/
 
 
 -- ============================================================

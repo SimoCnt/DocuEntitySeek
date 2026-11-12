@@ -83,6 +83,9 @@ CREATE TABLE users (
     -- Indirizzo email dell'utente.
     email VARCHAR(320) NOT NULL,
 
+    -- Password hash dell'utente
+    password_hash TEXT,
+
     -- Ruolo applicativo.
     role VARCHAR(20) NOT NULL DEFAULT 'USER',
 
@@ -95,6 +98,12 @@ CREATE TABLE users (
     -- Data dell'ultimo aggiornamento. Gli aggiornamenti successivi saranno gestiti dall'applicazione oppure da un trigger dedicato.
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
+    -- Utente attivo / non attivo
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    -- Ultimo logino
+    last_login_at TIMESTAMPTZ,
+
     -- Sono ammessi soltanto due ruoli.
     CONSTRAINT ck_users_role
         CHECK (role IN ('USER', 'ADMIN')),
@@ -104,7 +113,13 @@ CREATE TABLE users (
         FOREIGN KEY (plan_code)
         REFERENCES plans(code)
         ON UPDATE CASCADE
-        ON DELETE RESTRICT
+        ON DELETE RESTRICT,    
+    
+    CONSTRAINT ck_users_active_password
+        CHECK (
+            is_active = FALSE
+            OR password_hash IS NOT NULL
+        )
 );
 
 
