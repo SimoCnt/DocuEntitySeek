@@ -5,30 +5,48 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.core.exceptions import AuthenticationError, ForbiddenError
+from app.core.security import decode_access_token, oauth2_scheme
 from app.db.session import get_db_session
+from app.db.models import UserModel
 from app.repositories.user_repository import UserRepository
 from app.services.document_service import DocumentService
-
-
-DbSessionDep = Annotated[Session, Depends(get_db_session)]
+from app.services.auth_service import AuthService
 
 
 def get_document_service(session: DbSessionDep) -> DocumentService:
     return DocumentService(session)
 
 
+def get_auth_service(session: DbSessionDep) -> AuthService:
+    return AuthService(session)
+
+
+def get_current_user(session: DbSessionDep, token: Annotated[str | None, Depends(oauth2_scheme)]) -> UserModel:
+    if token is None:
+        raise AuthenticationError("Autenticazione richiesta.")
+
+    user_id = decode_access_token(token)
+    user = UserRepository(session).get_by_id(user_id)
+
+    if user is None:
+        raise AuthenticationError("Utente associato al token non trovato.")
+
+    if not user.is_active:
+        raise ForbiddenError("Account disabilitato.")
+
+    return user
+
+
+def require_admin(current_user: CurrentUserDep) -> UserModel:
+    if current_user.role != "ADMIN":
+        raise ForbiddenError("Permessi amministrativi richiesti.")
+
+    return current_user
+
+
+DbSessionDep = Annotated[Session, Depends(get_db_session)]
 DocumentServiceDep = Annotated[DocumentService, Depends(get_document_service)]
-
-
-def get_development_user_id(session: DbSessionDep) -> UUID:
-    settings = get_settings()
-    repository = UserRepository(session)
-    user_id = repository.get_id_by_email(settings.development_user_email)
-
-    if user_id is None:
-        raise RuntimeError("Development user not found. Execute 02_seed.sql first.")
-
-    return user_id
-
-
-DevelopmentUserIdDep = Annotated[UUID, Depends(get_development_user_id)]
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+CurrentUserDep = Annotated[UserModel, Depends(get_current_user)]
+AdminUserDep = Annotated[UserModel, Depends(require_admin)]
