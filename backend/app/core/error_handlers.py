@@ -5,7 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.core.exceptions import DocumentNotFoundError, InvalidDocumentFileError
+from app.core.exceptions import DocumentNotFoundError, InvalidDocumentFileError, EmailAlreadyRegisteredError, AuthenticationError, ForbiddenError
 
 
 logger = logging.getLogger(__name__)
@@ -51,3 +51,22 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def unexpected_error(request: Request, exc: Exception) -> JSONResponse:
         logger.exception("Unhandled API error", exc_info=exc)
         return JSONResponse(status_code=500, content=error_payload(code="INTERNAL_SERVER_ERROR", message="Si è verificato un errore interno."))
+
+
+    @app.exception_handler(EmailAlreadyRegisteredError)
+    async def email_already_registered(request: Request, exc: EmailAlreadyRegisteredError) -> JSONResponse:
+        return JSONResponse(status_code=409, content=error_payload(code="EMAIL_ALREADY_REGISTERED", message=str(exc)))
+
+
+    @app.exception_handler(AuthenticationError)
+    async def authentication_error(request: Request, exc: AuthenticationError) -> JSONResponse:
+        return JSONResponse(
+            status_code=401,
+            headers={"WWW-Authenticate": "Bearer"},
+            content=error_payload(code="AUTHENTICATION_ERROR", message=str(exc))
+        )
+
+
+    @app.exception_handler(ForbiddenError)
+    async def forbidden_error(request: Request, exc: ForbiddenError) -> JSONResponse:
+        return JSONResponse(status_code=403, content=error_payload(code="FORBIDDEN", message=str(exc)))
