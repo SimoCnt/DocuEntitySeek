@@ -33,6 +33,9 @@ class UserModel(Base):
     __tablename__ = "users"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
     email: Mapped[str] = mapped_column(String(320), nullable=False)
+    password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=sql_text("TRUE"))
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     role: Mapped[str] = mapped_column(String(20), nullable=False, server_default=sql_text("'USER'"))
     plan_code: Mapped[str] = mapped_column(ForeignKey("plans.code", onupdate="CASCADE", ondelete="RESTRICT"), nullable=False, server_default=sql_text("'BASE'"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

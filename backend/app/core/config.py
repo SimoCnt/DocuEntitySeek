@@ -1,3 +1,4 @@
+from pydantic import Field
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -23,7 +24,11 @@ class Settings(BaseSettings):
 
     sql_echo: bool = False
 
-    development_user_email: str = "demo@docuentityseek.local"
+    jwt_secret_key: str = Field(min_length=64)
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 30
+    jwt_issuer: str = "docuentityseek-api"
+    jwt_audience: str = "docuentityseek-web"
 
     model_config = SettingsConfigDict(
         env_file=".env",

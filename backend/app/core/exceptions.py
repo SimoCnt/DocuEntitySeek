@@ -6,3 +6,15 @@ class DocumentNotFoundError(Exception):
 
 class InvalidDocumentFileError(Exception):
     pass
+
+
+class EmailAlreadyRegisteredError(Exception):
+    pass
+
+
+class AuthenticationError(Exception):
+    pass
+
+
+class ForbiddenError(Exception):
+    pass
