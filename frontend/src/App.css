@@ -57,6 +57,22 @@
   font-weight: 600;
 }
 
+.app-header__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.app-header__user {
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
 
 /* ==========================================================
    Hero
@@ -278,23 +294,31 @@
    Responsive
    ========================================================== */
 
+
 @media (max-width: 820px) {
+  .app-header {
+    flex-wrap: wrap;
+    column-gap: 16px;
+    row-gap: 8px;
+    padding: 14px 0;
+  }
+
   .app-header__nav {
-    display: none;
+    order: 3;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 18px;
   }
 
-  .features-grid, .plans-grid, .analysis-demo__workspace, .documents-grid, .schema-grid, .upload-layout {
-    grid-template-columns: 1fr;
+  .app-header__link {
+    padding: 9px 0;
   }
 
-  .hero {
-    padding-top: 72px;
-  }
-
-  .page-heading__top {
-    flex-direction: column;
+  .app-header__link--active::after {
+    bottom: 3px;
   }
 }
+
 
 
 /* ==========================================================
@@ -1083,4 +1107,40 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
+}
+
+
+/* ==========================================================
+   Authentication
+   ========================================================== */
+
+.auth-page {
+  max-width: 620px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.auth-form input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #d7dde8;
+  border-radius: 8px;
+  background: white;
+  color: #354157;
+}
+
+.auth-page__footer {
+  margin: 24px 0 0;
+  color: #69758b;
+  font-size: 13px;
+  text-align: center;
+}
+
+.app-header__user {
+  color: #69758b;
+  font-size: 12px;
 }
