@@ -5,7 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.core.exceptions import DocumentNotFoundError, InvalidDocumentFileError, EmailAlreadyRegisteredError, AuthenticationError, ForbiddenError
+from app.core.exceptions import DocumentNotFoundError, InvalidDocumentFileError, EmailAlreadyRegisteredError, AuthenticationError, ForbiddenError, DocumentStorageError
 
 
 logger = logging.getLogger(__name__)
@@ -70,3 +70,8 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(ForbiddenError)
     async def forbidden_error(request: Request, exc: ForbiddenError) -> JSONResponse:
         return JSONResponse(status_code=403, content=error_payload(code="FORBIDDEN", message=str(exc)))
+
+
+    @app.exception_handler(DocumentStorageError)
+    async def document_storage_error(request: Request, exc: DocumentStorageError) -> JSONResponse:
+        return JSONResponse(status_code=500, content=error_payload(code="DOCUMENT_STORAGE_ERROR", message="Impossibile salvare il documento."))

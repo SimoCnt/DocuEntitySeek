@@ -1,17 +1,25 @@
 
 from uuid import UUID
 from sqlalchemy.orm import Session
+from time import perf_counter
+from typing import BinaryIO
 
+from app.core.logging import get_logger
 from app.core.exceptions import DocumentNotFoundError
 from app.repositories.analysis_repository import AnalysisRepository
 from app.repositories.document_repository import DocumentRepository
 from app.schemas.document import DocumentCategory, DocumentDetailResponse, DocumentSummary
 from app.services.document_mapper import build_document_analysis, to_document_summary
+from app.services.document_storage import DocumentStorage
+
+
+logger = get_logger("document")
 
 
 class DocumentService:
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, storage: DocumentStorage) -> None:
         self.session = session
+        self.storage = storage
         self.documents = DocumentRepository(session)
         self.analyses = AnalysisRepository(session)
 
@@ -42,14 +50,70 @@ class DocumentService:
         category: DocumentCategory,
         mime_type: str | None,
         size_bytes: int | None,
+        file_stream: BinaryIO,
     ) -> DocumentSummary:
-        document = self.documents.create(
-            owner_user_id=owner_user_id,
-            original_name=file_name,
-            category=category.value,
-            mime_type=mime_type,
-            size_bytes=size_bytes,
+        started_at = perf_counter()
+        storage_key: str | None = None
+
+        logger.info(
+            "DOCUMENT_CREATE | phase=start | owner_user_id=%s | filename=%r | category=%s | size_bytes=%s",
+            owner_user_id,
+            file_name,
+            category.value,
+            size_bytes,
         )
-        self.session.commit()
-        self.session.refresh(document)
-        return to_document_summary(document)
+
+        try:
+            document = self.documents.create(
+                owner_user_id=owner_user_id,
+                original_name=file_name,
+                category=category.value,
+                mime_type=mime_type,
+                size_bytes=size_bytes,
+            )
+
+            logger.info("DOCUMENT_CREATE | phase=db_record_created | document_id=%s", document.id)
+
+            storage_key = self.storage.save_original(
+                owner_user_id=owner_user_id,
+                document_id=document.id,
+                source=file_stream,
+            )
+
+            document.storage_key = storage_key
+
+            logger.info(
+                "DOCUMENT_CREATE | phase=storage_linked | document_id=%s | storage_key=%s",
+                document.id,
+                storage_key,
+            )
+
+            self.session.commit()
+            self.session.refresh(document)
+
+            elapsed_ms = (perf_counter() - started_at) * 1000
+
+            logger.info(
+                "DOCUMENT_CREATE | phase=complete | document_id=%s | elapsed_ms=%.2f",
+                document.id,
+                elapsed_ms,
+            )
+
+            return to_document_summary(document)
+
+        except Exception:
+            self.session.rollback()
+
+            if storage_key:
+                try:
+                    self.storage.delete(storage_key)
+                except Exception:
+                    logger.exception("DOCUMENT_CREATE | phase=rollback_storage_cleanup_failed | storage_key=%s", storage_key)
+
+            logger.exception(
+                "DOCUMENT_CREATE | phase=failed | owner_user_id=%s | filename=%r",
+                owner_user_id,
+                file_name,
+            )
+
+            raise

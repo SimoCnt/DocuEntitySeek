@@ -14,6 +14,8 @@ from app.core.security import create_access_token, hash_password
 from app.db.models import UserModel
 from app.db.session import get_db_session
 from app.main import create_application
+from app.dependencies import get_document_storage
+from app.services.document_storage import DocumentStorage
 
 
 class TestEnvironment(BaseSettings):
@@ -97,14 +99,14 @@ def clean_api_database(test_engine: Engine) -> Generator[None, None, None]:
 
 
 @pytest.fixture
-def app(test_engine: Engine, clean_api_database: None) -> Generator[FastAPI, None, None]:
+def app(test_engine: Engine, clean_api_database: None, tmp_path) -> Generator[FastAPI, None, None]:
     test_session_factory = sessionmaker(bind=test_engine, class_=Session, expire_on_commit=False)
     application = create_application()
 
     def override_db_session() -> Generator[Session, None, None]:
-        session = test_session_factory()
+        session = test_session_factory()        
 
-        try:
+        try:            
             yield session
         except Exception:
             session.rollback()
@@ -112,7 +114,9 @@ def app(test_engine: Engine, clean_api_database: None) -> Generator[FastAPI, Non
         finally:
             session.close()
 
+    test_storage = DocumentStorage(tmp_path / "documents")
     application.dependency_overrides[get_db_session] = override_db_session
+    application.dependency_overrides[get_document_storage] = lambda: test_storage
 
     yield application
     application.dependency_overrides.clear()

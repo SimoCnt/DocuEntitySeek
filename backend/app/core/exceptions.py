@@ -18,3 +18,7 @@ class AuthenticationError(Exception):
 
 class ForbiddenError(Exception):
     pass
+
+
+class DocumentStorageError(Exception):
+    pass

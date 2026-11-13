@@ -72,4 +72,5 @@ def create_document(
         category=category,
         mime_type=file.content_type,
         size_bytes=file.size,
+        file_stream=file.file
     )
