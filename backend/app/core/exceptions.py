@@ -22,3 +22,7 @@ class ForbiddenError(Exception):
 
 class DocumentStorageError(Exception):
     pass
+
+
+class PdfTextExtractionError(Exception):
+    pass

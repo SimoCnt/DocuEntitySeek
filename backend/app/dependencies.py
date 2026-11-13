@@ -12,6 +12,7 @@ from app.repositories.user_repository import UserRepository
 from app.services.document_service import DocumentService
 from app.services.document_storage import DocumentStorage
 from app.services.auth_service import AuthService
+from app.pipeline.pdf_text_extractor import PdfTextExtractor
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -19,6 +20,7 @@ DbSessionDep = Annotated[Session, Depends(get_db_session)]
 
 def get_document_storage() -> DocumentStorage:
     settings = get_settings()
+    
     return DocumentStorage(settings.document_storage_root)
 
 
@@ -64,4 +66,10 @@ AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 AdminUserDep = Annotated[UserModel, Depends(require_admin)]
 
 
+def get_pdf_text_extractor() -> PdfTextExtractor:
+    settings = get_settings()
 
+    return PdfTextExtractor(sort_text=settings.pdf_text_sort)
+
+
+PdfTextExtractorDep = Annotated[PdfTextExtractor, Depends(get_pdf_text_extractor)]
