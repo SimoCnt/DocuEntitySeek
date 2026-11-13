@@ -1,0 +1,88 @@
+name: docuentityseek
+
+services:
+  db:
+    image: postgres:18.6
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./backend/docker/postgres/00_init_app.sh:/docker-entrypoint-initdb.d/00_init_app.sh:ro
+      - ./backend/sql/01_schema.sql:/docker-init/01_schema.sql:ro
+      - ./backend/sql/02_seed.sql:/docker-init/02_seed.sql:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          pg_isready -U docuentityseek_app -d docuentityseek &&
+          psql -U docuentityseek_app -d docuentityseek -tAc
+          'SELECT 1 FROM plans LIMIT 1' >/dev/null
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      APP_NAME: DocuEntitySeek API
+      APP_VERSION: 0.1.0
+      APP_ENV: development
+      DEBUG: "true"
+      API_V1_PREFIX: /api/v1
+      CORS_ORIGINS: '["http://localhost:5173","http://127.0.0.1:5173"]'
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: docuentityseek
+      DB_USER: docuentityseek_app
+      DB_PASSWORD: ${APP_DB_PASSWORD}
+      SQL_ECHO: "false"
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      JWT_ISSUER: docuentityseek-api
+      JWT_AUDIENCE: docuentityseek-web
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend/app:/app/app
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health').read()"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000/api/v1
+    ports:
+      - "5173:5173"
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

@@ -32,7 +32,9 @@ dist/
 
 .env
 .env.*
+.env.docker
 !.env.example
+!.env.docker.example
 
 
 # ============================================================
