@@ -1,9 +1,7 @@
-export type DocumentCategory =
-    | 'DISCIPLINARE'
-    | 'CAPITOLATO'
-    | 'CONTRATTO'
-    | 'BANDO'
-    | 'ALTRO'
+import type { DocumentCategory } from "./document"
+
+
+export type { DocumentCategory } from "./document"
 
 
 export type UploadFormData = {

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 
 import ConfirmUploadDialog from '../components/upload/ConfirmUploadDialog'
 import DocumentUploadForm from '../components/upload/DocumentUploadForm'
@@ -8,6 +8,8 @@ import Panel from '../components/common/Panel'
 import useDocumentTitle from '../hooks/useDocumentTitle'
 import { validatePdfFile } from '../utils/fileValidation'
 import type { DocumentCategory } from '../types/upload'
+import ErrorState from '../components/feedback/ErrorState'
+import useCreateDocument from '../hooks/useCreateDocument'
 
 
 function NewDocumentPage() {
@@ -16,14 +18,14 @@ function NewDocumentPage() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [category, setCategory] = useState<DocumentCategory>('DISCIPLINARE')
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
-    const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
-    const [isSimulationComplete, setIsSimulationComplete] = useState(false)
+    const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)    
+    const navigate = useNavigate()
+    const {uploadDocument, isSubmitting, error: uploadError} = useCreateDocument()
 
 
     function handleFileChange(file: File | null) {
         setSelectedFile(file)
-        setErrorMessage(null)
-        setIsSimulationComplete(false)
+        setErrorMessage(null)        
     }
 
 
@@ -41,10 +43,22 @@ function NewDocumentPage() {
     }
 
 
-    function handleConfirm() {
+    async function handleConfirm() {
+        if (!selectedFile) {
+            return
+        }
+
         setIsConfirmationOpen(false)
-        setIsSimulationComplete(true)
-    }
+
+        const document = await uploadDocument(selectedFile, category)
+
+        if (!document) {
+            return
+        }
+
+        navigate('/documents', { replace: true })
+        }
+
 
     return (
         <section className="page-section">
@@ -91,14 +105,19 @@ function NewDocumentPage() {
                 </Panel>
             </div>
 
-            {isSimulationComplete && (
+            {isSubmitting && (
                 <div
                     className="frontend-notice"
                     role="status"
-                >
-                    <strong>Workflow frontend completato.</strong>
-                    <p>Il documento non è stato ancora inviato: il vero upload verrà implementato in seguito tramite fastAPI.</p>
+                >                    
+                    <p>Invio del documento al backend...</p>
                 </div>
+            )}
+
+            {uploadError && (
+                <ErrorState
+                    message={uploadError.message}
+                />
             )}
 
             <ConfirmUploadDialog
