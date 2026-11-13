@@ -10,10 +10,9 @@ class Settings(BaseSettings):
     app_env: str = "development"
     debug: bool = True
     app_log_level: str = "INFO"
-
     api_v1_prefix: str = "/api/v1"
-
     document_storage_root: Path = Path("storage/documents")
+    pdf_text_sort: bool = False
     
     cors_origins: list[str] = [
         "http://localhost:5173",
