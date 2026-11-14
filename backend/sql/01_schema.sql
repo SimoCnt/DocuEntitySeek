@@ -516,6 +516,46 @@ CREATE TABLE document_pages (
 
 
 -- ============================================================
+-- 9. TABELLA: ai_runtime_configs
+-- ============================================================
+CREATE TABLE ai_runtime_configs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(120) NOT NULL,
+    version INTEGER NOT NULL,
+    engine VARCHAR(50) NOT NULL,
+    model_id TEXT NOT NULL,
+    model_revision VARCHAR(120),
+    chunk_size INTEGER NOT NULL,
+    chunk_overlap INTEGER NOT NULL,
+    entity_threshold NUMERIC(5, 4) NOT NULL,
+    field_threshold NUMERIC(5, 4) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT uq_ai_runtime_configs_name_version UNIQUE (name, version),
+    CONSTRAINT ck_ai_runtime_configs_version CHECK (version > 0),
+    CONSTRAINT ck_ai_runtime_configs_engine CHECK (LENGTH(TRIM(engine)) > 0),
+    CONSTRAINT ck_ai_runtime_configs_model CHECK (LENGTH(TRIM(model_id)) > 0),
+    CONSTRAINT ck_ai_runtime_configs_chunk_size CHECK (chunk_size > 0),
+    CONSTRAINT ck_ai_runtime_configs_chunk_overlap CHECK (
+        chunk_overlap >= 0
+        AND chunk_overlap < chunk_size
+    ),
+    CONSTRAINT ck_ai_runtime_configs_entity_threshold CHECK (
+        entity_threshold BETWEEN 0 AND 1
+    ),
+    CONSTRAINT ck_ai_runtime_configs_field_threshold CHECK (
+        field_threshold BETWEEN 0 AND 1
+    )
+);
+
+CREATE UNIQUE INDEX uq_ai_runtime_configs_active
+ON ai_runtime_configs (is_active)
+WHERE is_active = TRUE;
+
+
+-- ============================================================
 -- 9. TABELLA: analyses
 -- ============================================================
 
@@ -560,6 +600,10 @@ CREATE TABLE analyses (
 
     -- Istante di completamento.
     completed_at TIMESTAMPTZ,
+
+    ai_runtime_config_id UUID
+        REFERENCES ai_runtime_configs(id)
+        ON DELETE RESTRICT,
 
     -- Relazione con il documento analizzato.
     CONSTRAINT fk_analyses_document
