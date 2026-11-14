@@ -13,6 +13,8 @@ from app.services.document_service import DocumentService
 from app.services.document_storage import DocumentStorage
 from app.services.auth_service import AuthService
 from app.pipeline.pdf_text_extractor import PdfTextExtractor
+from app.pipeline.provenance import DocumentProvenanceBuilder
+from app.services.document_preparation_service import DocumentPreparationService
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -73,3 +75,28 @@ def get_pdf_text_extractor() -> PdfTextExtractor:
 
 
 PdfTextExtractorDep = Annotated[PdfTextExtractor, Depends(get_pdf_text_extractor)]
+
+
+def get_provenance_builder() -> DocumentProvenanceBuilder:
+    return (DocumentProvenanceBuilder())
+
+
+ProvenanceBuilderDep = Annotated[DocumentProvenanceBuilder, Depends(get_provenance_builder)]
+
+
+def get_document_preparation_service(
+    session: DbSessionDep,
+    storage: DocumentStorageDep,
+    pdf_extractor: PdfTextExtractorDep,
+    provenance_builder: ProvenanceBuilderDep,
+) -> DocumentPreparationService:
+    return (DocumentPreparationService(
+        session=session,
+        storage=storage,
+        pdf_extractor=(pdf_extractor),
+        provenance_builder=(provenance_builder)
+        )
+    )
+
+
+DocumentPreparationServiceDep = Annotated[DocumentPreparationService, Depends(get_document_preparation_service)]
