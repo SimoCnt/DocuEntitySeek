@@ -26,3 +26,7 @@ class DocumentStorageError(Exception):
 
 class PdfTextExtractionError(Exception):
     pass
+
+
+class AiConfigurationError(Exception):
+    pass

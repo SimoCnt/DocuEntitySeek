@@ -15,6 +15,7 @@ from app.services.auth_service import AuthService
 from app.pipeline.pdf_text_extractor import PdfTextExtractor
 from app.pipeline.provenance import DocumentProvenanceBuilder
 from app.services.document_preparation_service import DocumentPreparationService
+from app.pipeline.config_resolver import AiConfigurationResolver
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -100,3 +101,10 @@ def get_document_preparation_service(
 
 
 DocumentPreparationServiceDep = Annotated[DocumentPreparationService, Depends(get_document_preparation_service)]
+
+
+def get_ai_configuration_resolver(session: DbSessionDep) -> AiConfigurationResolver:
+    return AiConfigurationResolver(session)
+
+
+AiConfigurationResolverDep = Annotated[AiConfigurationResolver, Depends(get_ai_configuration_resolver)]
