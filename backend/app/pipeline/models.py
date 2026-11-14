@@ -26,3 +26,30 @@ class PdfExtractionResult:
     @property
     def empty_page_count(self) -> int:
         return sum(not page.text.strip() for page in self.pages)
+    
+
+@dataclass(frozen=True, slots=True)
+class PreparedDocumentPage:
+    page_number: int
+    text: str
+    global_start: int
+    global_end: int
+
+    @property
+    def char_count(self) -> int:
+        return len(self.text)
+
+
+@dataclass(frozen=True, slots=True)
+class PreparedDocumentText:
+    text: str
+    pages: tuple[PreparedDocumentPage, ...]
+    layout_version: str
+
+    @property
+    def page_count(self) -> int:
+        return len(self.pages)
+
+    @property
+    def total_characters(self) -> int:
+        return len(self.text)
