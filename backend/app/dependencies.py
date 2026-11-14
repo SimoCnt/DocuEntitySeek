@@ -2,6 +2,7 @@
 from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.orm import Session
+from functools import lru_cache
 
 from app.core.config import get_settings
 from app.core.exceptions import AuthenticationError, ForbiddenError
@@ -16,6 +17,7 @@ from app.pipeline.pdf_text_extractor import PdfTextExtractor
 from app.pipeline.provenance import DocumentProvenanceBuilder
 from app.services.document_preparation_service import DocumentPreparationService
 from app.pipeline.config_resolver import AiConfigurationResolver
+from app.pipeline.model_provider import AiModelProvider, Gliner2ModelLoader
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -108,3 +110,18 @@ def get_ai_configuration_resolver(session: DbSessionDep) -> AiConfigurationResol
 
 
 AiConfigurationResolverDep = Annotated[AiConfigurationResolver, Depends(get_ai_configuration_resolver)]
+
+
+@lru_cache(maxsize=1)
+def get_ai_model_provider() -> AiModelProvider:
+    settings = get_settings()
+
+    return AiModelProvider(
+        loaders={"GLINER2": (Gliner2ModelLoader())},
+        requested_device=(settings.ai_model_device),
+        quantize=(settings.ai_model_quantize),
+        compile_model=(settings.ai_model_compile)
+    )
+
+
+AiModelProviderDep = Annotated[AiModelProvider, Depends(get_ai_model_provider)]
