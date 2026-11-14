@@ -30,3 +30,7 @@ class PdfTextExtractionError(Exception):
 
 class AiConfigurationError(Exception):
     pass
+
+
+class AiModelLoadError(Exception):
+    pass

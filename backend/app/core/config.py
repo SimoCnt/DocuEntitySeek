@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     jwt_issuer: str = "docuentityseek-api"
     jwt_audience: str = "docuentityseek-web"
 
+    ai_model_device: str = "auto"
+    ai_model_quantize: bool = False
+    ai_model_compile: bool = False
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
