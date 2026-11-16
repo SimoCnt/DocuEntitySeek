@@ -26,6 +26,7 @@ from app.pipeline.page_span_mapper import PageSpanMapper
 from app.services.entity_occurrence_persistence_service import EntityOccurrencePersistenceService
 from app.pipeline.field_result_resolver import FieldResultResolver
 from app.services.field_result_persistence_service import FieldResultPersistenceService
+from app.pipeline.analysis_pipeline import AnalysisPipeline
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -189,3 +190,32 @@ def get_field_result_persistence_service(session: DbSessionDep) -> FieldResultPe
 
 
 FieldResultPersistenceServiceDep = Annotated[FieldResultPersistenceService, Depends(get_field_result_persistence_service)]
+
+
+def get_analysis_pipeline(
+    preparation_service: DocumentPreparationServiceDep,
+    model_provider: AiModelProviderDep,
+    ner_extractor: Gliner2NerExtractorDep,
+    field_extractor: Gliner2FieldExtractorDep,
+    deduplicator: CandidateDeduplicatorDep,
+    overlap_resolver: ViewerOverlapResolverDep,
+    page_mapper: PageSpanMapperDep,
+    field_resolver: FieldResultResolverDep,
+    entity_persistence: EntityOccurrencePersistenceServiceDep,
+    field_persistence: FieldResultPersistenceServiceDep,
+) -> AnalysisPipeline:
+    return AnalysisPipeline(
+        preparation_service=preparation_service,
+        model_provider=model_provider,
+        ner_extractor=ner_extractor,
+        field_extractor=field_extractor,
+        deduplicator=deduplicator,
+        overlap_resolver=overlap_resolver,
+        page_mapper=page_mapper,
+        field_resolver=field_resolver,
+        entity_persistence=entity_persistence,
+        field_persistence=field_persistence,
+    )
+
+
+AnalysisPipelineDep = Annotated[AnalysisPipeline, Depends(get_analysis_pipeline)]
