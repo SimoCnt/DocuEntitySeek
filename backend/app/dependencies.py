@@ -24,6 +24,8 @@ from app.pipeline.candidate_deduplicator import CandidateDeduplicator
 from app.pipeline.viewer_overlap_resolver import ViewerOverlapResolver
 from app.pipeline.page_span_mapper import PageSpanMapper
 from app.services.entity_occurrence_persistence_service import EntityOccurrencePersistenceService
+from app.pipeline.field_result_resolver import FieldResultResolver
+from app.services.field_result_persistence_service import FieldResultPersistenceService
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -173,3 +175,17 @@ def get_entity_occurrence_persistence_service(session: DbSessionDep) -> EntityOc
 
 
 EntityOccurrencePersistenceServiceDep = Annotated[EntityOccurrencePersistenceService, Depends(get_entity_occurrence_persistence_service)]
+
+
+def get_field_result_resolver() -> FieldResultResolver:
+    return FieldResultResolver()
+
+
+FieldResultResolverDep = Annotated[FieldResultResolver, Depends(get_field_result_resolver)]
+
+
+def get_field_result_persistence_service(session: DbSessionDep) -> FieldResultPersistenceService:
+    return FieldResultPersistenceService(session)
+
+
+FieldResultPersistenceServiceDep = Annotated[FieldResultPersistenceService, Depends(get_field_result_persistence_service)]
