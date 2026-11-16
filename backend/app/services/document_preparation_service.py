@@ -76,7 +76,7 @@ class DocumentPreparationService:
 
             self.pages.replace_for_document(document_id=document_id, pages=prepared.pages)
             document.page_count = prepared.page_count
-            self.session.commit()
+            self.session.flush()
 
             elapsed_ms = (perf_counter() - started_at) * 1000
 
@@ -92,8 +92,5 @@ class DocumentPreparationService:
             return prepared
 
         except Exception:
-            self.session.rollback()
-
             logger.exception("TEXT_PREPARATION | phase=failed | document_id=%s", document_id)
-
             raise

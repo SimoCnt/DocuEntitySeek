@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.db.models import AiRuntimeConfigModel, AnalysisModel, ExtractionSchemaVersionModel, FieldCandidateModel
 from app.pipeline.field_resolution_models import FieldResolutionResult, FieldStatus, RankedFieldCandidate, ResolvedExtractedField
 from app.pipeline.field_models import StructuredFieldCandidate
+from app.pipeline.page_mapping_models import SpanMappingFailureReason
 from app.repositories.extracted_field_repository import ExtractedFieldRepository
 from app.services.field_result_persistence_service import FieldResultPersistenceService
 from app.repositories.document_repository import DocumentRepository
