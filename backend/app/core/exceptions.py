@@ -1,3 +1,6 @@
+from uuid import UUID
+
+
 class DocumentNotFoundError(Exception):
     def __init__(self, document_id: str):
         self.document_id = (document_id)
@@ -42,3 +45,10 @@ class AiInferenceError(Exception):
 
 class SpanMappingError(Exception):
     pass
+
+
+class AnalysisExecutionError(Exception):
+    def __init__(self, analysis_id: UUID) -> None:
+        self.analysis_id = analysis_id
+
+        super().__init__(f"Analisi {analysis_id} non completata.")

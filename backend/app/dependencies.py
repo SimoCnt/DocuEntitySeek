@@ -27,6 +27,7 @@ from app.services.entity_occurrence_persistence_service import EntityOccurrenceP
 from app.pipeline.field_result_resolver import FieldResultResolver
 from app.services.field_result_persistence_service import FieldResultPersistenceService
 from app.pipeline.analysis_pipeline import AnalysisPipeline
+from app.services.analysis_service import AnalysisService
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -219,3 +220,18 @@ def get_analysis_pipeline(
 
 
 AnalysisPipelineDep = Annotated[AnalysisPipeline, Depends(get_analysis_pipeline)]
+
+
+def get_analysis_service(
+    session: DbSessionDep,
+    config_resolver: AiConfigurationResolverDep,
+    pipeline: AnalysisPipelineDep,
+) -> AnalysisService:
+    return AnalysisService(
+        session=session,
+        config_resolver=config_resolver,
+        pipeline=pipeline,
+    )
+
+
+AnalysisServiceDep = Annotated[AnalysisService, Depends(get_analysis_service)]
