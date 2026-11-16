@@ -1,4 +1,5 @@
 from uuid import UUID
+from datetime import datetime
 
 
 class DocumentNotFoundError(Exception):
@@ -52,3 +53,18 @@ class AnalysisExecutionError(Exception):
         self.analysis_id = analysis_id
 
         super().__init__(f"Analisi {analysis_id} non completata.")
+
+
+class AnalysisQuotaExceededError(Exception):
+    def __init__(
+        self,
+        *,
+        daily_limit: int,
+        used: int,
+        resets_at: datetime,
+    ) -> None:
+        self.daily_limit = daily_limit
+        self.used = used
+        self.resets_at = resets_at
+
+        super().__init__("Limite giornaliero di analisi raggiunto.")
