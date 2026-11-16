@@ -93,6 +93,7 @@ class AiConfigurationResolver:
 
         schema = ResolvedExtractionSchema(
             schema_id=schema_model.schema_id,
+            structure_key=schema_model.schema.structure_key,
             schema_name=schema_model.schema.name,
             schema_domain=schema_model.schema.domain,
             version_id=schema_model.id,

@@ -72,6 +72,7 @@ class ResolvedAiConfiguration:
             },
             "schema": {
                 "schemaId": str(self.schema.schema_id),
+                "structureKey": self.schema.structure_key,
                 "name": self.schema.schema_name,
                 "domain": self.schema.schema_domain,
                 "versionId": str(self.schema.version_id),
@@ -79,3 +80,15 @@ class ResolvedAiConfiguration:
             },
             "textLayoutVersion": self.text_layout_version,
         }
+
+
+@dataclass(frozen=True, slots=True)
+class ResolvedExtractionSchema:
+    schema_id: UUID
+    schema_name: str
+    schema_domain: str
+    structure_key: str
+    version_id: UUID
+    version: int
+    entities: tuple[EntityExtractionDefinition, ...]
+    fields: tuple[FieldExtractionDefinition, ...]

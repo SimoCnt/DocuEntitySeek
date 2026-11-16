@@ -52,6 +52,7 @@ class UserModel(Base):
 class ExtractionSchemaModel(Base):
     __tablename__ = "extraction_schemas"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
+    structure_key: Mapped[str] = mapped_column(String(120), nullable=False, unique=True)
     owner_user_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     domain: Mapped[str] = mapped_column(String(120), nullable=False)

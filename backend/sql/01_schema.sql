@@ -151,6 +151,8 @@ CREATE TABLE extraction_schemas (
     -- UUID dell'utente per gli schemi personalizzati.
     owner_user_id UUID,
 
+    structure_key VARCHAR(120) NOT NULL UNIQUE,
+
     -- Nome dello schema.
     name VARCHAR(120) NOT NULL,
 
@@ -170,6 +172,8 @@ CREATE TABLE extraction_schemas (
         FOREIGN KEY (owner_user_id)
         REFERENCES users(id)
         ON DELETE CASCADE,
+
+    CONSTRAINT ck_extraction_schemas_structure_key CHECK (LENGTH(TRIM(structure_key)) > 0),
 
     -- Verifica la coerenza della proprietà.
     -- Uno schema builtin non deve avere proprietario.

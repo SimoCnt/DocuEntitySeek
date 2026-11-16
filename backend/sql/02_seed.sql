@@ -95,12 +95,14 @@ WHERE NOT EXISTS (
 
 INSERT INTO extraction_schemas (
     owner_user_id,
+    structure_key,
     name,
     domain,
     is_builtin
 )
 SELECT
     NULL,
+    'procurement_document',
     'Procurement',
     'Public Procurement',
     TRUE
