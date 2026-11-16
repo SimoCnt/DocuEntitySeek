@@ -19,6 +19,7 @@ from app.services.document_preparation_service import DocumentPreparationService
 from app.pipeline.config_resolver import AiConfigurationResolver
 from app.pipeline.model_provider import AiModelProvider, Gliner2ModelLoader
 from app.pipeline.ner_extractor import Gliner2NerExtractor
+from app.pipeline.field_extractor import Gliner2FieldExtractor
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -133,3 +134,10 @@ def get_gliner2_ner_extractor() -> Gliner2NerExtractor:
 
 
 Gliner2NerExtractorDep = Annotated[Gliner2NerExtractor, Depends(get_gliner2_ner_extractor)]
+
+
+def get_gliner2_field_extractor() -> Gliner2FieldExtractor:
+    return Gliner2FieldExtractor()
+
+
+Gliner2FieldExtractorDep = Annotated[Gliner2FieldExtractor, Depends(get_gliner2_field_extractor)]
