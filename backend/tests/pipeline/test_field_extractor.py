@@ -28,7 +28,8 @@ class FakeFieldExtractor:
                         "start": start,
                         "end": start + len(value),
                         "confidence": 0.93,
-                    }
+                    },
+                    "confidence": 0.97,
                 }
             ]
         }
@@ -194,3 +195,21 @@ def test_invalid_field_span_is_rejected() -> None:
             config=make_field_config(),
             model=make_loaded_model(InvalidFieldSpanExtractor()),
         )
+
+
+@pytest.mark.unit
+def test_record_level_confidence_is_ignored() -> None:
+    result = Gliner2FieldExtractor().extract(
+        document_id=uuid4(),
+        document=make_document(),
+        config=make_field_config(),
+        model=make_loaded_model(FakeFieldExtractor()),
+    )
+
+    assert result.total_candidates == 1
+
+    candidate = result.candidates[0]
+
+    assert candidate.field_key == "ente_appaltante"
+    assert candidate.value == "Comune di Palermo"
+    assert candidate.confidence == pytest.approx(0.93)

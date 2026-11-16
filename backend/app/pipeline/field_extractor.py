@@ -14,6 +14,8 @@ logger = get_logger("pipeline.fields")
 
 
 class Gliner2FieldExtractor:
+    _RECORD_METADATA_KEYS = frozenset({"confidence"})
+    
     def extract(
         self,
         *,
@@ -137,6 +139,9 @@ class Gliner2FieldExtractor:
             if "::" in field_key:
                 raise AiInferenceError(f"La chiave field {field_key!r} contiene il separatore riservato '::'.")
 
+            if field_key in self._RECORD_METADATA_KEYS:
+                raise AiInferenceError(f"La chiave field {field_key!r} è riservata dal motore GLiNER2.")
+
             seen_keys.add(field_key)
             field_specs.append(self._build_field_spec(definition))
 
@@ -195,14 +200,15 @@ class Gliner2FieldExtractor:
             if not isinstance(record, dict):
                 raise AiInferenceError("Il modello IE ha restituito un record non valido.")
 
-            unknown_fields = set(record) - set(field_definitions)
+            unknown_fields = set(record) - set(field_definitions) - self._RECORD_METADATA_KEYS
 
             if unknown_fields:
-                raise AiInferenceError(
-                    f"Il modello IE ha restituito field non presenti nello schema: {sorted(unknown_fields)!r}."
-                )
+                raise AiInferenceError(f"Il modello IE ha restituito field non presenti nello schema: {sorted(unknown_fields)!r}.")
 
             for field_key, raw_value in record.items():
+                if field_key in self._RECORD_METADATA_KEYS:
+                    continue
+
                 definition = field_definitions[field_key]
 
                 normalized_values = self._normalize_field_value(
