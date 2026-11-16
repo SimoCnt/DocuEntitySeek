@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 from datetime import datetime, timezone
 
-from app.db.models import AnalysisModel, ExtractedFieldModel, ExtractionSchemaVersionModel
+from app.db.models import AnalysisModel, ExtractedFieldModel, ExtractionSchemaVersionModel, DocumentModel
 from app.domain.analysis import AnalysisStatus
 
 
@@ -93,3 +93,42 @@ class AnalysisRepository:
         analysis.error_message = error_message
 
         self.session.flush()
+
+
+    def list_for_document_and_owner(
+        self,
+        *,
+        document_id: UUID,
+        owner_user_id: UUID,
+    ) -> list[AnalysisModel]:
+        statement = (
+            select(AnalysisModel)
+            .join(DocumentModel, DocumentModel.id == AnalysisModel.document_id)
+            .where(
+                AnalysisModel.document_id == document_id,
+                DocumentModel.owner_user_id == owner_user_id,
+            )
+            .order_by(AnalysisModel.created_at.desc())
+        )
+
+        return list(self.session.scalars(statement).all())
+
+
+    def get_for_document_and_owner(
+        self,
+        *,
+        analysis_id: UUID,
+        document_id: UUID,
+        owner_user_id: UUID,
+    ) -> AnalysisModel | None:
+        statement = (
+            select(AnalysisModel)
+            .join(DocumentModel, DocumentModel.id == AnalysisModel.document_id)
+            .where(
+                AnalysisModel.id == analysis_id,
+                AnalysisModel.document_id == document_id,
+                DocumentModel.owner_user_id == owner_user_id,
+            )
+        )
+
+        return self.session.scalar(statement)
