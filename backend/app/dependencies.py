@@ -28,6 +28,8 @@ from app.pipeline.field_result_resolver import FieldResultResolver
 from app.services.field_result_persistence_service import FieldResultPersistenceService
 from app.pipeline.analysis_pipeline import AnalysisPipeline
 from app.services.analysis_service import AnalysisService
+from app.repositories.analysis_quota_repository import AnalysisQuotaRepository
+from app.services.analysis_quota_service import AnalysisQuotaService
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -222,14 +224,23 @@ def get_analysis_pipeline(
 AnalysisPipelineDep = Annotated[AnalysisPipeline, Depends(get_analysis_pipeline)]
 
 
+def get_analysis_quota_service(session: DbSessionDep) -> AnalysisQuotaService:
+    return AnalysisQuotaService(AnalysisQuotaRepository(session))
+
+
+AnalysisQuotaServiceDep = Annotated[AnalysisQuotaService, Depends(get_analysis_quota_service)]
+
+
 def get_analysis_service(
     session: DbSessionDep,
     config_resolver: AiConfigurationResolverDep,
+    quota_service: AnalysisQuotaServiceDep,
     pipeline: AnalysisPipelineDep,
 ) -> AnalysisService:
     return AnalysisService(
         session=session,
         config_resolver=config_resolver,
+        quota_service=quota_service,
         pipeline=pipeline,
     )
 
