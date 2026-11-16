@@ -20,6 +20,7 @@ from app.pipeline.config_resolver import AiConfigurationResolver
 from app.pipeline.model_provider import AiModelProvider, Gliner2ModelLoader
 from app.pipeline.ner_extractor import Gliner2NerExtractor
 from app.pipeline.field_extractor import Gliner2FieldExtractor
+from app.pipeline.candidate_deduplicator import CandidateDeduplicator
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -141,3 +142,10 @@ def get_gliner2_field_extractor() -> Gliner2FieldExtractor:
 
 
 Gliner2FieldExtractorDep = Annotated[Gliner2FieldExtractor, Depends(get_gliner2_field_extractor)]
+
+
+def get_candidate_deduplicator() -> CandidateDeduplicator:
+    return CandidateDeduplicator()
+
+
+CandidateDeduplicatorDep = Annotated[CandidateDeduplicator, Depends(get_candidate_deduplicator)]
