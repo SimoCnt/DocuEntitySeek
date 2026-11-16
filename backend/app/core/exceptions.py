@@ -34,3 +34,7 @@ class AiConfigurationError(Exception):
 
 class AiModelLoadError(Exception):
     pass
+
+
+class AiInferenceError(Exception):
+    pass

@@ -1,5 +1,5 @@
 import gc
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from threading import RLock
 from time import perf_counter
 from typing import Any, Protocol
@@ -53,6 +53,7 @@ class ModelCacheKey:
 class LoadedAiModel:
     cache_key: ModelCacheKey
     extractor: Any
+    inference_lock: Any = field(default_factory=RLock, repr=False, compare=False)
 
 
 class AiModelLoader(Protocol):
