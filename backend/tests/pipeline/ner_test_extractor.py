@@ -53,6 +53,7 @@ def make_config() -> ResolvedAiConfiguration:
 
     schema = ResolvedExtractionSchema(
         schema_id=uuid4(),
+        structure_key="test_document",
         schema_name="Schema test",
         schema_domain="TEST",
         version_id=uuid4(),
