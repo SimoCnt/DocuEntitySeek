@@ -48,10 +48,15 @@ class ResolvedExtractionSchema:
 
 
 @dataclass(frozen=True, slots=True)
-class ResolvedAiConfiguration:
-    runtime: RuntimeAiConfig
-    schema: ResolvedExtractionSchema
-    text_layout_version: str
+class ResolvedExtractionSchema:
+    schema_id: UUID
+    schema_name: str
+    schema_domain: str
+    structure_key: str
+    version_id: UUID
+    version: int
+    entities: tuple[EntityExtractionDefinition, ...]
+    fields: tuple[FieldExtractionDefinition, ...]
 
     def to_snapshot(self) -> dict[str, object]:
         return {
@@ -80,15 +85,3 @@ class ResolvedAiConfiguration:
             },
             "textLayoutVersion": self.text_layout_version,
         }
-
-
-@dataclass(frozen=True, slots=True)
-class ResolvedExtractionSchema:
-    schema_id: UUID
-    schema_name: str
-    schema_domain: str
-    structure_key: str
-    version_id: UUID
-    version: int
-    entities: tuple[EntityExtractionDefinition, ...]
-    fields: tuple[FieldExtractionDefinition, ...]

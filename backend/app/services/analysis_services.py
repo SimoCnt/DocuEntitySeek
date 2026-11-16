@@ -1,6 +1,8 @@
 from time import perf_counter
 from uuid import UUID
-
+from datetime import datetime, timezone
+from app.db.models import DocumentModel
+from app.core.exceptions import DocumentNotFoundError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AnalysisExecutionError
@@ -11,6 +13,8 @@ from app.pipeline.config_resolver import AiConfigurationResolver
 from app.repositories.analysis_repository import AnalysisRepository
 from app.repositories.document_repository import DocumentRepository
 from app.services.analysis_models import AnalysisExecutionResult
+from app.services.analysis_quota_service import AnalysisQuotaService
+from app.services.analysis_quota_models import AnalysisQuotaDecision
 
 
 logger = get_logger("analysis")
@@ -22,10 +26,12 @@ class AnalysisService:
         *,
         session: Session,
         config_resolver: AiConfigurationResolver,
+        quota_service: AnalysisQuotaService,
         pipeline: AnalysisPipeline,
     ) -> None:
         self.session = session
         self.config_resolver = config_resolver
+        self.quota_service = quota_service
         self.pipeline = pipeline
         self.analyses = AnalysisRepository(session)
         self.documents = DocumentRepository(session)
@@ -49,26 +55,40 @@ class AnalysisService:
         document = self.documents.get_by_id_and_owner(document_id=document_id, owner_user_id=owner_user_id)
 
         if document is None:
-            raise LookupError("Documento non trovato.")
+            raise DocumentNotFoundError(str(document_id))
 
-        config = self.config_resolver.resolve(schema_version_id=schema_version_id)
+        config = self.config_resolver.resolve(schema_version_id=schema_version_id, owner_user_id=owner_user_id)
 
-        analysis = self.analyses.create_queued(
-            document_id=document.id,
-            schema_version_id=config.schema.version_id,
-            ai_runtime_config_id=config.runtime.id,
-            config=config.to_snapshot(),
-        )
+        try:
+            quota_decision = self.quota_service.assert_can_queue(user_id=owner_user_id)
 
-        analysis_id = analysis.id
-        self.session.commit()
+            analysis = self.analyses.create_queued(
+                document_id=document.id,
+                schema_version_id=config.schema.version_id,
+                ai_runtime_config_id=config.runtime.id,
+                config=config.to_snapshot(),
+            )
+
+            analysis_id = analysis.id
+            self.session.commit()
+
+        except Exception:
+            self.session.rollback()
+            raise
 
         logger.info(
-            "ANALYSIS | phase=queued | analysis_id=%s | document_id=%s | runtime_config_id=%s | schema_version_id=%s",
+            "ANALYSIS | "
+            "phase=queued | "
+            "analysis_id=%s | "
+            "document_id=%s | "
+            "quota_limit=%s | "
+            "quota_used_before=%d | "
+            "quota_remaining_after=%s",
             analysis_id,
             document.id,
-            config.runtime.id,
-            config.schema.version_id,
+            quota_decision.daily_limit,
+            quota_decision.used_or_reserved,
+            quota_decision.remaining_after_queue,
         )
 
         try:
@@ -77,6 +97,7 @@ class AnalysisService:
                 document_id=document.id,
                 owner_user_id=owner_user_id,
                 config=config,
+                quota_decision=quota_decision,
                 started_at=started_at,
             )
 
@@ -97,6 +118,7 @@ class AnalysisService:
         document_id: UUID,
         owner_user_id: UUID,
         config,
+        quota_decision: AnalysisQuotaDecision,
         started_at: float,
     ) -> AnalysisExecutionResult:
         analysis = self.analyses.get_by_id(analysis_id)
@@ -125,7 +147,18 @@ class AnalysisService:
         if analysis is None:
             raise RuntimeError("Analysis non trovata dopo la pipeline.")
 
-        self.analyses.mark_ready(analysis)
+        self.quota_service.consume_on_success(analysis=analysis, decision=quota_decision)
+        self.analyses.mark_ready(analysis)  
+
+        document = self.documents.get_by_id_and_owner(document_id=document_id, owner_user_id=owner_user_id)
+
+        if document is None:
+            raise RuntimeError("Documento non trovato al completamento dell'analisi.")
+
+        document.status = "READY"
+        document.error_message = None
+        document.updated_at = datetime.now(timezone.utc)
+
         self.session.commit()
 
         elapsed_ms = (perf_counter() - started_at) * 1000
@@ -169,6 +202,14 @@ class AnalysisService:
                 return
 
             self.analyses.mark_error(analysis, error_message=self._safe_error_message(exc))
+
+            document = self.session.get(DocumentModel, document_id)
+
+            if document is not None and document.status != "READY":
+                document.status = "ERROR"
+                document.error_message = self._safe_error_message(exc)
+                document.updated_at = datetime.now(timezone.utc)
+
             self.session.commit()
 
             logger.info(

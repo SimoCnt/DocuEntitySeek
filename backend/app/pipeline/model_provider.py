@@ -165,6 +165,27 @@ class AiModelProvider:
         return loaded
 
 
+    def get_model(self, runtime: RuntimeAiConfig) -> LoadedAiModel:
+        cache_key = self._build_cache_key(runtime)
+
+        with self._lock:
+            loader = self.loaders.get(cache_key.engine)
+
+            if loader is None:
+                raise AiModelLoadError(f"Motore AI non supportato: {cache_key.engine}")
+
+            if self._cached is not None and self._cached.cache_key == cache_key:
+                return self._cached
+
+            self._release_cached_model()
+
+            return self._load_model(
+                loader=loader,
+                runtime=runtime,
+                cache_key=cache_key,
+            )
+
+
     def _release_cached_model(self) -> None:
         if self._cached is None:
             return
@@ -190,6 +211,6 @@ class AiModelProvider:
         )
 
 
-        def clear(self) -> None:
-            with self._lock:
-                self._release_cached_model()
+    def clear(self) -> None:
+        with self._lock:
+            self._release_cached_model()

@@ -27,7 +27,7 @@ from app.services.entity_occurrence_persistence_service import EntityOccurrenceP
 from app.pipeline.field_result_resolver import FieldResultResolver
 from app.services.field_result_persistence_service import FieldResultPersistenceService
 from app.pipeline.analysis_pipeline import AnalysisPipeline
-from app.services.analysis_service import AnalysisService
+from app.services.analysis_services import AnalysisService
 from app.repositories.analysis_quota_repository import AnalysisQuotaRepository
 from app.services.analysis_quota_service import AnalysisQuotaService
 

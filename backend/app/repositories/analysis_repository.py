@@ -1,12 +1,7 @@
-
 from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 from datetime import datetime, timezone
-from uuid import UUID
-
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 from app.db.models import AnalysisModel, ExtractedFieldModel, ExtractionSchemaVersionModel
 from app.domain.analysis import AnalysisStatus
@@ -24,7 +19,7 @@ class AnalysisRepository:
     def get_latest_completed(self, document_id: UUID) -> AnalysisModel | None:
         statement = (
             select(AnalysisModel)
-            .where(AnalysisModel.document_id == document_id, AnalysisModel.status == "COMPLETED")
+            .where(AnalysisModel.document_id == document_id, AnalysisModel.status == AnalysisStatus.READY.value)
             .order_by(AnalysisModel.created_at.desc())
             .limit(1)
             .options(

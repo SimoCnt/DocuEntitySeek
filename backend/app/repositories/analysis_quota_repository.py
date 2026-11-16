@@ -15,18 +15,14 @@ class AnalysisQuotaRepository:
     def lock_user_and_plan(self, user_id: UUID) -> tuple[UserModel, PlanModel] | None:
         statement = (
             select(UserModel, PlanModel)
-            .join(PlanModel, PlanModel.id == UserModel.plan_id)
+            .join(PlanModel, PlanModel.code == UserModel.plan_code)
             .where(UserModel.id == user_id)
             .with_for_update(of=UserModel)
         )
 
         row = self.session.execute(statement).one_or_none()
-
-        if row is None:
-            return None
-
-        user, plan = row
-        return user, plan
+        
+        return (row[0], row[1]) if row is not None else None
 
 
     def count_used_or_reserved(

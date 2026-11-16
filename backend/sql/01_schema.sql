@@ -538,7 +538,7 @@ CREATE TABLE ai_runtime_configs (
     overlap_policy VARCHAR(20) NOT NULL DEFAULT 'allow',
     is_active BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()    
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),    
 
     CONSTRAINT uq_ai_runtime_configs_name_version UNIQUE (name, version),
     CONSTRAINT ck_ai_runtime_configs_version CHECK (version > 0),
@@ -565,7 +565,7 @@ CREATE TABLE ai_runtime_configs (
                 'disallow',
                 'longest'
             )
-        ),
+        )
 );
 
 CREATE UNIQUE INDEX uq_ai_runtime_configs_active
@@ -600,7 +600,7 @@ CREATE TABLE analyses (
     schema_version_id UUID NOT NULL,
 
     -- Stato dell'analisi.
-    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    status VARCHAR(30) NOT NULL DEFAULT 'QUEUED',
 
     -- Configurazione dell'analisi in formato JSON.
     -- Esempio:
@@ -618,6 +618,8 @@ CREATE TABLE analyses (
 
     -- Istante di completamento.
     completed_at TIMESTAMPTZ,
+
+    quota_consumed_at TIMESTAMPTZ,
 
     ai_runtime_config_id UUID
         REFERENCES ai_runtime_configs(id)
@@ -637,15 +639,8 @@ CREATE TABLE analyses (
         ON DELETE RESTRICT,
 
     -- Stati dell'analisi consentiti.
-    CONSTRAINT ck_analysis_status
-        CHECK (
-            status IN (
-                'PENDING',
-                'PROCESSING',
-                'COMPLETED',
-                'ERROR'
-            )
-        ),
+   CONSTRAINT ck_analysis_status
+    CHECK (status IN ('QUEUED', 'PROCESSING', 'READY', 'ERROR')),
 
     -- L'analisi non può terminare prima di iniziare.
     CONSTRAINT ck_analysis_times

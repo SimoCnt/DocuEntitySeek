@@ -8,6 +8,8 @@ from app.pipeline.config_models import EntityExtractionDefinition, FieldExtracti
 from app.pipeline.provenance import TEXT_LAYOUT_VERSION
 from app.repositories.ai_runtime_config_repository import AiRuntimeConfigRepository
 from app.repositories.extraction_schema_repository import ExtractionSchemaRepository
+from app.core.exceptions import ForbiddenError
+from app.db.models import UserModel
 
 
 logger = get_logger("pipeline.config")
@@ -15,10 +17,11 @@ logger = get_logger("pipeline.config")
 
 class AiConfigurationResolver:
     def __init__(self, session: Session) -> None:
+        self.session = session
         self.runtime_configs = AiRuntimeConfigRepository(session)
         self.schemas = ExtractionSchemaRepository(session)
 
-    def resolve(self, *, schema_version_id: UUID | None = None) -> ResolvedAiConfiguration:
+    def resolve(self, *, schema_version_id: UUID | None = None, owner_user_id: UUID | None = None) -> ResolvedAiConfiguration:
         logger.info("AI_CONFIG | phase=resolve_start | requested_schema_version_id=%s", schema_version_id)
         runtime_model = self.runtime_configs.get_active()
 
@@ -49,6 +52,21 @@ class AiConfigurationResolver:
         if schema_model is None:
             logger.error("AI_CONFIG | phase=schema_missing | requested_schema_version_id=%s", schema_version_id)
             raise AiConfigurationError("Nessuna versione dello schema di estrazione disponibile.")
+
+        if not schema_model.is_active:
+            raise AiConfigurationError("La versione dello schema non è attiva.")
+
+        if not schema_model.schema.is_builtin:
+            if owner_user_id is None:
+                raise ForbiddenError("Schema di estrazione non disponibile.")
+
+            user = self.session.get(UserModel, owner_user_id)
+
+            if user is None or schema_model.schema.owner_user_id != user.id:
+                raise ForbiddenError("Schema di estrazione non disponibile.")
+
+            if not user.plan.custom_schemas_enabled:
+                raise ForbiddenError("Il piano attuale non consente schemi personalizzati.")
 
         entities = tuple(
             EntityExtractionDefinition(
