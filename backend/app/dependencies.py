@@ -22,6 +22,7 @@ from app.pipeline.ner_extractor import Gliner2NerExtractor
 from app.pipeline.field_extractor import Gliner2FieldExtractor
 from app.pipeline.candidate_deduplicator import CandidateDeduplicator
 from app.pipeline.viewer_overlap_resolver import ViewerOverlapResolver
+from app.pipeline.page_span_mapper import PageSpanMapper
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -157,3 +158,10 @@ def get_viewer_overlap_resolver() -> ViewerOverlapResolver:
 
 
 ViewerOverlapResolverDep = Annotated[ViewerOverlapResolver, Depends(get_viewer_overlap_resolver)]
+
+
+def get_page_span_mapper() -> PageSpanMapper:
+    return PageSpanMapper()
+
+
+PageSpanMapperDep = Annotated[PageSpanMapper, Depends(get_page_span_mapper)]

@@ -38,3 +38,7 @@ class AiModelLoadError(Exception):
 
 class AiInferenceError(Exception):
     pass
+
+
+class SpanMappingError(Exception):
+    pass
