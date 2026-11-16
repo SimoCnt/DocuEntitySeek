@@ -529,9 +529,12 @@ CREATE TABLE ai_runtime_configs (
     chunk_overlap INTEGER NOT NULL,
     entity_threshold NUMERIC(5, 4) NOT NULL,
     field_threshold NUMERIC(5, 4) NOT NULL,
+    batch_size INTEGER NOT NULL DEFAULT 8,
+    num_workers INTEGER NOT NULL DEFAULT 0,
+    overlap_policy VARCHAR(20) NOT NULL DEFAULT 'allow',
     is_active BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()    
 
     CONSTRAINT uq_ai_runtime_configs_name_version UNIQUE (name, version),
     CONSTRAINT ck_ai_runtime_configs_version CHECK (version > 0),
@@ -547,7 +550,18 @@ CREATE TABLE ai_runtime_configs (
     ),
     CONSTRAINT ck_ai_runtime_configs_field_threshold CHECK (
         field_threshold BETWEEN 0 AND 1
-    )
+    ),
+    CONSTRAINT ck_ai_runtime_configs_batch_size CHECK (batch_size > 0),
+    CONSTRAINT ck_ai_runtime_configs_num_workers CHECK (num_workers >= 0),
+    CONSTRAINT ck_ai_runtime_configs_overlap_policy CHECK (
+            overlap_policy IN (
+                'allow',
+                'nested',
+                'flat',
+                'disallow',
+                'longest'
+            )
+        ),
 );
 
 CREATE UNIQUE INDEX uq_ai_runtime_configs_active

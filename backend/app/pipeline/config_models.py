@@ -12,6 +12,9 @@ class RuntimeAiConfig:
     model_revision: str | None
     chunk_size: int
     chunk_overlap: int
+    batch_size: int
+    num_workers: int
+    overlap_policy: str
     entity_threshold: float
     field_threshold: float
 
@@ -63,6 +66,9 @@ class ResolvedAiConfiguration:
                 "chunkOverlap": self.runtime.chunk_overlap,
                 "entityThreshold": self.runtime.entity_threshold,
                 "fieldThreshold": self.runtime.field_threshold,
+                "batchSize": self.runtime.batch_size,
+                "numWorkers": self.runtime.num_workers,
+                "overlapPolicy": self.runtime.overlap_policy,
             },
             "schema": {
                 "schemaId": str(self.schema.schema_id),

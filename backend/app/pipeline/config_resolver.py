@@ -27,13 +27,16 @@ class AiConfigurationResolver:
             raise AiConfigurationError("Nessuna configurazione AI attiva.")
 
         logger.info(
-            "AI_CONFIG | phase=runtime_loaded | config_id=%s | config_version=%d | engine=%s | model_id=%s | chunk_size=%d | chunk_overlap=%d | entity_threshold=%.4f | field_threshold=%.4f",
+            "AI_CONFIG | phase=runtime_loaded | config_id=%s | config_version=%d | engine=%s | model_id=%s | chunk_size=%d | chunk_overlap=%d | batch_size=%d | num_workers=%d | overlap_policy=%s | entity_threshold=%.4f | field_threshold=%.4f",
             runtime_model.id,
             runtime_model.version,
             runtime_model.engine,
             runtime_model.model_id,
             runtime_model.chunk_size,
             runtime_model.chunk_overlap,
+            runtime_model.batch_size,
+            runtime_model.num_workers,
+            runtime_model.overlap_policy,
             float(runtime_model.entity_threshold),
             float(runtime_model.field_threshold),
         )
@@ -81,6 +84,9 @@ class AiConfigurationResolver:
             model_revision=runtime_model.model_revision,
             chunk_size=runtime_model.chunk_size,
             chunk_overlap=runtime_model.chunk_overlap,
+            batch_size=runtime_model.batch_size,
+            num_workers=runtime_model.num_workers,
+            overlap_policy=runtime_model.overlap_policy,
             entity_threshold=float(runtime_model.entity_threshold),
             field_threshold=float(runtime_model.field_threshold),
         )
