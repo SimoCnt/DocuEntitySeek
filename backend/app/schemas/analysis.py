@@ -1,6 +1,7 @@
 from uuid import UUID
 from enum import Enum
-from pydantic import Field
+from datetime import datetime
+from pydantic import Field, BaseModel
 from typing import Annotated, Literal
 from app.schemas.base import ApiModel
 
@@ -50,3 +51,101 @@ class DocumentAnalysis(ApiModel):
     entity_definitions: list[EntityDefinition]
     pages: list[DocumentPage]
     extracted_fields: list[ExtractedField]
+
+
+class AnalysisPipelineSummaryResponse(BaseModel):
+    page_count: int
+    document_characters: int
+
+    entity_count: int
+    visible_entity_count: int
+    hidden_entity_count: int
+    rejected_entity_count: int
+
+    field_count: int
+    field_candidate_count: int
+    extracted_field_count: int
+    ambiguous_field_count: int
+    not_found_field_count: int
+    rejected_field_candidate_count: int
+
+    elapsed_ms: float
+
+
+class AnalysisStartResponse(BaseModel):
+    analysis_id: UUID
+    status: str
+    pipeline: AnalysisPipelineSummaryResponse
+
+
+class AnalysisSummaryResponse(BaseModel):
+    id: UUID
+    document_id: UUID
+    status: str
+    created_at: datetime
+    started_at: datetime | None
+    completed_at: datetime | None
+    error_message: str | None
+    schema_version_id: UUID
+    ai_runtime_config_id: UUID
+
+
+class DocumentPageResponse(BaseModel):
+    page_number: int
+    text: str
+    global_start: int
+    global_end: int
+
+
+class EntityOccurrenceResponse(BaseModel):
+    id: UUID
+    label: str
+    text: str
+    confidence: float
+    global_start: int
+    global_end: int
+    page: int
+    page_start: int
+    page_end: int
+    is_visible: bool
+
+
+class FieldCandidateResponse(BaseModel):
+    id: UUID
+    value: str
+    confidence: float
+    page: int | None
+    global_start: int
+    global_end: int
+    rank: int
+
+
+class ExtractedFieldResponse(BaseModel):
+    id: UUID
+    field_key: str
+    status: str
+    value: str | None
+    confidence: float | None
+    page: int | None
+    global_start: int | None
+    global_end: int | None
+    candidates: list[FieldCandidateResponse]
+
+
+class AnalysisResultResponse(BaseModel):
+    pages: list[DocumentPageResponse]
+    entities: list[EntityOccurrenceResponse]
+    fields: list[ExtractedFieldResponse]
+
+
+class AnalysisDetailResponse(BaseModel):
+    id: UUID
+    document_id: UUID
+    status: str
+    created_at: datetime
+    started_at: datetime | None
+    completed_at: datetime | None
+    error_message: str | None
+    schema_version_id: UUID
+    ai_runtime_config_id: UUID
+    result: AnalysisResultResponse | None

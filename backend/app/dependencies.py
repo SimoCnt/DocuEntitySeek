@@ -30,6 +30,7 @@ from app.pipeline.analysis_pipeline import AnalysisPipeline
 from app.services.analysis_services import AnalysisService
 from app.repositories.analysis_quota_repository import AnalysisQuotaRepository
 from app.services.analysis_quota_service import AnalysisQuotaService
+from app.services.analysis_query_service import AnalysisQueryService
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -246,3 +247,10 @@ def get_analysis_service(
 
 
 AnalysisServiceDep = Annotated[AnalysisService, Depends(get_analysis_service)]
+
+
+def get_analysis_query_service(session: DbSessionDep) -> AnalysisQueryService:
+    return AnalysisQueryService(session)
+
+
+AnalysisQueryServiceDep = Annotated[AnalysisQueryService, Depends(get_analysis_query_service)]
