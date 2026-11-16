@@ -23,6 +23,7 @@ from app.pipeline.field_extractor import Gliner2FieldExtractor
 from app.pipeline.candidate_deduplicator import CandidateDeduplicator
 from app.pipeline.viewer_overlap_resolver import ViewerOverlapResolver
 from app.pipeline.page_span_mapper import PageSpanMapper
+from app.services.entity_occurrence_persistence_service import EntityOccurrencePersistenceService
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -165,3 +166,10 @@ def get_page_span_mapper() -> PageSpanMapper:
 
 
 PageSpanMapperDep = Annotated[PageSpanMapper, Depends(get_page_span_mapper)]
+
+
+def get_entity_occurrence_persistence_service(session: DbSessionDep) -> EntityOccurrencePersistenceService:
+    return EntityOccurrencePersistenceService(session)
+
+
+EntityOccurrencePersistenceServiceDep = Annotated[EntityOccurrencePersistenceService, Depends(get_entity_occurrence_persistence_service)]
