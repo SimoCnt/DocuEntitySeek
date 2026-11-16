@@ -21,6 +21,7 @@ from app.pipeline.model_provider import AiModelProvider, Gliner2ModelLoader
 from app.pipeline.ner_extractor import Gliner2NerExtractor
 from app.pipeline.field_extractor import Gliner2FieldExtractor
 from app.pipeline.candidate_deduplicator import CandidateDeduplicator
+from app.pipeline.viewer_overlap_resolver import ViewerOverlapResolver
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -149,3 +150,10 @@ def get_candidate_deduplicator() -> CandidateDeduplicator:
 
 
 CandidateDeduplicatorDep = Annotated[CandidateDeduplicator, Depends(get_candidate_deduplicator)]
+
+
+def get_viewer_overlap_resolver() -> ViewerOverlapResolver:
+    return ViewerOverlapResolver()
+
+
+ViewerOverlapResolverDep = Annotated[ViewerOverlapResolver, Depends(get_viewer_overlap_resolver)]
