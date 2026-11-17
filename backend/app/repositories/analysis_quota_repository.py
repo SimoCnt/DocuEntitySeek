@@ -12,6 +12,18 @@ class AnalysisQuotaRepository:
         self.session = session
 
 
+    def get_user_and_plan(self, user_id: UUID) -> tuple[UserModel, PlanModel] | None:
+        statement = (
+            select(UserModel, PlanModel)
+            .join(PlanModel, PlanModel.code == UserModel.plan_code)
+            .where(UserModel.id == user_id)
+        )
+
+        row = self.session.execute(statement).one_or_none()
+
+        return (row[0], row[1]) if row is not None else None
+
+
     def lock_user_and_plan(self, user_id: UUID) -> tuple[UserModel, PlanModel] | None:
         statement = (
             select(UserModel, PlanModel)

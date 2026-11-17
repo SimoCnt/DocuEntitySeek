@@ -4,7 +4,7 @@ from uuid import UUID
 from app.core.exceptions import AnalysisQuotaExceededError
 from app.db.models import AnalysisModel
 from app.repositories.analysis_quota_repository import AnalysisQuotaRepository
-from app.services.analysis_quota_models import AnalysisQuotaDecision
+from app.services.analysis_quota_models import AnalysisQuotaDecision, AnalysisQuotaStatus
 from app.core.logging import get_logger
 
 
@@ -16,7 +16,12 @@ class AnalysisQuotaService:
         self.repository = repository
 
 
-    def assert_can_queue(self, *, user_id: UUID, now: datetime | None = None) -> AnalysisQuotaDecision:
+    def assert_can_queue(
+            self, 
+            *, 
+            user_id: UUID, 
+            now: datetime | None = None
+            ) -> AnalysisQuotaDecision:
         current = now or datetime.now(timezone.utc)
         window_start = current.replace(hour=0, minute=0, second=0, microsecond=0)
         window_end = window_start + timedelta(days=1)
@@ -58,6 +63,52 @@ class AnalysisQuotaService:
             daily_limit=limit,
             used_or_reserved=used,
             remaining_after_queue=limit - used - 1,
+            window_start=window_start,
+            window_end=window_end,
+        )
+
+
+    def get_status(
+            self, 
+            *, 
+            user_id: UUID, 
+            now: datetime | None = None
+            ) -> AnalysisQuotaStatus:
+        current = now or datetime.now(timezone.utc)
+        window_start = current.replace(hour=0, minute=0, second=0, microsecond=0)
+        window_end = window_start + timedelta(days=1)
+
+        user_and_plan = self.repository.get_user_and_plan(user_id)
+
+        if user_and_plan is None:
+            raise LookupError("Utente non trovato.")
+
+        user, plan = user_and_plan
+        limit = plan.daily_analysis_limit
+
+        if limit is None:
+            return AnalysisQuotaStatus(
+                user_id=user.id,
+                plan_code=plan.code,
+                daily_limit=None,
+                used_or_reserved=0,
+                remaining=None,
+                window_start=window_start,
+                window_end=window_end,
+            )
+
+        used = self.repository.count_used_or_reserved(
+            user_id=user_id,
+            window_start=window_start,
+            window_end=window_end,
+        )
+
+        return AnalysisQuotaStatus(
+            user_id=user.id,
+            plan_code=plan.code,
+            daily_limit=limit,
+            used_or_reserved=used,
+            remaining=max(limit - used, 0),
             window_start=window_start,
             window_end=window_end,
         )

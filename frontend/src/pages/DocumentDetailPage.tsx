@@ -214,8 +214,15 @@ async function handleStartAnalysis() {
                         disabled={analysisRunning}
                         onClick={() => void handleStartAnalysis()}
                     >
-                        {analysisRunning ? 'Analisi in corso...' : 'Analizza documento'}
+                        {analysisRunning ? 'Analisi in corso...' : 'Analizza nuovamente'}
                     </button>
+
+                    {analysisRunning && (
+                        <div className="frontend-notice">
+                            <strong>In elaborazione</strong>
+                            <p>Il documento è in fase di analisi. I risultati compariranno automaticamente quando l'elaborazione sarà completata.</p>
+                        </div>
+                    )}
                 </div>
 
                 {analysisStartErrorContent && <ErrorState title={analysisStartErrorContent.title} message={analysisStartErrorContent.message} />}

@@ -38,3 +38,13 @@ export type TokenResponse = {
     token_type: 'bearer'
     expires_in: number
 }
+
+
+export type AnalysisQuotaResponse = {
+    planCode: PlanCode
+    dailyLimit: number | null
+    usedOrReserved: number
+    remaining: number | null
+    resetsAt: string
+    isUnlimited: boolean
+}

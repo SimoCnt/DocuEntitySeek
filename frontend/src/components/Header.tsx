@@ -9,7 +9,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 
 
 function Header() {
-  const { user, status, logout, refreshUser } = useAuth()
+  const { user, analysisQuota, status, logout, refreshUser } = useAuth()
   const navigate = useNavigate()
 
 
@@ -38,6 +38,14 @@ function Header() {
           </>
         )}
       </nav>
+
+      {analysisQuota && (
+        <span className="app-header__quota">
+          {analysisQuota.isUnlimited
+            ? 'Analisi illimitate'
+            : `${analysisQuota.remaining ?? 0}/${analysisQuota.dailyLimit ?? 0} analisi residue`}
+        </span>
+      )}
 
       <div className="app-header__actions">
         {status === 'authenticated' && (

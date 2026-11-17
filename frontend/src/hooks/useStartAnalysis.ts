@@ -12,7 +12,7 @@ export type StartAnalysisOutcome =
 
 
 function useStartAnalysis() {
-  const { accessToken, logout } = useAuth()
+  const { accessToken, logout, refreshAnalysisQuota } = useAuth()
   const [data, setData] = useState<AnalysisStartResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<RequestError | null>(null)
@@ -44,6 +44,7 @@ function useStartAnalysis() {
       return { ok: false, error: normalized }
     } finally {
       setIsLoading(false)
+      await refreshAnalysisQuota()
     }
   }
 

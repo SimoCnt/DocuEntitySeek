@@ -1,5 +1,5 @@
 import { requestJson } from './http'
-import type { RegisterRequest, TokenResponse, UserResponse } from '../types/auth'
+import type { RegisterRequest, TokenResponse, UserResponse, AnalysisQuotaResponse } from '../types/auth'
 
 
 export function registerUser(payload: RegisterRequest, signal?: AbortSignal) {
@@ -29,6 +29,15 @@ export function loginUser(email: string, password: string, signal?: AbortSignal)
 
 export function getCurrentUser(token: string, signal?: AbortSignal) {
     return requestJson<UserResponse>('/auth/me', {
+        method: 'GET',
+        token,
+        signal,
+    })
+}
+
+
+export function getAnalysisQuota(token: string, signal?: AbortSignal) {
+    return requestJson<AnalysisQuotaResponse>('/auth/me/analysis-quota', {
         method: 'GET',
         token,
         signal,

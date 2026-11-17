@@ -4,8 +4,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.config import get_settings
 from app.core.security import create_access_token
-from app.dependencies import AuthServiceDep, CurrentUserDep
-from app.schemas.auth import RegisterRequest, TokenResponse, UserResponse
+from app.dependencies import AuthServiceDep, CurrentUserDep, AnalysisQuotaServiceDep
+from app.schemas.auth import AnalysisQuotaResponse, RegisterRequest, TokenResponse, UserResponse
 from app.services.user_mapper import to_user_response
 
 
@@ -48,3 +48,21 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], service: A
         )
 def read_current_user(current_user: CurrentUserDep) -> UserResponse:
     return to_user_response(current_user)
+
+
+@router.get(
+    "/me/analysis-quota",
+    response_model=AnalysisQuotaResponse,
+    summary="Get current analysis quota",
+)
+def read_analysis_quota(current_user: CurrentUserDep, service: AnalysisQuotaServiceDep) -> AnalysisQuotaResponse:
+    quota = service.get_status(user_id=current_user.id)
+
+    return AnalysisQuotaResponse(
+        plan_code=quota.plan_code,
+        daily_limit=quota.daily_limit,
+        used_or_reserved=quota.used_or_reserved,
+        remaining=quota.remaining,
+        resets_at=quota.window_end,
+        is_unlimited=quota.is_unlimited,
+    )
