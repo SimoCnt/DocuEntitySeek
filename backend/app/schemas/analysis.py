@@ -1,7 +1,7 @@
 from uuid import UUID
 from enum import Enum
 from datetime import datetime
-from pydantic import Field, BaseModel
+from pydantic import Field
 from typing import Annotated, Literal
 from app.schemas.base import ApiModel
 
@@ -53,7 +53,7 @@ class DocumentAnalysis(ApiModel):
     extracted_fields: list[ExtractedField]
 
 
-class AnalysisPipelineSummaryResponse(BaseModel):
+class AnalysisPipelineSummaryResponse(ApiModel):
     page_count: int
     document_characters: int
 
@@ -72,13 +72,13 @@ class AnalysisPipelineSummaryResponse(BaseModel):
     elapsed_ms: float
 
 
-class AnalysisStartResponse(BaseModel):
+class AnalysisStartResponse(ApiModel):
     analysis_id: UUID
     status: str
     pipeline: AnalysisPipelineSummaryResponse
 
 
-class AnalysisSummaryResponse(BaseModel):
+class AnalysisSummaryResponse(ApiModel):
     id: UUID
     document_id: UUID
     status: str
@@ -90,14 +90,14 @@ class AnalysisSummaryResponse(BaseModel):
     ai_runtime_config_id: UUID
 
 
-class DocumentPageResponse(BaseModel):
+class DocumentPageResponse(ApiModel):
     page_number: int
     text: str
     global_start: int
     global_end: int
 
 
-class EntityOccurrenceResponse(BaseModel):
+class EntityOccurrenceResponse(ApiModel):
     id: UUID
     label: str
     text: str
@@ -110,7 +110,7 @@ class EntityOccurrenceResponse(BaseModel):
     is_visible: bool
 
 
-class FieldCandidateResponse(BaseModel):
+class FieldCandidateResponse(ApiModel):
     id: UUID
     value: str
     confidence: float
@@ -120,7 +120,7 @@ class FieldCandidateResponse(BaseModel):
     rank: int
 
 
-class ExtractedFieldResponse(BaseModel):
+class ExtractedFieldResponse(ApiModel):
     id: UUID
     field_key: str
     status: str
@@ -132,13 +132,13 @@ class ExtractedFieldResponse(BaseModel):
     candidates: list[FieldCandidateResponse]
 
 
-class AnalysisResultResponse(BaseModel):
+class AnalysisResultResponse(ApiModel):
     pages: list[DocumentPageResponse]
     entities: list[EntityOccurrenceResponse]
     fields: list[ExtractedFieldResponse]
 
 
-class AnalysisDetailResponse(BaseModel):
+class AnalysisDetailResponse(ApiModel):
     id: UUID
     document_id: UUID
     status: str
