@@ -660,6 +660,11 @@
   color: #287242;
 }
 
+.document-status--queued {
+  background: #eef1f8;
+  color: #536078;
+}
+
 .document-status--processing {
   background: #fff3c9;
   color: #7b6017;

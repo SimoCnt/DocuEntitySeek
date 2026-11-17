@@ -92,3 +92,15 @@ export type AnalysisResult = {
 export type AnalysisDetail = AnalysisSummary & {
     result: AnalysisResult | null
 }
+
+
+export type AnalysisQuotaExceededDetails = {
+    dailyLimit: number
+    used: number
+    resetsAt: string
+}
+
+
+export type AnalysisFailedDetails = {
+    analysisId: string
+}

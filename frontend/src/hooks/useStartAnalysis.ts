@@ -6,42 +6,48 @@ import { useAuth } from '../auth/AuthContext'
 import type { AnalysisStartResponse } from '../types/analysis'
 
 
+export type StartAnalysisOutcome =
+  | { ok: true; data: AnalysisStartResponse }
+  | { ok: false; error: RequestError }
+
+
 function useStartAnalysis() {
-    const { accessToken, logout } = useAuth()
-    const [data, setData] = useState<AnalysisStartResponse | null>(null)
-    const [isLoading, setIsLoading] = useState(false)
-    const [error, setError] = useState<RequestError | null>(null)
+  const { accessToken, logout } = useAuth()
+  const [data, setData] = useState<AnalysisStartResponse | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<RequestError | null>(null)
 
-    
-    async function run(documentId: string): Promise<AnalysisStartResponse | null> {
-        if (!accessToken) {
-            setError({ message: 'Sessione non disponibile.' })
-            return null
-        }
-
-        setIsLoading(true)
-        setError(null)
-
-        try {
-            const result = await startAnalysis(documentId, accessToken)
-            setData(result)
-            return result
-        } catch (requestError) {
-            const normalized = normalizeRequestError(requestError)
-
-            if (normalized.status === 401) {
-                logout()
-                return null
-            }
-
-            setError(normalized)
-            return null
-        } finally {
-            setIsLoading(false)
-        }
+  
+  async function run(documentId: string): Promise<StartAnalysisOutcome> {
+    if (!accessToken) {
+      const authError: RequestError = { message: 'Sessione non disponibile.' }
+      setError(authError)
+      return { ok: false, error: authError }
     }
 
-    return { data, isLoading, error, run }
+    setData(null)
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const result = await startAnalysis(documentId, accessToken)
+      setData(result)
+      return { ok: true, data: result }
+    } catch (requestError) {
+      const normalized = normalizeRequestError(requestError)
+
+      if (normalized.status === 401) {
+        logout()
+      }
+
+      setError(normalized)
+      return { ok: false, error: normalized }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return { data, isLoading, error, run }
 }
 
 export default useStartAnalysis

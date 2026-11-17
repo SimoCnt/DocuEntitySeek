@@ -11,12 +11,7 @@ from app.core.exceptions import DocumentNotFoundError, InvalidDocumentFileError,
 logger = logging.getLogger(__name__)
 
 
-def error_payload(
-    *,
-    code: str,
-    message: str,
-    details: list[dict] | None = None
-) -> dict:
+def error_payload(*, code: str, message: str, details: object | None = None) -> dict:
     return {
         "error": {
             "code": code,
@@ -44,6 +39,26 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+        if isinstance(exc.detail, dict):
+            code = exc.detail.get("code")
+            message = exc.detail.get("message")
+
+            if isinstance(code, str) and isinstance(message, str):
+                details = {
+                    key: value
+                    for key, value in exc.detail.items()
+                    if key not in {"code", "message"}
+                }
+
+                return JSONResponse(
+                    status_code=exc.status_code,
+                    content=error_payload(
+                        code=code,
+                        message=message,
+                        details=details or None,
+                    ),
+                )
+
         return JSONResponse(status_code=exc.status_code, content=error_payload(code="HTTP_ERROR", message=str(exc.detail)))
 
 
