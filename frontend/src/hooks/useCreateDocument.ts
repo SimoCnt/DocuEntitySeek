@@ -4,17 +4,32 @@ import { createDocument } from '../api/documentsApi'
 import { normalizeRequestError, type RequestError } from '../api/http'
 import { useAuth } from '../auth/AuthContext'
 import type { DocumentCategory, DocumentSummary } from '../types/document'
+import { startAnalysis } from '../api/analyses'
 
 
 function useCreateDocument() {
-    const { accessToken, logout } = useAuth()
+    const { accessToken, logout, analysisQuota, refreshAnalysisQuota } = useAuth()
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<RequestError | null>(null)
 
 
-    async function uploadDocument(file: File, category: DocumentCategory): Promise<DocumentSummary | null> {
+    async function uploadDocument(
+        file: File, 
+        category: DocumentCategory,
+        schemaVersionId?: string
+    ): Promise<DocumentSummary | null> {
         if (!accessToken) {
+            return null
+        }
+
+        if (analysisQuota && !analysisQuota.isUnlimited && (analysisQuota.remaining ?? 0) <= 0) {
+            setError({
+                status: 429,
+                code: 'ANALYSIS_QUOTA_EXCEEDED',
+                message: 'Hai raggiunto il limite giornaliero di analisi.',
+            })
+
             return null
         }
 
@@ -22,7 +37,21 @@ function useCreateDocument() {
         setError(null)
 
         try {
-            return await createDocument(file, category, accessToken)
+            const document = await createDocument(file, category, accessToken)
+
+            void startAnalysis(document.id, accessToken, schemaVersionId)
+            .catch((analysisError) => {
+                const normalized = normalizeRequestError(analysisError)
+
+                if (normalized.status === 401) {
+                logout()
+                }
+            })
+            .finally(() => {
+                void refreshAnalysisQuota()
+            })
+
+            return document
         } catch (requestError) {
             const normalized = normalizeRequestError(requestError)
 
