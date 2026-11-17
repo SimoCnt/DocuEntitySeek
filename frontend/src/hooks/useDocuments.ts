@@ -1,10 +1,13 @@
-
 import { useEffect, useState } from 'react'
 
 import { getDocuments } from '../api/documentsApi'
 import { isAbortError, normalizeRequestError, type RequestError } from '../api/http'
 import { useAuth } from '../auth/AuthContext'
 import type { DocumentSummary } from '../types/document'
+
+
+const PROCESSING_REFRESH_INTERVAL_MS = 2000
+
 
 function useDocuments() {
   const { accessToken, logout } = useAuth()
@@ -18,23 +21,36 @@ function useDocuments() {
 
     if (!token) {
       setDocuments([])
-      setError(null)
       setIsLoading(false)
       return
     }
 
     const controller = new AbortController()
+    let timer: number | undefined
+    let active = true
 
 
-    async function loadDocuments(validToken: string) {
-      setIsLoading(true)
-      setError(null)
+    async function loadDocuments(validToken: string, background: boolean) {
+      if (!background) {
+        setIsLoading(true)
+        setError(null)
+      }
 
       try {
-        const data = await getDocuments(validToken, controller.signal)
+        const result = await getDocuments(validToken, controller.signal)
 
-        if (!controller.signal.aborted) {
-          setDocuments(data)
+        if (!active || controller.signal.aborted) return
+
+        setDocuments(result)
+        setError(null)
+
+        const hasProcessingDocuments = result.some((document) => document.status === 'PROCESSING')
+
+        if (hasProcessingDocuments) {
+          timer = window.setTimeout(
+            () => void loadDocuments(validToken, true),
+            PROCESSING_REFRESH_INTERVAL_MS,
+          )
         }
       } catch (requestError) {
         if (controller.signal.aborted || isAbortError(requestError)) return
@@ -46,14 +62,26 @@ function useDocuments() {
           return
         }
 
-        setError(normalized)
+        if (active) {
+          setError(normalized)
+        }
       } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
+        if (active && !controller.signal.aborted && !background) {
+          setIsLoading(false)
+        }
       }
     }
 
-    void loadDocuments(token)
-    return () => controller.abort()
+    void loadDocuments(token, false)
+
+    return () => {
+      active = false
+      controller.abort()
+
+      if (timer !== undefined) {
+        window.clearTimeout(timer)
+      }
+    }
   }, [accessToken, logout, reloadToken])
 
   
