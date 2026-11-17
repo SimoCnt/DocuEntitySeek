@@ -1,10 +1,10 @@
-import type { EntityDefinition } from '../../types/analysis'
+import type { EntityDefinition } from '../../types/analysisDemo'
 
 
 type EntityFilterListProps = {
     definitions: EntityDefinition[]
     activeLabels: string[]
-    
+
     onToggleLabel: (label: string) => void
     onShowAll: () => void
     onHideAll: () => void

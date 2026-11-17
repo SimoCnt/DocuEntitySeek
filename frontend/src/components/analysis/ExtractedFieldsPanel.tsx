@@ -1,4 +1,4 @@
-import type { ExtractedField } from '../../types/analysis'
+import type { ExtractedField } from '../../types/analysisDemo'
 
 
 type ExtractedFieldsPanelProps = {
@@ -6,7 +6,7 @@ type ExtractedFieldsPanelProps = {
 }
 
 
-function ExtractedFieldsPanel({fields}: ExtractedFieldsPanelProps) {
+function ExtractedFieldsPanel({ fields }: ExtractedFieldsPanelProps) {
     return (
         <div className="extracted-fields-panel">
             <h3>Informazioni estratte</h3>

@@ -1,42 +1,94 @@
-export type EntityDefinition = {
-    label: string
-    color: string
+export type AnalysisStatus = 'QUEUED' | 'PROCESSING' | 'READY' | 'ERROR'
+export type ExtractedFieldStatus = 'EXTRACTED' | 'AMBIGUOUS' | 'NOT_FOUND' | 'ERROR'
+
+
+export type AnalysisPipelineSummary = {
+    pageCount: number
+    documentCharacters: number
+    entityCount: number
+    visibleEntityCount: number
+    hiddenEntityCount: number
+    rejectedEntityCount: number
+    fieldCount: number
+    fieldCandidateCount: number
+    extractedFieldCount: number
+    ambiguousFieldCount: number
+    notFoundFieldCount: number
+    rejectedFieldCandidateCount: number
+    elapsedMs: number
 }
 
-export type TextSegment =
-    | {
-        type: 'text'
-        text: string
-    }
-    | {
-        type: 'entity'
-        id: string
-        text: string
-        label: string
-    }
+export type AnalysisStartResponse = {
+    analysisId: string
+    status: AnalysisStatus
+    pipeline: AnalysisPipelineSummary
+}
 
-export type DocumentPage = {
+export type AnalysisSummary = {
+    id: string
+    documentId: string
+    status: AnalysisStatus
+    createdAt: string
+    startedAt: string | null
+    completedAt: string | null
+    errorMessage: string | null
+    schemaVersionId: string
+    aiRuntimeConfigId: string
+}
+
+export type AnalysisResultPage = {
     pageNumber: number
-    segments: TextSegment[]
+    text: string
+    globalStart: number
+    globalEnd: number
 }
 
-export type ExtractedFieldStatus =
-    | 'EXTRACTED'
-    | 'AMBIGUOUS'
-    | 'NOT_FOUND'
-    | 'ERROR'
 
-export type ExtractedField = {
+export type EntityOccurrence = {
     id: string
     label: string
-    value: string | null
-    page: number | null
-    confidence: number | null
-    status: ExtractedFieldStatus
+    text: string
+    confidence: number
+    globalStart: number
+    globalEnd: number
+    page: number
+    pageStart: number
+    pageEnd: number
+    isVisible: boolean
 }
 
-export type DocumentAnalysis = {
-    entityDefinitions: EntityDefinition[]
-    pages: DocumentPage[]
-    extractedFields: ExtractedField[]
+
+export type FieldCandidate = {
+    id: string
+    value: string
+    confidence: number
+    page: number | null
+    globalStart: number
+    globalEnd: number
+    rank: number
+}
+
+
+export type AnalysisExtractedField = {
+    id: string
+    fieldKey: string
+    status: ExtractedFieldStatus
+    value: string | null
+    confidence: number | null
+    page: number | null
+    globalStart: number | null
+    globalEnd: number | null
+    candidates: FieldCandidate[]
+}
+
+
+export type AnalysisResult = {
+    pages: AnalysisResultPage[]
+    entities: EntityOccurrence[]
+    fields: AnalysisExtractedField[]
+}
+
+
+export type AnalysisDetail = AnalysisSummary & {
+    result: AnalysisResult | null
 }

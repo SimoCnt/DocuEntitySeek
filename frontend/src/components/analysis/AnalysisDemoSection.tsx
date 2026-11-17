@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import type { DocumentAnalysis } from '../../types/analysis'
+import type { DocumentAnalysis } from '../../types/analysisDemo'
 import AnnotatedDocumentMock from './AnnotatedDocumentMock'
 import EntityFilterList from './EntityFilterList'
 import ExtractedFieldsPanel from './ExtractedFieldsPanel'

@@ -1,4 +1,4 @@
-import type { DocumentPage, EntityDefinition } from '../../types/analysis'
+import type { DocumentPage, EntityDefinition } from '../../types/analysisDemo'
 
 
 type AnnotatedDocumentMockProps = {
@@ -11,7 +11,7 @@ type AnnotatedDocumentMockProps = {
 }
 
 
-function AnnotatedDocumentMock({documentName, page, entityDefinitions, activeLabels, selectedEntityId, onSelectEntity}: AnnotatedDocumentMockProps) {
+function AnnotatedDocumentMock({ documentName, page, entityDefinitions, activeLabels, selectedEntityId, onSelectEntity }: AnnotatedDocumentMockProps) {
     function getEntityColor(label: string) {
         return (
             entityDefinitions.find(
