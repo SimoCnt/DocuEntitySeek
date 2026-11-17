@@ -149,3 +149,7 @@ class AnalysisDetailResponse(ApiModel):
     schema_version_id: UUID
     ai_runtime_config_id: UUID
     result: AnalysisResultResponse | None
+
+
+class AnalysisStartRequest(ApiModel):
+    schema_version_id: UUID | None = None

@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, status
 from app.core.exceptions import AiConfigurationError, AnalysisExecutionError, AnalysisQuotaExceededError
 from app.db.models import UserModel
 from app.dependencies import AnalysisServiceDep, CurrentUserDep, AnalysisQueryServiceDep
-from app.schemas.analysis import AnalysisPipelineSummaryResponse, AnalysisStartResponse, AnalysisSummaryResponse, AnalysisDetailResponse, AnalysisResultResponse, DocumentPageResponse, EntityOccurrenceResponse, ExtractedFieldResponse, FieldCandidateResponse
+from app.schemas.analysis import AnalysisPipelineSummaryResponse, AnalysisStartResponse, AnalysisSummaryResponse, AnalysisDetailResponse, AnalysisResultResponse, DocumentPageResponse, EntityOccurrenceResponse, ExtractedFieldResponse, FieldCandidateResponse, AnalysisStartRequest
 
 
 router = APIRouter()
@@ -17,6 +17,7 @@ router = APIRouter()
 )
 def start_analysis(
     document_id: UUID,
+    payload: AnalysisStartRequest,
     current_user: CurrentUserDep,
     service: AnalysisServiceDep,
 ) -> AnalysisStartResponse:
@@ -24,6 +25,7 @@ def start_analysis(
         result = service.run(
             document_id=document_id,
             owner_user_id=current_user.id,
+            schema_version_id=payload.schema_version_id
         )
 
     except AnalysisQuotaExceededError as exc:
