@@ -31,6 +31,9 @@ from app.services.analysis_services import AnalysisService
 from app.repositories.analysis_quota_repository import AnalysisQuotaRepository
 from app.services.analysis_quota_service import AnalysisQuotaService
 from app.services.analysis_query_service import AnalysisQueryService
+from app.repositories.schema_access_repository import SchemaAccessRepository
+from app.services.schema_access_service import SchemaAccessService
+from app.services.custom_schema_service import CustomSchemaService
 
 
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
@@ -232,16 +235,33 @@ def get_analysis_quota_service(session: DbSessionDep) -> AnalysisQuotaService:
 AnalysisQuotaServiceDep = Annotated[AnalysisQuotaService, Depends(get_analysis_quota_service)]
 
 
+
+def get_schema_access_service(session: DbSessionDep) -> SchemaAccessService:
+    return SchemaAccessService(SchemaAccessRepository(session))
+
+
+SchemaAccessServiceDep = Annotated[SchemaAccessService, Depends(get_schema_access_service)]
+
+
+def get_custom_schema_service(session: DbSessionDep, schema_access_service: SchemaAccessServiceDep) -> CustomSchemaService:
+    return CustomSchemaService(session=session, schema_access_service=schema_access_service)
+
+
+CustomSchemaServiceDep = Annotated[CustomSchemaService, Depends(get_custom_schema_service)]
+
+
 def get_analysis_service(
     session: DbSessionDep,
     config_resolver: AiConfigurationResolverDep,
     quota_service: AnalysisQuotaServiceDep,
+    schema_access_service: SchemaAccessServiceDep,
     pipeline: AnalysisPipelineDep,
 ) -> AnalysisService:
     return AnalysisService(
         session=session,
         config_resolver=config_resolver,
         quota_service=quota_service,
+        schema_access_service=schema_access_service,
         pipeline=pipeline,
     )
 
