@@ -18,7 +18,7 @@ function useStartAnalysis() {
   const [error, setError] = useState<RequestError | null>(null)
 
   
-  async function run(documentId: string): Promise<StartAnalysisOutcome> {
+  async function run(documentId: string, schemaVersionId?: string): Promise<StartAnalysisOutcome> {
     if (!accessToken) {
       const authError: RequestError = { message: 'Sessione non disponibile.' }
       setError(authError)
@@ -30,7 +30,7 @@ function useStartAnalysis() {
     setError(null)
 
     try {
-      const result = await startAnalysis(documentId, accessToken)
+      const result = await startAnalysis(documentId, accessToken, schemaVersionId)
       setData(result)
       return { ok: true, data: result }
     } catch (requestError) {

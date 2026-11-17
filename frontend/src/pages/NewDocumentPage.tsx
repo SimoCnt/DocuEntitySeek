@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router'
 
 import ConfirmUploadDialog from '../components/upload/ConfirmUploadDialog'
@@ -10,6 +10,8 @@ import { validatePdfFile } from '../utils/fileValidation'
 import type { DocumentCategory } from '../types/upload'
 import ErrorState from '../components/feedback/ErrorState'
 import useCreateDocument from '../hooks/useCreateDocument'
+import { useAuth } from '../auth/AuthContext'
+import useAvailableSchemas from '../hooks/useAvailableSchemas'
 
 
 function NewDocumentPage() {
@@ -18,9 +20,53 @@ function NewDocumentPage() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [category, setCategory] = useState<DocumentCategory>('DISCIPLINARE')
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [schemaSelectionError, setSchemaSelectionError] = useState<string | null>(null)
     const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)    
     const navigate = useNavigate()
     const {uploadDocument, isSubmitting, error: uploadError} = useCreateDocument()
+
+    const { user } = useAuth()
+    const customSchemasEnabled = user?.plan.customSchemasEnabled === true
+
+    const { schemas, isLoading: schemasLoading, error: schemasError } = useAvailableSchemas(customSchemasEnabled)
+    const [selectedSchemaVersionId, setSelectedSchemaVersionId] = useState<string | undefined>(undefined)
+
+    useEffect(() => {
+        if (!customSchemasEnabled) {
+            setSelectedSchemaVersionId(undefined)
+            return
+        }
+
+        if (schemas.length === 0) {
+            return
+        }
+
+        setSelectedSchemaVersionId(
+            (current) => {
+                if (
+                    current &&
+                    schemas.some(
+                        (schema) =>
+                            schema.schemaVersionId === current
+                    )
+                ) {
+                    return current
+                }
+
+                const builtInSchema = schemas.find(
+                    (schema) => schema.isBuiltin
+                )
+
+                return (
+                    builtInSchema?.schemaVersionId ??
+                    schemas[0].schemaVersionId
+                )
+            }
+        )
+    }, [
+        customSchemasEnabled,
+        schemas,
+    ])
 
 
     function handleFileChange(file: File | null) {
@@ -29,8 +75,15 @@ function NewDocumentPage() {
     }
 
 
+    function handleSchemaVersionChange(schemaVersionId: string) {
+        setSelectedSchemaVersionId(schemaVersionId)
+        setSchemaSelectionError(null)
+    }
+
+
     function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault()
+
         const validationError = validatePdfFile(selectedFile)
 
         if (validationError) {
@@ -38,7 +91,25 @@ function NewDocumentPage() {
             return
         }
 
+        if (customSchemasEnabled) {
+            if (schemasLoading) {
+            setSchemaSelectionError('Attendi il caricamento degli schemi disponibili.')
+            return
+            }
+
+            if (schemasError) {
+            setSchemaSelectionError('Impossibile caricare gli schemi disponibili.')
+            return
+            }
+
+            if (!selectedSchemaVersionId) {
+            setSchemaSelectionError('Seleziona uno schema di estrazione.')
+            return
+            }
+        }
+
         setErrorMessage(null)
+        setSchemaSelectionError(null)
         setIsConfirmationOpen(true)
     }
 
@@ -49,8 +120,8 @@ function NewDocumentPage() {
         }
 
         setIsConfirmationOpen(false)
-
-        const document = await uploadDocument(selectedFile, category)
+        
+        const document = await uploadDocument(selectedFile, category, customSchemasEnabled ? selectedSchemaVersionId : undefined)
 
         if (!document) {
             return
@@ -58,6 +129,15 @@ function NewDocumentPage() {
 
         navigate('/documents', { replace: true })
         }
+
+
+    const selectedSchema = schemas.find(
+        (schema) => schema.schemaVersionId === selectedSchemaVersionId,
+    )
+
+    const schemaDisplayName = customSchemasEnabled
+        ? selectedSchema?.name ?? 'Schema non selezionato'
+        : 'Schema predefinito'    
 
 
     return (
@@ -84,9 +164,34 @@ function NewDocumentPage() {
                         selectedFile={selectedFile}
                         category={category}
                         errorMessage={errorMessage}
-                        onFileChange={handleFileChange}
-                        onCategoryChange={setCategory}
-                        onSubmit={handleSubmit}
+                        showSchemaSelector={
+                            customSchemasEnabled
+                        }
+                        schemas={schemas}
+                        schemasLoading={
+                            schemasLoading
+                        }
+                        schemaVersionId={
+                            selectedSchemaVersionId ??
+                            ''
+                        }
+                        schemaErrorMessage={
+                            schemaSelectionError ??
+                            schemasError?.message ??
+                            null
+                        }
+                        onSchemaVersionChange={
+                            handleSchemaVersionChange
+                        }
+                        onFileChange={
+                            handleFileChange
+                        }
+                        onCategoryChange={
+                            setCategory
+                        }
+                        onSubmit={
+                            handleSubmit
+                        }
                     />
                 </Panel>
 
@@ -98,6 +203,7 @@ function NewDocumentPage() {
                         <UploadSummary
                             file={selectedFile}
                             category={category}
+                            schemaName={schemaDisplayName}
                         />
                     ) : (
                         <div className="upload-empty-summary">Seleziona un PDF per visualizzare il riepilogo.</div>
@@ -124,6 +230,7 @@ function NewDocumentPage() {
                 isOpen={isConfirmationOpen}
                 file={selectedFile}
                 category={category}
+                schemaName={schemaDisplayName}
                 onCancel={() =>
                     setIsConfirmationOpen(
                         false,

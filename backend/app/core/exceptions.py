@@ -68,3 +68,11 @@ class AnalysisQuotaExceededError(Exception):
         self.resets_at = resets_at
 
         super().__init__("Limite giornaliero di analisi raggiunto.")
+
+
+class ExtractionSchemaNotFoundError(Exception):
+    pass
+
+
+class CustomSchemasNotAvailableError(Exception):
+    pass

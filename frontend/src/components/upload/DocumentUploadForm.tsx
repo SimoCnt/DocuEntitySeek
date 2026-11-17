@@ -1,106 +1,146 @@
 import type { ChangeEvent, FormEvent } from 'react'
 
+import type { AvailableExtractionSchema } from '../../types/extractionSchema'
 import type { DocumentCategory } from '../../types/upload'
 
 
 type DocumentUploadFormProps = {
-    selectedFile: File | null
-    category: DocumentCategory
-    errorMessage: string | null
-
-    onFileChange: (
-        file: File | null,
-    ) => void
-
-    onCategoryChange: (
-        category: DocumentCategory,
-    ) => void
-
-    onSubmit: (
-        event: FormEvent<HTMLFormElement>,
-    ) => void
+  selectedFile: File | null
+  category: DocumentCategory
+  errorMessage: string | null
+  showSchemaSelector: boolean
+  schemas: AvailableExtractionSchema[]
+  schemasLoading: boolean
+  schemaVersionId: string
+  schemaErrorMessage: string | null
+  onSchemaVersionChange: (schemaVersionId: string) => void
+  onFileChange: (file: File | null) => void
+  onCategoryChange: (category: DocumentCategory) => void
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void
 }
 
 
-function DocumentUploadForm({ selectedFile, category, errorMessage, onFileChange, onCategoryChange, onSubmit }: DocumentUploadFormProps) {
-    function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-        const file = event.target.files?.[0] ?? null
-        onFileChange(file)
-    }
+function DocumentUploadForm({
+  selectedFile,
+  category,
+  errorMessage,
+  showSchemaSelector,
+  schemas,
+  schemasLoading,
+  schemaVersionId,
+  schemaErrorMessage,
+  onSchemaVersionChange,
+  onFileChange,
+  onCategoryChange,
+  onSubmit,
+}: DocumentUploadFormProps) {
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null
+    onFileChange(file)
+  }
 
-    return (
-        <form className="upload-form" onSubmit={onSubmit}>
-            <div className="form-field">
-                <label htmlFor="document-file">Documento PDF</label>
+  return (
+    <form className="upload-form" onSubmit={onSubmit}>
+      <div className="form-field">
+        <label htmlFor="document-file">Documento PDF</label>
 
-                <input
-                    id="document-file"
-                    name="documentFile"
-                    type="file"
-                    accept=".pdf,application/pdf"
-                    onChange={handleFileChange}
-                    aria-describedby={
-                        errorMessage
-                            ? 'document-file-help document-file-error'
-                            : 'document-file-help'
-                    }
-                />
+        <input
+          id="document-file"
+          name="documentFile"
+          type="file"
+          accept=".pdf,application/pdf"
+          onChange={handleFileChange}
+          aria-describedby={
+            errorMessage
+              ? 'document-file-help document-file-error'
+              : 'document-file-help'
+          }
+        />
 
-                <p id="document-file-help" className="form-field__help">Seleziona un documento PDF da analizzare.</p>
+        <p id="document-file-help" className="form-field__help">
+          Seleziona un documento PDF da analizzare.
+        </p>
 
-                {selectedFile && (
-                    <p className="form-field__selection">File selezionato:{' '}<strong>{selectedFile.name}</strong></p>                      
-                )}
+        {selectedFile && (
+          <p className="form-field__selection">
+            File selezionato: <strong>{selectedFile.name}</strong>
+          </p>
+        )}
 
-                {errorMessage && (
-                    <p
-                        id="document-file-error"
-                        className="form-field__error"
-                        role="alert"
-                    >
-                        {errorMessage}
-                    </p>
-                )}
-            </div>
+        {errorMessage && (
+          <p id="document-file-error" className="form-field__error" role="alert">
+            {errorMessage}
+          </p>
+        )}
+      </div>
 
-            <div className="form-field">
-                <label htmlFor="document-category">Tipo di documento</label>
+      <div className="form-field">
+        <label htmlFor="document-category">Tipo di documento</label>
 
-                <select
-                    id="document-category"
-                    name="documentCategory"
-                    value={category}
-                    onChange={(event) =>
-                        onCategoryChange(
-                            event.target
-                                .value as DocumentCategory,
-                        )
-                    }
-                >
-                    <option value="DISCIPLINARE">Disciplinare</option>
-                    <option value="CAPITOLATO">Capitolato</option>
-                    <option value="CONTRATTO">Contratto</option>
-                    <option value="BANDO">Bando</option>
-                    <option value="ALTRO">Altro</option>
-                </select>
-            </div>
+        <select
+          id="document-category"
+          name="documentCategory"
+          value={category}
+          onChange={(event) => onCategoryChange(event.target.value as DocumentCategory)}
+        >
+          <option value="DISCIPLINARE">Disciplinare</option>
+          <option value="CAPITOLATO">Capitolato</option>
+          <option value="CONTRATTO">Contratto</option>
+          <option value="BANDO">Bando</option>
+          <option value="ALTRO">Altro</option>
+        </select>
+      </div>
 
-            <div className="form-field">
-                <span className="form-field__label">Schema di estrazione</span>
+      {showSchemaSelector && (
+        <div className="form-field">
+          <label htmlFor="schema-version">Schema di estrazione</label>
 
-                <div className="schema-selection">
-                    <strong>Procurement</strong>
-                    <span>Schema predefinito</span>
-                </div>
+          <select
+            id="schema-version"
+            name="schemaVersion"
+            value={schemaVersionId}
+            disabled={schemasLoading || schemas.length === 0}
+            onChange={(event) => onSchemaVersionChange(event.target.value)}
+          >
+            <option value="" disabled>
+              {schemasLoading ? 'Caricamento schemi...' : 'Seleziona uno schema'}
+            </option>
 
-                <p className="form-field__help">Gli schemi personalizzati saranno disponibili agli utenti Premium.</p>
-            </div>
+            {schemas.map((schema) => (
+              <option key={schema.schemaVersionId} value={schema.schemaVersionId}>
+                {schema.isBuiltin
+                  ? `${schema.name} — predefinito`
+                  : `${schema.name} — v${schema.version}`}
+              </option>
+            ))}
+          </select>
 
-            <div className="upload-form__actions">
-                <button type="submit" className="button button--primary">Continua</button>
-            </div>
-        </form>
-    )
+          {schemaErrorMessage && (
+            <p className="form-field__error" role="alert">
+              {schemaErrorMessage}
+            </p>
+          )}
+        </div>
+      )}
+
+      {!showSchemaSelector && (
+        <div className="form-field">
+          <span className="form-field__label">Schema di estrazione</span>
+
+          <div className="schema-selection">
+            <strong>Schema predefinito</strong>
+            <span>Incluso nel piano Base</span>
+          </div>
+        </div>
+      )}
+
+      <div className="upload-form__actions">
+        <button type="submit" className="button button--primary">
+          Continua
+        </button>
+      </div>
+    </form>
+  )
 }
 
 export default DocumentUploadForm

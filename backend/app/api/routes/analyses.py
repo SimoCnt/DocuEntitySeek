@@ -1,7 +1,7 @@
 from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
 
-from app.core.exceptions import AiConfigurationError, AnalysisExecutionError, AnalysisQuotaExceededError
+from app.core.exceptions import AiConfigurationError, AnalysisExecutionError, AnalysisQuotaExceededError, CustomSchemasNotAvailableError, ExtractionSchemaNotFoundError
 from app.db.models import UserModel
 from app.dependencies import AnalysisServiceDep, CurrentUserDep, AnalysisQueryServiceDep
 from app.schemas.analysis import AnalysisPipelineSummaryResponse, AnalysisStartResponse, AnalysisSummaryResponse, AnalysisDetailResponse, AnalysisResultResponse, DocumentPageResponse, EntityOccurrenceResponse, ExtractedFieldResponse, FieldCandidateResponse, AnalysisStartRequest
@@ -17,15 +17,15 @@ router = APIRouter()
 )
 def start_analysis(
     document_id: UUID,
-    payload: AnalysisStartRequest,
     current_user: CurrentUserDep,
     service: AnalysisServiceDep,
+    payload: AnalysisStartRequest | None = None
 ) -> AnalysisStartResponse:
     try:
         result = service.run(
             document_id=document_id,
             owner_user_id=current_user.id,
-            schema_version_id=payload.schema_version_id
+            schema_version_id=payload.schema_version_id if payload is not None else None
         )
 
     except AnalysisQuotaExceededError as exc:
@@ -65,6 +65,24 @@ def start_analysis(
             detail={
                 "code": "DOCUMENT_NOT_FOUND",
                 "message": "Documento non trovato.",
+            },
+        ) from exc
+
+    except ExtractionSchemaNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "EXTRACTION_SCHEMA_NOT_FOUND",
+                "message": "Schema di estrazione non trovato.",
+            },
+        ) from exc
+
+    except CustomSchemasNotAvailableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "CUSTOM_SCHEMAS_NOT_AVAILABLE",
+                "message": "Gli schema personalizzati richiedono un piano che li supporti.",
             },
         ) from exc
 

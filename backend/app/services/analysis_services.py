@@ -15,6 +15,7 @@ from app.repositories.document_repository import DocumentRepository
 from app.services.analysis_models import AnalysisExecutionResult
 from app.services.analysis_quota_service import AnalysisQuotaService
 from app.services.analysis_quota_models import AnalysisQuotaDecision
+from app.services.schema_access_service import SchemaAccessService
 
 
 logger = get_logger("analysis")
@@ -27,11 +28,13 @@ class AnalysisService:
         session: Session,
         config_resolver: AiConfigurationResolver,
         quota_service: AnalysisQuotaService,
-        pipeline: AnalysisPipeline,
+        schema_access_service: SchemaAccessService,
+        pipeline: AnalysisPipeline        
     ) -> None:
         self.session = session
         self.config_resolver = config_resolver
         self.quota_service = quota_service
+        self.schema_access_service = schema_access_service
         self.pipeline = pipeline
         self.analyses = AnalysisRepository(session)
         self.documents = DocumentRepository(session)
@@ -57,7 +60,8 @@ class AnalysisService:
         if document is None:
             raise DocumentNotFoundError(str(document_id))
 
-        config = self.config_resolver.resolve(schema_version_id=schema_version_id, owner_user_id=owner_user_id)
+        authorized_schema_version_id = self.schema_access_service.authorize_for_analysis(user_id=owner_user_id, requested_schema_version_id=schema_version_id)
+        config = self.config_resolver.resolve(schema_version_id=authorized_schema_version_id)
 
         try:
             quota_decision = self.quota_service.assert_can_queue(user_id=owner_user_id)
