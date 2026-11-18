@@ -83,6 +83,7 @@ export type AnalysisExtractedField = {
 
 
 export type AnalysisResult = {
+    schema: AnalysisSchema
     pages: AnalysisResultPage[]
     entities: EntityOccurrence[]
     fields: AnalysisExtractedField[]
@@ -103,4 +104,33 @@ export type AnalysisQuotaExceededDetails = {
 
 export type AnalysisFailedDetails = {
     analysisId: string
+}
+
+
+export type AnalysisEntityDefinition = {
+    label: string
+    description: string
+    color: string
+    sortOrder: number
+}
+
+
+export type AnalysisFieldDefinition = {
+    fieldKey: string
+    label: string
+    description: string
+    dataType: string
+    isRequired: boolean
+    sortOrder: number
+}
+
+
+export type AnalysisSchema = {
+    schemaId: string
+    schemaVersionId: string
+    name: string
+    domain: string
+    version: number
+    entityDefinitions: AnalysisEntityDefinition[]
+    fieldDefinitions: AnalysisFieldDefinition[]
 }

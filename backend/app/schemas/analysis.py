@@ -132,7 +132,34 @@ class ExtractedFieldResponse(ApiModel):
     candidates: list[FieldCandidateResponse]
 
 
+class AnalysisEntityDefinitionResponse(ApiModel):
+    label: str
+    description: str
+    color: str
+    sort_order: int
+
+
+class AnalysisFieldDefinitionResponse(ApiModel):
+    field_key: str
+    label: str
+    description: str
+    data_type: str
+    is_required: bool
+    sort_order: int
+
+
+class AnalysisSchemaResponse(ApiModel):
+    schema_id: UUID
+    schema_version_id: UUID
+    name: str
+    domain: str
+    version: int
+    entity_definitions: list[AnalysisEntityDefinitionResponse]
+    field_definitions: list[AnalysisFieldDefinitionResponse]
+
+
 class AnalysisResultResponse(ApiModel):
+    schema: AnalysisSchemaResponse
     pages: list[DocumentPageResponse]
     entities: list[EntityOccurrenceResponse]
     fields: list[ExtractedFieldResponse]

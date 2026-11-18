@@ -1,10 +1,30 @@
 from uuid import UUID
+
 from fastapi import APIRouter, HTTPException, status
 
-from app.core.exceptions import AiConfigurationError, AnalysisExecutionError, AnalysisQuotaExceededError, CustomSchemasNotAvailableError, ExtractionSchemaNotFoundError
-from app.db.models import UserModel
-from app.dependencies import AnalysisServiceDep, CurrentUserDep, AnalysisQueryServiceDep
-from app.schemas.analysis import AnalysisPipelineSummaryResponse, AnalysisStartResponse, AnalysisSummaryResponse, AnalysisDetailResponse, AnalysisResultResponse, DocumentPageResponse, EntityOccurrenceResponse, ExtractedFieldResponse, FieldCandidateResponse, AnalysisStartRequest
+from app.core.exceptions import (
+    AiConfigurationError,
+    AnalysisExecutionError,
+    AnalysisQuotaExceededError,
+    CustomSchemasNotAvailableError,
+    ExtractionSchemaNotFoundError,
+)
+from app.dependencies import AnalysisQueryServiceDep, AnalysisServiceDep, CurrentUserDep
+from app.schemas.analysis import (
+    AnalysisDetailResponse,
+    AnalysisEntityDefinitionResponse,
+    AnalysisFieldDefinitionResponse,
+    AnalysisPipelineSummaryResponse,
+    AnalysisResultResponse,
+    AnalysisSchemaResponse,
+    AnalysisStartRequest,
+    AnalysisStartResponse,
+    AnalysisSummaryResponse,
+    DocumentPageResponse,
+    EntityOccurrenceResponse,
+    ExtractedFieldResponse,
+    FieldCandidateResponse,
+)
 
 
 router = APIRouter()
@@ -19,13 +39,13 @@ def start_analysis(
     document_id: UUID,
     current_user: CurrentUserDep,
     service: AnalysisServiceDep,
-    payload: AnalysisStartRequest | None = None
+    payload: AnalysisStartRequest | None = None,
 ) -> AnalysisStartResponse:
     try:
         result = service.run(
             document_id=document_id,
             owner_user_id=current_user.id,
-            schema_version_id=payload.schema_version_id if payload is not None else None
+            schema_version_id=payload.schema_version_id if payload is not None else None,
         )
 
     except AnalysisQuotaExceededError as exc:
@@ -109,7 +129,10 @@ def start_analysis(
     )
 
 
-@router.get("/documents/{document_id}/analyses", response_model=list[AnalysisSummaryResponse])
+@router.get(
+    "/documents/{document_id}/analyses",
+    response_model=list[AnalysisSummaryResponse],
+)
 def list_analyses(
     document_id: UUID,
     current_user: CurrentUserDep,
@@ -136,7 +159,10 @@ def list_analyses(
     ]
 
 
-@router.get("/documents/{document_id}/analyses/{analysis_id}", response_model=AnalysisDetailResponse)
+@router.get(
+    "/documents/{document_id}/analyses/{analysis_id}",
+    response_model=AnalysisDetailResponse,
+)
 def get_analysis(
     document_id: UUID,
     analysis_id: UUID,
@@ -144,7 +170,14 @@ def get_analysis(
     service: AnalysisQueryServiceDep,
 ) -> AnalysisDetailResponse:
     try:
-        analysis, pages, entities, fields, candidates_by_field = service.get_detail(
+        (
+            analysis,
+            schema_version,
+            pages,
+            entities,
+            fields,
+            candidates_by_field,
+        ) = service.get_detail(
             analysis_id=analysis_id,
             document_id=document_id,
             owner_user_id=current_user.id,
@@ -162,7 +195,47 @@ def get_analysis(
     result = None
 
     if analysis.status == "READY":
+        if schema_version is None:
+            raise RuntimeError(
+                "Schema version associata all'Analysis non trovata."
+            )
+
+        schema = AnalysisSchemaResponse(
+            schema_id=schema_version.schema.id,
+            schema_version_id=schema_version.id,
+            name=schema_version.schema.name,
+            domain=schema_version.schema.domain,
+            version=schema_version.version,
+            entity_definitions=[
+                AnalysisEntityDefinitionResponse(
+                    label=definition.label,
+                    description=definition.description,
+                    color=definition.color,
+                    sort_order=definition.sort_order,
+                )
+                for definition in sorted(
+                    schema_version.entity_definitions,
+                    key=lambda item: item.sort_order,
+                )
+            ],
+            field_definitions=[
+                AnalysisFieldDefinitionResponse(
+                    field_key=definition.field_key,
+                    label=definition.label,
+                    description=definition.description,
+                    data_type=definition.data_type,
+                    is_required=definition.is_required,
+                    sort_order=definition.sort_order,
+                )
+                for definition in sorted(
+                    schema_version.field_definitions,
+                    key=lambda item: item.sort_order,
+                )
+            ],
+        )
+
         result = AnalysisResultResponse(
+            schema=schema,
             pages=[
                 DocumentPageResponse(
                     page_number=page.page_number,

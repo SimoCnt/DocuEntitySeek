@@ -35,11 +35,17 @@ class AnalysisQueryService:
             raise LookupError("Analysis non trovata.")
 
         if analysis.status != AnalysisStatus.READY.value:
-            return analysis, [], [], [], {}
+            return analysis, None, [], [], [], {}
+
+        schema_version = self.analyses.get_schema_version_with_definitions(analysis.schema_version_id)
+
+        if schema_version is None:
+            raise RuntimeError("Schema version associata all'Analysis non trovata.")
 
         pages = self.pages.list_for_document(document_id)
         entities = self.entities.list_for_analysis(analysis_id)
         fields = self.fields.list_for_analysis(analysis_id)
+
         candidates = self.candidates.list_for_extracted_fields([field.id for field in fields])
 
         candidates_by_field = defaultdict(list)
@@ -47,4 +53,11 @@ class AnalysisQueryService:
         for candidate in candidates:
             candidates_by_field[candidate.extracted_field_id].append(candidate)
 
-        return analysis, pages, entities, fields, candidates_by_field
+        return (
+            analysis,
+            schema_version,
+            pages,
+            entities,
+            fields,
+            candidates_by_field,
+        )

@@ -1,6 +1,6 @@
 from uuid import UUID
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, selectinload, joinedload
 from datetime import datetime, timezone
 
 from app.db.models import AnalysisModel, ExtractedFieldModel, ExtractionSchemaVersionModel, DocumentModel
@@ -129,6 +129,20 @@ class AnalysisRepository:
                 AnalysisModel.document_id == document_id,
                 DocumentModel.owner_user_id == owner_user_id,
             )
+        )
+
+        return self.session.scalar(statement)
+
+
+    def get_schema_version_with_definitions(self, schema_version_id: UUID) -> ExtractionSchemaVersionModel | None:
+        statement = (
+            select(ExtractionSchemaVersionModel)
+            .options(
+                joinedload(ExtractionSchemaVersionModel.schema),
+                selectinload(ExtractionSchemaVersionModel.entity_definitions),
+                selectinload(ExtractionSchemaVersionModel.field_definitions),
+            )
+            .where(ExtractionSchemaVersionModel.id == schema_version_id)
         )
 
         return self.session.scalar(statement)

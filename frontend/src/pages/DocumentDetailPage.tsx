@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 
-import AnalysisDemoSection from '../components/analysis/AnalysisDemoSection'
 import ErrorState from '../components/feedback/ErrorState'
 import LoadingState from '../components/feedback/LoadingState'
 import useAnalysis from '../hooks/useAnalysis'
@@ -12,6 +11,7 @@ import useStartAnalysis from '../hooks/useStartAnalysis'
 import type { RequestError } from '../api/http'
 import type { AnalysisStatus } from '../types/analysis'
 import { getAnalysisFailedDetails, getAnalysisQuotaExceededDetails } from '../utils/analysisErrors'
+import AnalysisResultViewer from '../components/analysis/AnalysisResultViewer'
 
 
 function getAnalysisStatusLabel(status: AnalysisStatus) {
@@ -172,7 +172,7 @@ function DocumentDetailPage() {
 
     if (!data) return null
 
-    const { document, analysis: viewerAnalysis } = data
+    const { document } = data
 
     const analysisStartErrorContent = analysisStartError
         ? getAnalysisStartErrorContent(
@@ -373,24 +373,63 @@ function DocumentDetailPage() {
                         )}
                 </section>
             )}
+           
+           {selectedAnalysisId && selectedAnalysisLoading && (
+                <LoadingState message="Caricamento del risultato dell’analisi..." />
+                )}
 
-            {viewerAnalysis ? (
-                <AnalysisDemoSection
-                    key={document.id}
-                    documentName={document.name}
-                    analysis={viewerAnalysis}
+                {selectedAnalysisId && selectedAnalysisError && (
+                <ErrorState
+                    message={selectedAnalysisError.message}
+                    onRetry={reloadSelectedAnalysis}
                 />
-            ) : (
-                <section className="page-section">
+                )}
+
+                {selectedAnalysis?.status === 'READY' && selectedAnalysis.result && (
+                <AnalysisResultViewer
+                    key={selectedAnalysis.id}
+                    documentName={document.name}
+                    result={selectedAnalysis.result}
+                />
+                )}
+
+                {selectedAnalysis?.status === 'READY' && !selectedAnalysis.result && (
+                <div className="empty-state">
+                    <h2>Risultato non disponibile</h2>
+                    <p>
+                    L’analisi risulta completata, ma non contiene un risultato visualizzabile.
+                    </p>
+                </div>
+                )}
+
+                {selectedAnalysis &&
+                (selectedAnalysis.status === 'QUEUED' || selectedAnalysis.status === 'PROCESSING') && (
                     <div className="empty-state">
-                        <h2>Viewer non ancora disponibile</h2>
-                        <p>
-                            Quando un'analisi sarà completata con successo,
-                            il risultato verrà mostrato qui.
-                        </p>
+                    <h2>Analisi in elaborazione</h2>
+                    <p>
+                        Il risultato verrà mostrato automaticamente quando l’elaborazione sarà completata.
+                    </p>
                     </div>
-                </section>
-            )}
+                )}
+
+                {selectedAnalysis?.status === 'ERROR' && (
+                <div className="empty-state">
+                    <h2>Analisi non completata</h2>
+                    <p>
+                    {selectedAnalysis.errorMessage ?? 'Si è verificato un errore durante l’analisi.'}
+                    </p>
+                </div>
+                )}
+
+                {!selectedAnalysisId && !selectedAnalysisLoading && (
+                <div className="empty-state">
+                    <h2>Nessuna analisi selezionata</h2>
+                    <p>
+                    Seleziona un’analisi disponibile oppure avviane una nuova.
+                    </p>
+                </div>
+                )}      
+
         </>
     )
 }
