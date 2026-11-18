@@ -132,3 +132,8 @@ class CustomSchemaDuplicateRequest(ApiModel):
             return value.strip()
 
         return value
+
+
+class CustomSchemaArchiveResponse(ApiModel):
+    schema_id: UUID
+    archived_at: datetime

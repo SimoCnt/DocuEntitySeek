@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from app.core.exceptions import CustomSchemasNotAvailableError, CustomSchemaNameConflictError, ExtractionSchemaNotFoundError, CustomSchemaArchivedError
 from app.dependencies import CurrentUserDep, CustomSchemaServiceDep, SchemaAccessServiceDep
-from app.schemas.custom_schema import CustomEntityDefinitionResponse, CustomFieldDefinitionResponse, CustomSchemaCreateRequest, CustomSchemaResponse, CustomSchemaSummaryResponse, CustomSchemaUpdateRequest, CustomSchemaDuplicateRequest
+from app.schemas.custom_schema import CustomEntityDefinitionResponse, CustomFieldDefinitionResponse, CustomSchemaCreateRequest, CustomSchemaResponse, CustomSchemaSummaryResponse, CustomSchemaUpdateRequest, CustomSchemaDuplicateRequest, CustomSchemaArchiveResponse
 from app.schemas.extraction_schema import AvailableExtractionSchemaResponse
 from app.services.custom_schema_models import CustomEntityDefinitionInput, CustomFieldDefinitionInput, CustomSchemaCreateCommand
 
@@ -261,17 +261,14 @@ def update_custom_schema(
     return _custom_schema_response(result)
 
 
-@router.delete("/custom/{schema_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/custom/{schema_id}", response_model=CustomSchemaArchiveResponse)
 def archive_custom_schema(
     schema_id: UUID,
     current_user: CurrentUserDep,
     service: CustomSchemaServiceDep,
-) -> None:
+) -> CustomSchemaArchiveResponse:
     try:
-        service.archive(
-            user_id=current_user.id,
-            schema_id=schema_id,
-        )
+        archived_at = service.archive(user_id=current_user.id, schema_id=schema_id)
 
     except ExtractionSchemaNotFoundError as exc:
         raise HTTPException(
@@ -290,6 +287,11 @@ def archive_custom_schema(
                 "message": "Gli schema personalizzati non sono disponibili per il piano corrente.",
             },
         ) from exc
+
+    return CustomSchemaArchiveResponse(
+        schema_id=schema_id,
+        archived_at=archived_at,
+    )
 
 
 @router.post(

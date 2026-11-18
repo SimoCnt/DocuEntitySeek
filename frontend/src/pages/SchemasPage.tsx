@@ -1,100 +1,287 @@
+import { useState } from 'react'
+
+import ErrorState from '../components/feedback/ErrorState'
+import LoadingState from '../components/feedback/LoadingState'
+import CustomSchemaForm from '../components/schemas/CustomSchemaForm'
+import { useAuth } from '../auth/AuthContext'
+import useCreateCustomSchema from '../hooks/useCreateCustomSchema'
+import useCustomSchemaActions from '../hooks/useCustomSchemaActions'
+import useCustomSchemas from '../hooks/useCustomSchemas'
 import useDocumentTitle from '../hooks/useDocumentTitle'
-
-const procurementEntities = [
-    'ORGANIZZAZIONE',
-    'PERSONA',
-    'LOCALITA',
-    'IMPORTO',
-    'DATA',
-    'ORA',
-    'RIFERIMENTO_NORMATIVO',
-    'IDENTIFICATIVO_GARA',
-    'CERTIFICAZIONE',
-    'PRODOTTO_SERVIZIO',
-]
-
-const procurementFields = [
-    'Stazione appaltante',
-    'Oggetto gara',
-    'CIG',
-    'CUP',
-    'CPV',
-    'Tipo procedura',
-    'Importo complessivo',
-    'Importo base asta',
-    'Durata contratto',
-    'Scadenza offerte',
-    'Termine chiarimenti',
-    'Criterio aggiudicazione',
-    'Responsabile procedimento',
-    'Luogo esecuzione',
-]
+import type { CustomSchema, CustomSchemaCreateRequest, CustomSchemaSummary } from '../types/customSchema'
 
 
 function SchemasPage() {
-    useDocumentTitle('Schemi | DocuEntitySeek')
+  const { user } = useAuth()
+  const customSchemasEnabled = user?.plan.customSchemasEnabled === true
+  const { schemas, isLoading, error, reload } = useCustomSchemas(customSchemasEnabled)
 
-    return (
-        <section className="page-section">
-            <div className="page-heading">
-                <span className="section-heading__eyebrow">Extraction schemas</span>
-                <h1>Schemi di estrazione</h1>
-                <p>Lo schema definisce quali entità e quali informazioni strutturate DocuEntitySeek deve cercare nei documenti.</p>
-            </div>
+  const {
+    isLoading: isCreating,
+    error: createError,
+    create,
+    clearError: clearCreateError,
+  } = useCreateCustomSchema()
 
-            <div className="schema-grid">
-                <article className="schema-card">
-                    <div className="schema-card__header">
-                        <div>
-                            <span className="schema-card__badge">BASE</span>
-                            <h2>Procurement</h2>
-                        </div>
+  const {
+    isLoading: isActing,
+    error: actionError,
+    load,
+    update,
+    duplicate,
+    archive,
+    clearError: clearActionError,
+  } = useCustomSchemaActions()
 
-                        <span>Predefinito</span>
-                    </div>
+  const [editingSchema, setEditingSchema] = useState<CustomSchema | null>(null)
 
-                    <div className="schema-card__section">
-                        <h3>Entità</h3>
+  useDocumentTitle('Schemi di estrazione | DocuEntitySeek')
 
-                        <div className="schema-tags">
-                            {procurementEntities.map((entity) => (
-                                <span key={entity}>{entity}</span>
-                            ))}
-                        </div>
-                    </div>
 
-                    <div className="schema-card__section">
-                        <h3>Campi strutturati</h3>
+  async function handleCreate(payload: CustomSchemaCreateRequest): Promise<boolean> {
+    clearCreateError()
 
-                        <ul>
-                            {procurementFields.map((field) => (
-                                <li key={field}>{field}</li>
-                            ))}
-                        </ul>
-                    </div>
-                </article>
+    const result = await create(payload)
 
-                <article className="schema-card schema-card--premium">
-                    <div className="schema-card__header">
-                        <div>
-                            <span className="schema-card__badge">PREMIUM</span>
-                            <h2>Schema personalizzato</h2>
-                        </div>
-                    </div>
+    if (!result) return false
 
-                    <p>Gli utenti Premium potranno creare entità e campi personalizzati e salvare configurazioni riutilizzabili.</p>
+    reload()
+    return true
+  }
 
-                    <button
-                        type="button"
-                        className="button button--secondary"
-                        disabled
-                    >
-                        Editor disponibile prossimamente
-                    </button>
-                </article>
-            </div>
-        </section>
+
+  async function handleOpenEdit(schemaId: string) {
+    clearActionError()
+
+    const result = await load(schemaId)
+
+    if (!result) return
+
+    setEditingSchema(result)
+  }
+
+
+  async function handleUpdate(payload: CustomSchemaCreateRequest): Promise<boolean> {
+    if (!editingSchema) return false
+
+    clearActionError()
+
+    const result = await update(editingSchema.schemaId, payload)
+
+    if (!result) return false
+
+    setEditingSchema(null)
+    reload()
+    return true
+  }
+
+
+  async function handleDuplicate(schema: CustomSchemaSummary) {
+    clearActionError()
+
+    const suggestedName = `${schema.name} - copia`
+    const name = window.prompt('Nome del nuovo schema', suggestedName)
+
+    if (!name?.trim()) return
+
+    const result = await duplicate(schema.schemaId, name.trim())
+
+    if (!result) return
+
+    reload()
+  }
+
+
+  async function handleArchive(schema: CustomSchemaSummary) {
+    clearActionError()
+
+    const confirmed = window.confirm(
+      `Archiviare lo schema "${schema.name}"? ` +
+      'Non sarà più disponibile per nuove analisi, ' +
+      'ma lo storico resterà conservato.',
     )
+
+    if (!confirmed) return
+
+    const success = await archive(schema.schemaId)
+
+    if (!success) return
+
+    if (editingSchema?.schemaId === schema.schemaId) {
+      setEditingSchema(null)
+    }
+
+    reload()
+  }
+
+  if (!customSchemasEnabled) {
+    return (
+      <section className="page-section">
+        <div className="empty-state">
+          <span className="section-heading__eyebrow">Funzionalità Premium</span>
+          <h1>Schemi personalizzati</h1>
+          <p>
+            Il tuo piano attuale utilizza lo schema predefinito. La creazione e gestione di
+            schemi personalizzati richiede un piano che abilita questa funzione.
+          </p>
+        </div>
+      </section>
+    )
+  }
+
+  const activeSchemas = schemas.filter((schema) => !schema.isArchived)
+  const archivedSchemas = schemas.filter((schema) => schema.isArchived)
+
+  return (
+    <>
+      <section className="page-section">
+        <div className="section-heading">
+          <span className="section-heading__eyebrow">Premium</span>
+          <h1>I miei schemi</h1>
+          <p>Crea e versiona schemi di estrazione personalizzati.</p>
+        </div>
+      </section>
+
+      {actionError && (
+        <section className="page-section">
+          <ErrorState message={actionError.message} />
+        </section>
+      )}
+
+      {editingSchema ? (
+        <section className="page-section">
+          <div className="section-heading">
+            <span className="section-heading__eyebrow">Modifica schema</span>
+            <h2>{editingSchema.name}</h2>
+            <p>
+              Il salvataggio creerà la versione {editingSchema.version + 1}.
+              La versione attuale resterà nello storico.
+            </p>
+          </div>
+
+          <CustomSchemaForm
+            initialValue={editingSchema}
+            isSubmitting={isActing}
+            errorMessage={actionError?.message ?? null}
+            submitLabel={`Salva come v${editingSchema.version + 1}`}
+            onCancel={() => setEditingSchema(null)}
+            onSubmit={handleUpdate}
+          />
+        </section>
+      ) : (
+        <section className="page-section">
+          <div className="section-heading">
+            <span className="section-heading__eyebrow">Nuovo schema</span>
+            <h2>Crea uno schema</h2>
+          </div>
+
+          <CustomSchemaForm
+            isSubmitting={isCreating}
+            errorMessage={createError?.message ?? null}
+            onSubmit={handleCreate}
+          />
+        </section>
+      )}
+
+      <section className="page-section">
+        <div className="section-heading">
+          <span className="section-heading__eyebrow">Schemi disponibili</span>
+          <h2>Schemi attivi</h2>
+        </div>
+
+        {isLoading && <LoadingState message="Caricamento degli schemi..." />}
+
+        {error && <ErrorState message={error.message} onRetry={reload} />}
+
+        {!isLoading && !error && activeSchemas.length === 0 && (
+          <div className="empty-state">
+            <h2>Nessuno schema personalizzato</h2>
+            <p>Crea il tuo primo schema utilizzando il modulo qui sopra.</p>
+          </div>
+        )}
+
+        {!isLoading && !error && activeSchemas.length > 0 && (
+          <div className="documents-grid">
+            {activeSchemas.map((schema) => (
+              <article key={schema.schemaId} className="document-card">
+                <div className="document-card__header">
+                  <span className="document-card__type">Schema custom</span>
+                  <span className="document-status document-status--ready">Attivo</span>
+                </div>
+
+                <h3>{schema.name}</h3>
+                <p>{schema.domain}</p>
+
+                <div className="document-card__meta">
+                  <span>Versione {schema.version}</span>
+                  <span>{schema.entityCount} entità</span>
+                  <span>{schema.fieldCount} campi</span>
+                </div>
+
+                <div className="schema-card__actions">
+                  <button
+                    type="button"
+                    className="button button--secondary"
+                    disabled={isActing}
+                    onClick={() => void handleOpenEdit(schema.schemaId)}
+                  >
+                    Modifica
+                  </button>
+
+                  <button
+                    type="button"
+                    className="button button--secondary"
+                    disabled={isActing}
+                    onClick={() => void handleDuplicate(schema)}
+                  >
+                    Duplica
+                  </button>
+
+                  <button
+                    type="button"
+                    className="button button--secondary"
+                    disabled={isActing}
+                    onClick={() => void handleArchive(schema)}
+                  >
+                    Archivia
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {archivedSchemas.length > 0 && (
+        <section className="page-section">
+          <div className="section-heading">
+            <span className="section-heading__eyebrow">Storico</span>
+            <h2>Schemi archiviati</h2>
+          </div>
+
+          <div className="documents-grid">
+            {archivedSchemas.map((schema) => (
+              <article key={schema.schemaId} className="document-card">
+                <div className="document-card__header">
+                  <span className="document-card__type">Schema custom</span>
+                  <span className="document-status document-status--error">Archiviato</span>
+                </div>
+
+                <h3>{schema.name}</h3>
+                <p>{schema.domain}</p>
+
+                <div className="document-card__meta">
+                  <span>Versione {schema.version}</span>
+                  <span>{schema.entityCount} entità</span>
+                  <span>{schema.fieldCount} campi</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+    </>
+  )
 }
 
 export default SchemasPage

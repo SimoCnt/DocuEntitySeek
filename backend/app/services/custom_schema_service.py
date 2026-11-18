@@ -307,14 +307,16 @@ class CustomSchemaService:
             raise
 
 
-    def archive(self, *, user_id: UUID, schema_id: UUID) -> None:
+    def archive(
+            self, 
+            *, 
+            user_id: UUID, 
+            schema_id: UUID
+            ) -> datetime:
         self.schema_access_service.assert_custom_schemas_enabled(user_id=user_id)
 
         try:
-            schema = self.repository.get_owned_schema_for_update(
-                user_id=user_id,
-                schema_id=schema_id,
-            )
+            schema = self.repository.get_owned_schema_for_update(user_id=user_id, schema_id=schema_id)
 
             if schema is None:
                 raise ExtractionSchemaNotFoundError("Schema di estrazione non trovato.")
@@ -322,7 +324,10 @@ class CustomSchemaService:
             if schema.archived_at is None:
                 schema.archived_at = datetime.now(timezone.utc)
 
+            archived_at = schema.archived_at
             self.session.commit()
+
+            return archived_at
 
         except Exception:
             self.session.rollback()
