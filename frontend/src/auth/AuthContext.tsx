@@ -1,10 +1,10 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 
-import { getCurrentUser, loginUser } from '../api/authApi'
+import { getCurrentUser, loginUser, getAnalysisQuota } from '../api/authApi'
 import { isAbortError, normalizeRequestError, type RequestError } from '../api/http'
 import { clearStoredAccessToken, getStoredAccessToken, storeAccessToken } from './authStorage'
-import type { UserResponse } from '../types/auth'
+import type { UserResponse, AnalysisQuotaResponse } from '../types/auth'
 
 
 type AuthStatus = 'checking' | 'authenticated' | 'anonymous' | 'error'
@@ -12,6 +12,7 @@ type AuthStatus = 'checking' | 'authenticated' | 'anonymous' | 'error'
 
 type AuthContextValue = {
   user: UserResponse | null
+  analysisQuota: AnalysisQuotaResponse | null
   accessToken: string | null
   status: AuthStatus
   error: RequestError | null
@@ -19,6 +20,7 @@ type AuthContextValue = {
   login: (email: string, password: string) => Promise<void>
   logout: () => void
   refreshUser: () => Promise<void>
+  refreshAnalysisQuota: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -26,6 +28,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserResponse | null>(null)
+  const [analysisQuota, setAnalysisQuota] = useState<AnalysisQuotaResponse | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(() => getStoredAccessToken())
   const [status, setStatus] = useState<AuthStatus>('checking')
   const [error, setError] = useState<RequestError | null>(null)
@@ -34,9 +37,34 @@ function AuthProvider({ children }: { children: ReactNode }) {
     clearStoredAccessToken()
     setAccessToken(null)
     setUser(null)
+    setAnalysisQuota(null)
     setError(null)
     setStatus('anonymous')
   }, [])
+
+  const loadAnalysisQuota = useCallback(
+    async (token: string, signal?: AbortSignal) => {
+      try {
+        const quota = await getAnalysisQuota(token, signal)
+
+        if (signal?.aborted) return
+
+        setAnalysisQuota(quota)
+      } catch (requestError) {
+        if (signal?.aborted || isAbortError(requestError)) return
+
+        const normalized = normalizeRequestError(requestError)
+
+        if (normalized.status === 401 || normalized.status === 403) {
+          logout()
+          return
+        }
+
+        setAnalysisQuota(null)
+      }
+    },
+    [logout],
+  )
 
   const validateToken = useCallback(async (token: string, signal?: AbortSignal) => {
     try {
@@ -47,6 +75,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
       setUser(currentUser)
       setError(null)
       setStatus('authenticated')
+      void loadAnalysisQuota(token, signal)
     } catch (requestError) {
       if (signal?.aborted || isAbortError(requestError)) return
 
@@ -59,7 +88,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
       setError(normalized)
       setStatus('error')
     }
-  }, [logout])
+  }, [loadAnalysisQuota, logout])
 
   useEffect(() => {
     const token = getStoredAccessToken()
@@ -81,7 +110,8 @@ function AuthProvider({ children }: { children: ReactNode }) {
     setUser(currentUser)
     setError(null)
     setStatus('authenticated')
-  }, [])
+    void loadAnalysisQuota(tokenResponse.access_token)
+  }, [loadAnalysisQuota])
 
   const refreshUser = useCallback(async () => {
     const token = accessToken ?? getStoredAccessToken()
@@ -94,15 +124,28 @@ function AuthProvider({ children }: { children: ReactNode }) {
     await validateToken(token)
   }, [accessToken, logout, validateToken])
 
+  const refreshAnalysisQuota = useCallback(async () => {
+    const token = accessToken ?? getStoredAccessToken()
+
+    if (!token) {
+      setAnalysisQuota(null)
+      return
+    }
+
+    await loadAnalysisQuota(token)
+  }, [accessToken, loadAnalysisQuota])
+
   const value = useMemo(() => ({
     user,
+    analysisQuota,
     accessToken,
     status,
     error,
     login,
     logout,
     refreshUser,
-  }), [user, accessToken, status, error, login, logout, refreshUser])
+    refreshAnalysisQuota
+  }), [user, analysisQuota, accessToken, status, error, login, logout, refreshUser, refreshAnalysisQuota])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

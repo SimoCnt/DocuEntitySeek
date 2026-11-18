@@ -1,4 +1,4 @@
-import type { DocumentAnalysis } from './analysis'
+import type { DocumentAnalysis } from './analysisDemo'
 
 
 export type DocumentStatus =

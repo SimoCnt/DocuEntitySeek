@@ -52,10 +52,12 @@ class UserModel(Base):
 class ExtractionSchemaModel(Base):
     __tablename__ = "extraction_schemas"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
+    structure_key: Mapped[str] = mapped_column(String(120), nullable=False, unique=True)
     owner_user_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     domain: Mapped[str] = mapped_column(String(120), nullable=False)
     is_builtin: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=sql_text("FALSE"))
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     owner: Mapped["UserModel | None"] = relationship(back_populates="schemas")
     versions: Mapped[list["ExtractionSchemaVersionModel"]] = relationship(back_populates="schema", passive_deletes=True)
@@ -132,6 +134,27 @@ class DocumentPageModel(Base):
     document: Mapped["DocumentModel"] = relationship(back_populates="pages")
 
 
+class AiRuntimeConfigModel(Base):
+    __tablename__ = "ai_runtime_configs"
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    engine: Mapped[str] = mapped_column(String(50), nullable=False)
+    model_id: Mapped[str] = mapped_column(Text, nullable=False)
+    model_revision: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    chunk_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    chunk_overlap: Mapped[int] = mapped_column(Integer, nullable=False)
+    entity_threshold: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+    field_threshold: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+    batch_size: Mapped[int] = mapped_column(Integer, nullable=False, server_default=sql_text("8"))
+    num_workers: Mapped[int] = mapped_column(Integer, nullable=False, server_default=sql_text("0"))
+    overlap_policy: Mapped[str] = mapped_column(String(20), nullable=False, server_default=sql_text("'allow'"))
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=sql_text("FALSE"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    analyses: Mapped[list["AnalysisModel"]] = relationship(back_populates="ai_runtime_config")
+
+
 # ============================================================
 # ANALYSES
 # ============================================================
@@ -141,16 +164,19 @@ class AnalysisModel(Base):
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
     document_id: Mapped[UUID] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
     schema_version_id: Mapped[UUID] = mapped_column(ForeignKey("extraction_schema_versions.id", ondelete="RESTRICT"), nullable=False)
-    status: Mapped[str] = mapped_column(String(30), nullable=False, server_default=sql_text("'PENDING'"))
+    ai_runtime_config_id: Mapped[UUID | None] = mapped_column(ForeignKey("ai_runtime_configs.id", ondelete="RESTRICT"), nullable=True)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, server_default=sql_text("'QUEUED'"))
     config: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=sql_text("'{}'::jsonb"))
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    quota_consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     document: Mapped["DocumentModel"] = relationship(back_populates="analyses")
     schema_version: Mapped["ExtractionSchemaVersionModel"] = relationship(back_populates="analyses")
     entity_occurrences: Mapped[list["EntityOccurrenceModel"]] = relationship(back_populates="analysis", passive_deletes=True)
     extracted_fields: Mapped[list["ExtractedFieldModel"]] = relationship(back_populates="analysis", passive_deletes=True)
+    ai_runtime_config: Mapped["AiRuntimeConfigModel | None"] = relationship(back_populates="analyses")
 
 
 class EntityOccurrenceModel(Base):

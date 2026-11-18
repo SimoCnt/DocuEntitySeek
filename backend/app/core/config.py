@@ -1,3 +1,4 @@
+from pathlib import Path
 from pydantic import Field
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -8,8 +9,10 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     app_env: str = "development"
     debug: bool = True
-
+    app_log_level: str = "INFO"
     api_v1_prefix: str = "/api/v1"
+    document_storage_root: Path = Path("storage/documents")
+    pdf_text_sort: bool = False
     
     cors_origins: list[str] = [
         "http://localhost:5173",
@@ -29,6 +32,10 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = 30
     jwt_issuer: str = "docuentityseek-api"
     jwt_audience: str = "docuentityseek-web"
+
+    ai_model_device: str = "auto"
+    ai_model_quantize: bool = False
+    ai_model_compile: bool = False
 
     model_config = SettingsConfigDict(
         env_file=".env",

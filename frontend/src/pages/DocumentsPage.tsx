@@ -83,22 +83,13 @@ function DocumentsPage() {
                                 <span>Caricato il{' '}{document.uploadedAt}</span>
                             </div>
 
-                            {document.status === 'READY' ? (
-                                <Link
-                                    to={`/documents/${document.id}`}
-                                    className="button button--primary"
-                                >
-                                    Apri documento
-                                </Link>
-                            ) : (
-                                <button
-                                    type="button"
-                                    className="button button--secondary"
-                                    disabled
-                                >
-                                    Non disponibile
-                                </button>
-                            )}
+                            <Link
+                                to={`/documents/${document.id}`}
+                                className="button button--primary"
+                            >
+                                Apri documento
+                            </Link>
+                            
                         </article>
                     ))}
                 </div>

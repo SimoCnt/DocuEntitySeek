@@ -17,6 +17,7 @@ export type RequestError = {
     message: string
     status?: number
     code?: string
+    details?: unknown
 }
 
 
@@ -29,13 +30,15 @@ export class HttpError extends Error {
     readonly status: number
     readonly url: string
     readonly code?: string
+    readonly details?: unknown
 
-    constructor(message: string, status: number, url: string, code?: string) {
+    constructor(message: string, status: number, url: string, code?: string, details?: unknown) {
         super(message)
         this.name = 'HttpError'
         this.status = status
         this.url = url
         this.code = code
+        this.details = details
     }
 }
 
@@ -71,6 +74,7 @@ export function normalizeRequestError(error: unknown): RequestError {
             message: error.message,
             status: error.status,
             code: error.code,
+            details: error.details
         }
     }
 
@@ -109,6 +113,7 @@ export async function requestJson<T>(path: string, options: RequestOptions = {})
             response.status,
             url,
             apiError?.code,
+            apiError?.details
         )
     }
 

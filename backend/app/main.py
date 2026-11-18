@@ -3,10 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.core.config import get_settings
+from app.core.logging import configure_logging
 from app.core.error_handlers import register_exception_handlers
 
 
 def create_application() -> FastAPI:
+    configure_logging()
     settings = get_settings()
 
     app = FastAPI(
@@ -23,7 +25,7 @@ def create_application() -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=["Content-Type", "Authorization"]
     )
 

@@ -4,19 +4,16 @@ import type { DocumentCategory } from '../../types/upload'
 type UploadSummaryProps = {
     file: File
     category: DocumentCategory
+    schemaName: string
 }
 
 
 function formatFileSize(bytes: number) {
-    if (bytes < 1024) {
-        return `${bytes} B`
-    }
+    if (bytes < 1024) return `${bytes} B`
 
     const kilobytes = bytes / 1024
 
-    if (kilobytes < 1024) {
-        return `${kilobytes.toFixed(1)} KB`
-    }
+    if (kilobytes < 1024) return `${kilobytes.toFixed(1)} KB`
 
     const megabytes = kilobytes / 1024
 
@@ -24,7 +21,7 @@ function formatFileSize(bytes: number) {
 }
 
 
-function UploadSummary({ file, category }: UploadSummaryProps) {
+function UploadSummary({ file, category, schemaName }: UploadSummaryProps) {
     return (
         <dl className="upload-summary">
             <div>
@@ -44,7 +41,7 @@ function UploadSummary({ file, category }: UploadSummaryProps) {
 
             <div>
                 <dt>Schema</dt>
-                <dd>Procurement</dd>
+                <dd>{schemaName}</dd>
             </div>
         </dl>
     )

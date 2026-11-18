@@ -5,6 +5,38 @@ BEGIN;
 -- ============================================================
 
 
+INSERT INTO ai_runtime_configs (
+    name, version, 
+    engine, 
+    model_id, 
+    model_revision,
+    chunk_size, 
+    chunk_overlap, 
+    batch_size, 
+    num_workers, 
+    overlap_policy,
+    entity_threshold, 
+    field_threshold, 
+    is_active
+)
+VALUES (
+    'Default GLiNER2', 
+    1, 
+    'GLINER2', 
+    'fastino/gliner2.5-multi-v1', 
+    NULL,
+    512,
+    96, 
+    8, 
+    0, 
+    'allow',
+    0.5000, 
+    0.5000, 
+    TRUE
+)
+ON CONFLICT (name, version) DO NOTHING;
+
+
 -- ============================================================
 -- 1. PIANI
 -- ============================================================
@@ -63,12 +95,14 @@ WHERE NOT EXISTS (
 
 INSERT INTO extraction_schemas (
     owner_user_id,
+    structure_key,
     name,
     domain,
     is_builtin
 )
 SELECT
     NULL,
+    'procurement_document',
     'Procurement',
     'Public Procurement',
     TRUE

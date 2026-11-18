@@ -39,6 +39,15 @@ class UserResponse(ApiModel):
     last_login_at: datetime | None
 
 
+class AnalysisQuotaResponse(ApiModel):
+    plan_code: PlanCode
+    daily_limit: int | None
+    used_or_reserved: int
+    remaining: int | None
+    resets_at: datetime
+    is_unlimited: bool
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: Literal["bearer"] = "bearer"

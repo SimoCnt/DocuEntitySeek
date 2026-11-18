@@ -151,6 +151,8 @@ CREATE TABLE extraction_schemas (
     -- UUID dell'utente per gli schemi personalizzati.
     owner_user_id UUID,
 
+    structure_key VARCHAR(120) NOT NULL UNIQUE,
+
     -- Nome dello schema.
     name VARCHAR(120) NOT NULL,
 
@@ -161,6 +163,10 @@ CREATE TABLE extraction_schemas (
     -- FALSE: schema creato da un utente.
     is_builtin BOOLEAN NOT NULL DEFAULT FALSE,
 
+    -- Data di archiviazione dello schema.
+    -- NULL significa che lo schema è disponibile per nuove analisi.
+    archived_at TIMESTAMPTZ,
+
     -- Data di creazione.
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
@@ -170,6 +176,8 @@ CREATE TABLE extraction_schemas (
         FOREIGN KEY (owner_user_id)
         REFERENCES users(id)
         ON DELETE CASCADE,
+
+    CONSTRAINT ck_extraction_schemas_structure_key CHECK (LENGTH(TRIM(structure_key)) > 0),
 
     -- Verifica la coerenza della proprietà.
     -- Uno schema builtin non deve avere proprietario.
@@ -516,6 +524,60 @@ CREATE TABLE document_pages (
 
 
 -- ============================================================
+-- 9. TABELLA: ai_runtime_configs
+-- ============================================================
+CREATE TABLE ai_runtime_configs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(120) NOT NULL,
+    version INTEGER NOT NULL,
+    engine VARCHAR(50) NOT NULL,
+    model_id TEXT NOT NULL,
+    model_revision VARCHAR(120),
+    chunk_size INTEGER NOT NULL,
+    chunk_overlap INTEGER NOT NULL,
+    entity_threshold NUMERIC(5, 4) NOT NULL,
+    field_threshold NUMERIC(5, 4) NOT NULL,
+    batch_size INTEGER NOT NULL DEFAULT 8,
+    num_workers INTEGER NOT NULL DEFAULT 0,
+    overlap_policy VARCHAR(20) NOT NULL DEFAULT 'allow',
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),    
+
+    CONSTRAINT uq_ai_runtime_configs_name_version UNIQUE (name, version),
+    CONSTRAINT ck_ai_runtime_configs_version CHECK (version > 0),
+    CONSTRAINT ck_ai_runtime_configs_engine CHECK (LENGTH(TRIM(engine)) > 0),
+    CONSTRAINT ck_ai_runtime_configs_model CHECK (LENGTH(TRIM(model_id)) > 0),
+    CONSTRAINT ck_ai_runtime_configs_chunk_size CHECK (chunk_size > 0),
+    CONSTRAINT ck_ai_runtime_configs_chunk_overlap CHECK (
+        chunk_overlap >= 0
+        AND chunk_overlap < chunk_size
+    ),
+    CONSTRAINT ck_ai_runtime_configs_entity_threshold CHECK (
+        entity_threshold BETWEEN 0 AND 1
+    ),
+    CONSTRAINT ck_ai_runtime_configs_field_threshold CHECK (
+        field_threshold BETWEEN 0 AND 1
+    ),
+    CONSTRAINT ck_ai_runtime_configs_batch_size CHECK (batch_size > 0),
+    CONSTRAINT ck_ai_runtime_configs_num_workers CHECK (num_workers >= 0),
+    CONSTRAINT ck_ai_runtime_configs_overlap_policy CHECK (
+            overlap_policy IN (
+                'allow',
+                'nested',
+                'flat',
+                'disallow',
+                'longest'
+            )
+        )
+);
+
+CREATE UNIQUE INDEX uq_ai_runtime_configs_active
+ON ai_runtime_configs (is_active)
+WHERE is_active = TRUE;
+
+
+-- ============================================================
 -- 9. TABELLA: analyses
 -- ============================================================
 
@@ -542,7 +604,7 @@ CREATE TABLE analyses (
     schema_version_id UUID NOT NULL,
 
     -- Stato dell'analisi.
-    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    status VARCHAR(30) NOT NULL DEFAULT 'QUEUED',
 
     -- Configurazione dell'analisi in formato JSON.
     -- Esempio:
@@ -561,6 +623,12 @@ CREATE TABLE analyses (
     -- Istante di completamento.
     completed_at TIMESTAMPTZ,
 
+    quota_consumed_at TIMESTAMPTZ,
+
+    ai_runtime_config_id UUID
+        REFERENCES ai_runtime_configs(id)
+        ON DELETE RESTRICT,
+
     -- Relazione con il documento analizzato.
     CONSTRAINT fk_analyses_document
         FOREIGN KEY (document_id)
@@ -575,15 +643,8 @@ CREATE TABLE analyses (
         ON DELETE RESTRICT,
 
     -- Stati dell'analisi consentiti.
-    CONSTRAINT ck_analysis_status
-        CHECK (
-            status IN (
-                'PENDING',
-                'PROCESSING',
-                'COMPLETED',
-                'ERROR'
-            )
-        ),
+   CONSTRAINT ck_analysis_status
+    CHECK (status IN ('QUEUED', 'PROCESSING', 'READY', 'ERROR')),
 
     -- L'analisi non può terminare prima di iniziare.
     CONSTRAINT ck_analysis_times
