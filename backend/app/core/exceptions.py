@@ -76,3 +76,7 @@ class ExtractionSchemaNotFoundError(Exception):
 
 class CustomSchemasNotAvailableError(Exception):
     pass
+
+
+class CustomSchemaNameConflictError(Exception):
+    pass

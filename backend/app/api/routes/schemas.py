@@ -1,8 +1,9 @@
+from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
 
-from app.core.exceptions import CustomSchemasNotAvailableError
+from app.core.exceptions import CustomSchemasNotAvailableError, CustomSchemaNameConflictError, ExtractionSchemaNotFoundError
 from app.dependencies import CurrentUserDep, CustomSchemaServiceDep, SchemaAccessServiceDep
-from app.schemas.custom_schema import CustomEntityDefinitionResponse, CustomFieldDefinitionResponse, CustomSchemaCreateRequest, CustomSchemaResponse, CustomSchemaSummaryResponse
+from app.schemas.custom_schema import CustomEntityDefinitionResponse, CustomFieldDefinitionResponse, CustomSchemaCreateRequest, CustomSchemaResponse, CustomSchemaSummaryResponse, CustomSchemaUpdateRequest
 from app.schemas.extraction_schema import AvailableExtractionSchemaResponse
 from app.services.custom_schema_models import CustomEntityDefinitionInput, CustomFieldDefinitionInput, CustomSchemaCreateCommand
 
@@ -98,6 +99,15 @@ def create_custom_schema(
             ),
         )
 
+    except CustomSchemaNameConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "CUSTOM_SCHEMA_NAME_CONFLICT",
+                "message": "Esiste già uno schema personalizzato con questo nome.",
+            },
+        ) from exc
+
     except CustomSchemasNotAvailableError as exc:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -143,3 +153,96 @@ def list_custom_schemas(
         )
         for schema in schemas
     ]
+
+
+@router.get("/custom/{schema_id}", response_model=CustomSchemaResponse)
+def get_custom_schema(
+    schema_id: UUID,
+    current_user: CurrentUserDep,
+    service: CustomSchemaServiceDep,
+) -> CustomSchemaResponse:
+    try:
+        result = service.get_owned(user_id=current_user.id, schema_id=schema_id)
+
+    except ExtractionSchemaNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "EXTRACTION_SCHEMA_NOT_FOUND",
+                "message": "Schema di estrazione non trovato.",
+            },
+        ) from exc
+
+    except CustomSchemasNotAvailableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "CUSTOM_SCHEMAS_NOT_AVAILABLE",
+                "message": "Gli schema personalizzati non sono disponibili per il piano corrente.",
+            },
+        ) from exc
+
+    return _custom_schema_response(result)
+
+
+@router.put("/custom/{schema_id}", response_model=CustomSchemaResponse)
+def update_custom_schema(
+    schema_id: UUID,
+    payload: CustomSchemaUpdateRequest,
+    current_user: CurrentUserDep,
+    service: CustomSchemaServiceDep,
+) -> CustomSchemaResponse:
+    try:
+        result = service.update(
+            user_id=current_user.id,
+            schema_id=schema_id,
+            command=CustomSchemaCreateCommand(
+                name=payload.name,
+                domain=payload.domain,
+                entities=tuple(
+                    CustomEntityDefinitionInput(
+                        label=entity.label,
+                        description=entity.description,
+                    )
+                    for entity in payload.entities
+                ),
+                fields=tuple(
+                    CustomFieldDefinitionInput(
+                        field_key=field.field_key,
+                        label=field.label,
+                        description=field.description,
+                        is_required=field.is_required,
+                    )
+                    for field in payload.fields
+                ),
+            ),
+        )
+
+    except ExtractionSchemaNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "EXTRACTION_SCHEMA_NOT_FOUND",
+                "message": "Schema di estrazione non trovato.",
+            },
+        ) from exc
+
+    except CustomSchemaNameConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "CUSTOM_SCHEMA_NAME_CONFLICT",
+                "message": "Esiste già uno schema personalizzato con questo nome.",
+            },
+        ) from exc
+
+    except CustomSchemasNotAvailableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "CUSTOM_SCHEMAS_NOT_AVAILABLE",
+                "message": "Gli schema personalizzati non sono disponibili per il piano corrente.",
+            },
+        ) from exc
+
+    return _custom_schema_response(result)

@@ -74,6 +74,10 @@ class CustomSchemaCreateRequest(ApiModel):
         return self
 
 
+class CustomSchemaUpdateRequest(CustomSchemaCreateRequest):
+    pass
+
+
 class CustomEntityDefinitionResponse(ApiModel):
     id: UUID
     label: str
