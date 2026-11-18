@@ -317,6 +317,10 @@
   .app-header__link--active::after {
     bottom: 3px;
   }
+
+  .analysis-viewer__layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 

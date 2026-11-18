@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 
+import AnalysisResultViewer from '../components/analysis/AnalysisResultViewer'
 import ErrorState from '../components/feedback/ErrorState'
 import LoadingState from '../components/feedback/LoadingState'
 import useAnalysis from '../hooks/useAnalysis'
@@ -8,69 +9,6 @@ import useDocumentAnalyses from '../hooks/useDocumentAnalyses'
 import useDocumentDetail from '../hooks/useDocumentDetail'
 import useDocumentTitle from '../hooks/useDocumentTitle'
 import useStartAnalysis from '../hooks/useStartAnalysis'
-import type { RequestError } from '../api/http'
-import type { AnalysisStatus } from '../types/analysis'
-import { getAnalysisFailedDetails, getAnalysisQuotaExceededDetails } from '../utils/analysisErrors'
-import AnalysisResultViewer from '../components/analysis/AnalysisResultViewer'
-
-
-function getAnalysisStatusLabel(status: AnalysisStatus) {
-    switch (status) {
-        case 'QUEUED':
-            return 'In coda'
-
-        case 'PROCESSING':
-            return 'In elaborazione'
-
-        case 'READY':
-            return 'Pronta'
-
-        case 'ERROR':
-            return 'Errore'
-    }
-}
-
-
-function getAnalysisStartErrorContent(error: RequestError) {
-    const quota = getAnalysisQuotaExceededDetails(error)
-
-    if (quota) {
-        const resetsAt = new Date(quota.resetsAt).toLocaleString('it-IT')
-
-        return {
-            title: 'Quota giornaliera raggiunta',
-            message: `Hai utilizzato ${quota.used} analisi su ${quota.dailyLimit}. La quota sarà nuovamente disponibile dal ${resetsAt}.`
-        }
-    }
-
-    switch (error.code) {
-        case 'ANALYSIS_FAILED':
-            return {
-                title: 'Analisi non completata',
-                message:
-                    'L’elaborazione AI è terminata con un errore. L’Analysis è stata registrata nella cronologia.'
-            }
-
-        case 'AI_CONFIGURATION_UNAVAILABLE':
-            return {
-                title: 'Servizio AI non disponibile',
-                message: 'La configurazione del servizio AI non è attualmente disponibile.',
-            }
-
-        case 'DOCUMENT_NOT_FOUND':
-            return {
-                title: 'Documento non trovato',
-                message: 'Il documento non è più disponibile o non appartiene al tuo account.',
-            }
-
-        default:
-            return {
-                title: 'Impossibile avviare l’analisi',
-                message: error.message,
-            }
-    }
-}
-
 
 function DocumentDetailPage() {
     const { documentId = '' } = useParams<{ documentId: string }>()
@@ -114,31 +52,55 @@ function DocumentDetailPage() {
         reload: reloadSelectedAnalysis,
     } = useAnalysis(documentId || undefined, selectedAnalysisId)
 
+    const hasRunningAnalyses = analyses.some(
+        (analysis) => analysis.status === 'QUEUED' || analysis.status === 'PROCESSING',
+    )
+
+    const selectedAnalysisIsRunning =
+        selectedAnalysis?.status === 'QUEUED' || selectedAnalysis?.status === 'PROCESSING'
+
+    useEffect(() => {
+        if (!hasRunningAnalyses) return
+
+        const intervalId = window.setInterval(() => {
+            reloadAnalyses()
+        }, 2000)
+
+        return () => window.clearInterval(intervalId)
+    }, [hasRunningAnalyses, reloadAnalyses])
+
+    useEffect(() => {
+        if (!selectedAnalysisId || !selectedAnalysisIsRunning) return
+
+        const intervalId = window.setInterval(() => {
+            reloadSelectedAnalysis()
+        }, 2000)
+
+        return () => window.clearInterval(intervalId)
+    }, [selectedAnalysisId, selectedAnalysisIsRunning, reloadSelectedAnalysis])
+
     useDocumentTitle(data ? `${data.document.name} | DocuEntitySeek` : 'Documento | DocuEntitySeek')
 
-
     async function handleStartAnalysis() {
-        if (!documentId) return
-
-        const schemaVersionId = selectedAnalysis?.schemaVersionId ?? analyses[0]?.schemaVersionId
-        const outcome = await runAnalysis(documentId, schemaVersionId)
-
-        if (outcome.ok === false) {
-            const failedAnalysis = getAnalysisFailedDetails(outcome.error)
-
-            if (failedAnalysis) {
-                setSelectedAnalysisId(failedAnalysis.analysisId)
-                reloadAnalyses()
-            }
-
+        if (
+            !documentId ||
+            hasRunningAnalyses
+        ) {
             return
         }
 
-        setSelectedAnalysisId(outcome.data.analysisId)
-        reloadAnalyses()
-        reloadDocument()
-    }
+        const result = await runAnalysis(documentId)
 
+        if (!result.ok) {
+            return
+        }
+
+        setSelectedAnalysisId(
+            result.data.analysisId,
+        )
+
+        reloadAnalyses()
+    }
 
     if (isLoading) {
         return (
@@ -154,6 +116,7 @@ function DocumentDetailPage() {
                 <div className="empty-state">
                     <span className="empty-state__code">Documento non trovato</span>
                     <h1>Il documento richiesto non esiste.</h1>
+
                     <Link to="/documents" className="button button--primary">
                         Torna ai documenti
                     </Link>
@@ -173,12 +136,6 @@ function DocumentDetailPage() {
     if (!data) return null
 
     const { document } = data
-
-    const analysisStartErrorContent = analysisStartError
-        ? getAnalysisStartErrorContent(
-            analysisStartError,
-        )
-        : null
 
     return (
         <>
@@ -212,25 +169,19 @@ function DocumentDetailPage() {
                     <button
                         type="button"
                         className="button button--primary"
-                        disabled={analysisRunning}
+                        disabled={analysisRunning || hasRunningAnalyses}
                         onClick={() => void handleStartAnalysis()}
                     >
-                        {analysisRunning ? 'Analisi in corso...' : 'Analizza nuovamente'}
+                        {analysisRunning || hasRunningAnalyses ? 'Analisi in corso...' : 'Analizza documento'}
                     </button>
-
-                    {analysisRunning && (
-                        <div className="frontend-notice">
-                            <strong>In elaborazione</strong>
-                            <p>Il documento è in fase di analisi. I risultati compariranno automaticamente quando l'elaborazione sarà completata.</p>
-                        </div>
-                    )}
                 </div>
 
-                {analysisStartErrorContent && <ErrorState title={analysisStartErrorContent.title} message={analysisStartErrorContent.message} />}
+                {analysisStartError && <ErrorState message={analysisStartError.message} />}
 
                 {startedAnalysis && (
                     <div className="frontend-notice">
                         <strong>Ultima analisi completata: {startedAnalysis.status}</strong>
+
                         <p>
                             {startedAnalysis.pipeline.entityCount} entità
                             {' · '}
@@ -267,7 +218,7 @@ function DocumentDetailPage() {
                                     <span className="document-card__type">Analysis</span>
 
                                     <span className={`document-status document-status--${analysis.status.toLowerCase()}`}>
-                                        {getAnalysisStatusLabel(analysis.status)}
+                                        {analysis.status}
                                     </span>
                                 </div>
 
@@ -275,17 +226,19 @@ function DocumentDetailPage() {
 
                                 <div className="document-card__meta">
                                     <span>{analysis.id}</span>
-                                    {analysis.status === 'ERROR' &&
-                                        analysis.errorMessage && (
-                                            <span>
-                                                {analysis.errorMessage}
-                                            </span>
-                                        )}
+                                    <span>Schema version: {analysis.schemaVersionId.slice(0, 8)}</span>
                                 </div>
+
+                                {(analysis.status === 'QUEUED' || analysis.status === 'PROCESSING') && (
+                                    <p className="document-card__processing" role="status">
+                                        Elaborazione AI in corso...
+                                    </p>
+                                )}
 
                                 <button
                                     type="button"
                                     className="button button--secondary"
+                                    disabled={selectedAnalysisId === analysis.id}
                                     onClick={() => setSelectedAnalysisId(analysis.id)}
                                 >
                                     {selectedAnalysisId === analysis.id ? 'Selezionata' : 'Apri analisi'}
@@ -308,128 +261,91 @@ function DocumentDetailPage() {
                     )}
 
                     {selectedAnalysisError && (
-                        <ErrorState message={selectedAnalysisError.message} onRetry={reloadSelectedAnalysis} />
-                    )}
-
-                    {!selectedAnalysisLoading && !selectedAnalysisError && selectedAnalysis?.status === 'QUEUED' && (
-                        <div className="frontend-notice">
-                            <strong>Analisi in coda</strong>
-                            <p>L'analisi è stata registrata ed è in attesa di elaborazione.</p>
-                            <button
-                                type="button"
-                                className="button button--secondary"
-                                onClick={reloadSelectedAnalysis}
-                            >
-                                Aggiorna stato
-                            </button>
-                        </div>
-                    )}
-
-                    {!selectedAnalysisLoading && !selectedAnalysisError && selectedAnalysis?.status === 'PROCESSING' && (
-                        <div className="frontend-notice">
-                            <strong>Analisi in elaborazione</strong>
-                            <p>Il documento è attualmente in elaborazione.</p>
-                            <button
-                                type="button"
-                                className="button button--secondary"
-                                onClick={reloadSelectedAnalysis}
-                            >
-                                Aggiorna stato
-                            </button>
-                        </div>
-                    )}
-
-                    {!selectedAnalysisLoading && !selectedAnalysisError && selectedAnalysis?.status === 'ERROR' && (
                         <ErrorState
-                            title="Analisi non completata"
-                            message={selectedAnalysis.errorMessage ?? 'L’analisi è terminata con un errore.'}
+                            message={selectedAnalysisError.message}
+                            onRetry={reloadSelectedAnalysis}
                         />
                     )}
 
-                    {!selectedAnalysisLoading &&
-                        !selectedAnalysisError &&
-                        selectedAnalysis?.status === 'READY' &&
-                        selectedAnalysis.result && (
-                            <div className="frontend-notice">
-                                <strong>Analisi pronta</strong>
-                                <p>
-                                    {selectedAnalysis.result.pages.length} pagine
-                                    {' · '}
-                                    {selectedAnalysis.result.entities.length} entità
-                                    {' · '}
-                                    {selectedAnalysis.result.fields.length} campi
-                                </p>
-                            </div>
-                        )}
+                    {!selectedAnalysisLoading && !selectedAnalysisError && selectedAnalysis && (
+                        <div className="frontend-notice">
+                            <strong>Status: {selectedAnalysis.status}</strong>
 
-                    {!selectedAnalysisLoading &&
-                        !selectedAnalysisError &&
-                        selectedAnalysis?.status === 'READY' &&
-                        !selectedAnalysis.result && (
-                            <ErrorState
-                                title="Risultato non disponibile"
-                                message="L'Analysis risulta completata, ma il risultato non è disponibile."
-                            />
-                        )}
+                            <p>
+                                {selectedAnalysis.result
+                                    ? `${selectedAnalysis.result.pages.length} pagine · ${selectedAnalysis.result.entities.length} entità · ${selectedAnalysis.result.fields.length} campi`
+                                    : 'Nessun risultato persistito disponibile per questa analisi.'}
+                            </p>
+                        </div>
+                    )}
                 </section>
             )}
-           
-           {selectedAnalysisId && selectedAnalysisLoading && (
-                <LoadingState message="Caricamento del risultato dell’analisi..." />
-                )}
 
-                {selectedAnalysisId && selectedAnalysisError && (
-                <ErrorState
-                    message={selectedAnalysisError.message}
-                    onRetry={reloadSelectedAnalysis}
-                />
-                )}
+            {selectedAnalysisId && selectedAnalysisLoading && (
+                <section className="page-section">
+                    <LoadingState message="Caricamento del risultato dell’analisi..." />
+                </section>
+            )}
 
-                {selectedAnalysis?.status === 'READY' && selectedAnalysis.result && (
+            {selectedAnalysisId && selectedAnalysisError && (
+                <section className="page-section">
+                    <ErrorState
+                        message={selectedAnalysisError.message}
+                        onRetry={reloadSelectedAnalysis}
+                    />
+                </section>
+            )}
+
+            {selectedAnalysis?.status === 'READY' && selectedAnalysis.result && (
                 <AnalysisResultViewer
                     key={selectedAnalysis.id}
                     documentName={document.name}
                     result={selectedAnalysis.result}
                 />
-                )}
+            )}
 
-                {selectedAnalysis?.status === 'READY' && !selectedAnalysis.result && (
-                <div className="empty-state">
-                    <h2>Risultato non disponibile</h2>
-                    <p>
-                    L’analisi risulta completata, ma non contiene un risultato visualizzabile.
-                    </p>
-                </div>
-                )}
-
-                {selectedAnalysis &&
-                (selectedAnalysis.status === 'QUEUED' || selectedAnalysis.status === 'PROCESSING') && (
+            {selectedAnalysis?.status === 'READY' && !selectedAnalysis.result && (
+                <section className="page-section">
                     <div className="empty-state">
-                    <h2>Analisi in elaborazione</h2>
-                    <p>
-                        Il risultato verrà mostrato automaticamente quando l’elaborazione sarà completata.
-                    </p>
+                        <h2>Risultato non disponibile</h2>
+                        <p>
+                            L’analisi risulta completata, ma non contiene un risultato visualizzabile.
+                        </p>
                     </div>
+                </section>
+            )}
+
+            {selectedAnalysis &&
+                (selectedAnalysis.status === 'QUEUED' || selectedAnalysis.status === 'PROCESSING') && (
+                    <section className="page-section">
+                        <div className="empty-state">
+                            <h2>Analisi in elaborazione</h2>
+                            <p>
+                                Il risultato verrà mostrato automaticamente quando l’elaborazione sarà completata.
+                            </p>
+                        </div>
+                    </section>
                 )}
 
-                {selectedAnalysis?.status === 'ERROR' && (
-                <div className="empty-state">
-                    <h2>Analisi non completata</h2>
-                    <p>
-                    {selectedAnalysis.errorMessage ?? 'Si è verificato un errore durante l’analisi.'}
-                    </p>
-                </div>
-                )}
+            {selectedAnalysis?.status === 'ERROR' && (
+                <section className="page-section">
+                    <div className="empty-state">
+                        <h2>Analisi non completata</h2>
+                        <p>
+                            {selectedAnalysis.errorMessage ?? 'Si è verificato un errore durante l’analisi.'}
+                        </p>
+                    </div>
+                </section>
+            )}
 
-                {!selectedAnalysisId && !selectedAnalysisLoading && (
-                <div className="empty-state">
-                    <h2>Nessuna analisi selezionata</h2>
-                    <p>
-                    Seleziona un’analisi disponibile oppure avviane una nuova.
-                    </p>
-                </div>
-                )}      
-
+            {!selectedAnalysisId && !selectedAnalysisLoading && (
+                <section className="page-section">
+                    <div className="empty-state">
+                        <h2>Nessuna analisi selezionata</h2>
+                        <p>Seleziona un’analisi disponibile oppure avviane una nuova.</p>
+                    </div>
+                </section>
+            )}
         </>
     )
 }
