@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 
-import type { CustomFieldDefinitionInput, CustomSchemaCreateRequest, CustomSchema } from '../../types/customSchema'
+import type { CustomFieldDefinitionInput, CustomSchemaCreateRequest, CustomSchema, CustomSchemaSummary } from '../../types/customSchema'
+import { validateCustomSchema } from '../../utils/customSchemaValidation'
 
 
 type EntityDraft = {
@@ -18,9 +19,9 @@ type FieldDraft = CustomFieldDefinitionInput & {
 type CustomSchemaFormProps = {
     isSubmitting: boolean
     errorMessage: string | null
+    existingSchemas: CustomSchemaSummary[]
     initialValue?: CustomSchema
     submitLabel?: string
-
     onCancel?: () => void
     onSubmit: (
         payload: CustomSchemaCreateRequest,
@@ -51,6 +52,7 @@ function createFieldDraft(): FieldDraft {
 function CustomSchemaForm({
     isSubmitting,
     errorMessage,
+    existingSchemas,
     initialValue,
     submitLabel='Crea schema',
     onCancel,
@@ -134,27 +136,34 @@ function CustomSchemaForm({
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault()
 
-        if (entities.length === 0 && fields.length === 0) {
-            setValidationError('Aggiungi almeno un’entità o un campo.')
+        const payload: CustomSchemaCreateRequest = {
+            name: name.trim(),
+            domain: domain.trim(),
+            entities: entities.map((entity) => ({
+            label: entity.label.trim(),
+            description: entity.description.trim(),
+            })),
+            fields: fields.map((field) => ({
+            fieldKey: field.fieldKey.trim(),
+            label: field.label.trim(),
+            description: field.description.trim(),
+            isRequired: field.isRequired,
+            })),
+        }
+
+        const validationMessage = validateCustomSchema(payload, {
+            existingSchemas,
+            currentSchemaId: initialValue?.schemaId,
+        })
+
+        if (validationMessage) {
+            setValidationError(validationMessage)
             return
         }
 
         setValidationError(null)
 
-        const success = await onSubmit({
-            name: name.trim(),
-            domain: domain.trim(),
-            entities: entities.map((entity) => ({
-                label: entity.label.trim(),
-                description: entity.description.trim(),
-            })),
-            fields: fields.map((field) => ({
-                fieldKey: field.fieldKey.trim(),
-                label: field.label.trim(),
-                description: field.description.trim(),
-                isRequired: field.isRequired,
-            })),
-        })
+        const success = await onSubmit(payload)
 
         if (success && !initialValue) {
             resetForm()
@@ -201,6 +210,10 @@ function CustomSchemaForm({
                     <button
                         type="button"
                         className="button button--secondary"
+                        disabled={
+                            isSubmitting ||
+                            entities.length >= 50
+                        }
                         onClick={() => setEntities((current) => [...current, createEntityDraft()])}
                     >
                         Aggiungi entità
@@ -268,6 +281,10 @@ function CustomSchemaForm({
                     <button
                         type="button"
                         className="button button--secondary"
+                        disabled={
+                            isSubmitting ||
+                            fields.length >= 50
+                        }
                         onClick={() => setFields((current) => [...current, createFieldDraft()])}
                     >
                         Aggiungi campo

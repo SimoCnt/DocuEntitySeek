@@ -9,6 +9,9 @@ import useCustomSchemaActions from '../hooks/useCustomSchemaActions'
 import useCustomSchemas from '../hooks/useCustomSchemas'
 import useDocumentTitle from '../hooks/useDocumentTitle'
 import type { CustomSchema, CustomSchemaCreateRequest, CustomSchemaSummary } from '../types/customSchema'
+import ArchiveSchemaDialog from '../components/schemas/ArchiveSchemaDialog'
+import DuplicateSchemaDialog from '../components/schemas/DuplicateSchemaDialog'
+import { getCustomSchemaErrorMessage } from '../utils/customSchemaErrors'
 
 
 function SchemasPage() {
@@ -34,18 +37,29 @@ function SchemasPage() {
   } = useCustomSchemaActions()
 
   const [editingSchema, setEditingSchema] = useState<CustomSchema | null>(null)
+  const [duplicatingSchema, setDuplicatingSchema] = useState<CustomSchemaSummary | null>(null)
+  const [archivingSchema, setArchivingSchema] = useState<CustomSchemaSummary | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  const [duplicateValidationError, setDuplicateValidationError] = useState<string | null>(null)
+
+  const createErrorMessage = getCustomSchemaErrorMessage(createError)
+  const actionErrorMessage = getCustomSchemaErrorMessage(actionError)
 
   useDocumentTitle('Schemi di estrazione | DocuEntitySeek')
 
 
   async function handleCreate(payload: CustomSchemaCreateRequest): Promise<boolean> {
     clearCreateError()
+    setSuccessMessage(null)
 
     const result = await create(payload)
 
     if (!result) return false
 
+    setSuccessMessage(`Schema "${result.name}" creato correttamente.`)
     reload()
+
     return true
   }
 
@@ -65,54 +79,89 @@ function SchemasPage() {
     if (!editingSchema) return false
 
     clearActionError()
+    setSuccessMessage(null)
 
     const result = await update(editingSchema.schemaId, payload)
 
     if (!result) return false
 
     setEditingSchema(null)
+    setSuccessMessage(`Schema aggiornato alla versione ${result.version}.`)
     reload()
+
     return true
   }
 
 
-  async function handleDuplicate(schema: CustomSchemaSummary) {
+  function handleOpenDuplicate(schema: CustomSchemaSummary) {
+    clearActionError()
+    setSuccessMessage(null)
+    setDuplicateValidationError(null)
+    setDuplicatingSchema(schema)
+  }
+
+
+  async function handleConfirmDuplicate(name: string) {
+    if (!duplicatingSchema) return
+
+    const normalizedName = name.trim()
+
+    const duplicatedName = schemas.some(
+      (schema) => schema.name.trim().toLowerCase() === normalizedName.toLowerCase(),
+    )
+
+    if (duplicatedName) {
+      setDuplicateValidationError(null)
+      setDuplicateValidationError('Esiste già uno schema personalizzato con questo nome.')
+
+      return
+  }
+
     clearActionError()
 
-    const suggestedName = `${schema.name} - copia`
-    const name = window.prompt('Nome del nuovo schema', suggestedName)
-
-    if (!name?.trim()) return
-
-    const result = await duplicate(schema.schemaId, name.trim())
+    const result = await duplicate(duplicatingSchema.schemaId, normalizedName)
 
     if (!result) return
 
+    setDuplicatingSchema(null)
+    setSuccessMessage(`Schema "${result.name}" duplicato correttamente.`)
     reload()
   }
 
 
-  async function handleArchive(schema: CustomSchemaSummary) {
+  function handleOpenArchive(schema: CustomSchemaSummary) {
     clearActionError()
+    setSuccessMessage(null)
+    setArchivingSchema(schema)
+  }
 
-    const confirmed = window.confirm(
-      `Archiviare lo schema "${schema.name}"? ` +
-      'Non sarà più disponibile per nuove analisi, ' +
-      'ma lo storico resterà conservato.',
-    )
 
-    if (!confirmed) return
-
-    const success = await archive(schema.schemaId)
-
-    if (!success) return
-
-    if (editingSchema?.schemaId === schema.schemaId) {
-      setEditingSchema(null)
+  async function handleConfirmArchive() {
+    if (!archivingSchema) {
+        return
     }
 
+    clearActionError()
+
+    const schemaName = archivingSchema.name
+    const success = await archive(archivingSchema.schemaId)
+
+    if (!success) {
+        return
+    }
+
+    if (
+        editingSchema?.schemaId ===
+        archivingSchema.schemaId
+    ) {
+        setEditingSchema(null)
+    }
+
+    setArchivingSchema(null)
+    setSuccessMessage(`Schema "${schemaName}" archiviato correttamente.`)
     reload()
   }
+  
 
   if (!customSchemasEnabled) {
     return (
@@ -142,11 +191,20 @@ function SchemasPage() {
         </div>
       </section>
 
-      {actionError && (
-        <section className="page-section">
-          <ErrorState message={actionError.message} />
-        </section>
-      )}
+      {successMessage && (
+        <div
+            className="frontend-notice"
+            role="status"
+        >
+            <strong>
+                Operazione completata
+            </strong>
+
+            <p>
+                {successMessage}
+            </p>
+        </div>
+      )}      
 
       {editingSchema ? (
         <section className="page-section">
@@ -160,9 +218,10 @@ function SchemasPage() {
           </div>
 
           <CustomSchemaForm
+            existingSchemas={schemas}
             initialValue={editingSchema}
             isSubmitting={isActing}
-            errorMessage={actionError?.message ?? null}
+            errorMessage={createErrorMessage}
             submitLabel={`Salva come v${editingSchema.version + 1}`}
             onCancel={() => setEditingSchema(null)}
             onSubmit={handleUpdate}
@@ -175,9 +234,10 @@ function SchemasPage() {
             <h2>Crea uno schema</h2>
           </div>
 
-          <CustomSchemaForm
+          <CustomSchemaForm            
+            existingSchemas={schemas}
             isSubmitting={isCreating}
-            errorMessage={createError?.message ?? null}
+            errorMessage={createErrorMessage}
             onSubmit={handleCreate}
           />
         </section>
@@ -232,7 +292,7 @@ function SchemasPage() {
                     type="button"
                     className="button button--secondary"
                     disabled={isActing}
-                    onClick={() => void handleDuplicate(schema)}
+                    onClick={() => handleOpenDuplicate(schema)}
                   >
                     Duplica
                   </button>
@@ -241,10 +301,10 @@ function SchemasPage() {
                     type="button"
                     className="button button--secondary"
                     disabled={isActing}
-                    onClick={() => void handleArchive(schema)}
-                  >
+                    onClick={() => handleOpenArchive(schema)}
+                >
                     Archivia
-                  </button>
+                </button>
                 </div>
               </article>
             ))}
@@ -280,6 +340,51 @@ function SchemasPage() {
           </div>
         </section>
       )}
+
+      <DuplicateSchemaDialog
+          isOpen={
+              duplicatingSchema !== null
+          }
+          schemaName={
+              duplicatingSchema?.name ??
+              ''
+          }
+          isSubmitting={isActing}
+          errorMessage={
+              duplicateValidationError ??
+              actionErrorMessage
+          }
+          onCancel={() => {
+              setDuplicatingSchema(null)
+              setDuplicateValidationError(null)
+              clearActionError()
+          }}
+          onConfirm={
+              handleConfirmDuplicate
+          }
+      />
+
+
+      <ArchiveSchemaDialog
+          isOpen={
+              archivingSchema !== null
+          }
+          schemaName={
+              archivingSchema?.name ??
+              ''
+          }
+          isSubmitting={isActing}
+          errorMessage={
+              actionErrorMessage
+          }
+          onCancel={() => {
+              setArchivingSchema(null)
+              clearActionError()
+          }}
+          onConfirm={
+              handleConfirmArchive
+          }
+      />
     </>
   )
 }
