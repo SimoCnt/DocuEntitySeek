@@ -57,6 +57,7 @@ class ExtractionSchemaModel(Base):
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     domain: Mapped[str] = mapped_column(String(120), nullable=False)
     is_builtin: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=sql_text("FALSE"))
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     owner: Mapped["UserModel | None"] = relationship(back_populates="schemas")
     versions: Mapped[list["ExtractionSchemaVersionModel"]] = relationship(back_populates="schema", passive_deletes=True)

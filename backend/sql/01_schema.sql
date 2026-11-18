@@ -163,6 +163,10 @@ CREATE TABLE extraction_schemas (
     -- FALSE: schema creato da un utente.
     is_builtin BOOLEAN NOT NULL DEFAULT FALSE,
 
+    -- Data di archiviazione dello schema.
+    -- NULL significa che lo schema è disponibile per nuove analisi.
+    archived_at TIMESTAMPTZ,
+
     -- Data di creazione.
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 

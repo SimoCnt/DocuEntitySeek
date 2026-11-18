@@ -53,6 +53,7 @@ class CustomSchemaResult:
     domain: str
     version: int
     created_at: datetime
+    archived_at: datetime | None
     entities: tuple[CustomEntityDefinitionResult, ...]
     fields: tuple[CustomFieldDefinitionResult, ...]
 
@@ -67,3 +68,4 @@ class CustomSchemaSummary:
     entity_count: int
     field_count: int
     created_at: datetime
+    archived_at: datetime | None

@@ -1,11 +1,12 @@
 from uuid import UUID, uuid4
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.db.models import EntityDefinitionModel, ExtractionSchemaModel, ExtractionSchemaVersionModel, FieldDefinitionModel
 from app.repositories.custom_schema_repository import CustomSchemaRepository
 from app.services.custom_schema_models import CustomEntityDefinitionResult, CustomFieldDefinitionResult, CustomSchemaCreateCommand, CustomSchemaResult, CustomSchemaSummary
 from app.services.schema_access_service import SchemaAccessService
-from app.core.exceptions import CustomSchemaNameConflictError, ExtractionSchemaNotFoundError
+from app.core.exceptions import CustomSchemaNameConflictError, ExtractionSchemaNotFoundError, CustomSchemaArchivedError
 
 
 ENTITY_COLOR_PALETTE = (
@@ -92,6 +93,7 @@ class CustomSchemaService:
                 domain=schema.domain,
                 version=version.version,
                 created_at=schema.created_at,
+                archived_at=schema.archived_at,
                 entities=tuple(
                     CustomEntityDefinitionResult(
                         id=entity.id,
@@ -139,6 +141,7 @@ class CustomSchemaService:
                 entity_count=len(version.entity_definitions),
                 field_count=len(version.field_definitions),
                 created_at=version.schema.created_at,
+                archived_at=version.schema.archived_at
             )
             for version in versions
         ]
@@ -162,6 +165,7 @@ class CustomSchemaService:
             domain=version.schema.domain,
             version=version.version,
             created_at=version.schema.created_at,
+            archived_at=version.schema.archived_at,
             entities=tuple(
                 CustomEntityDefinitionResult(
                     id=entity.id,
@@ -204,6 +208,9 @@ class CustomSchemaService:
 
             if schema is None:
                 raise ExtractionSchemaNotFoundError("Schema di estrazione non trovato.")
+
+            if schema.archived_at is not None:
+                raise CustomSchemaArchivedError("Uno schema archiviato non può essere modificato.")
 
             if self.repository.name_exists_for_owner(
                 user_id=user_id,
@@ -267,6 +274,137 @@ class CustomSchemaService:
                 domain=schema.domain,
                 version=new_version.version,
                 created_at=schema.created_at,
+                archived_at=schema.archived_at,
+                entities=tuple(
+                    CustomEntityDefinitionResult(
+                        id=entity.id,
+                        label=entity.label,
+                        description=entity.description,
+                        color=entity.color,
+                        sort_order=entity.sort_order,
+                    )
+                    for entity in entities
+                ),
+                fields=tuple(
+                    CustomFieldDefinitionResult(
+                        id=field.id,
+                        field_key=field.field_key,
+                        label=field.label,
+                        description=field.description,
+                        data_type=field.data_type,
+                        is_required=field.is_required,
+                        sort_order=field.sort_order,
+                    )
+                    for field in fields
+                ),
+            )
+
+            self.session.commit()
+            return result
+
+        except Exception:
+            self.session.rollback()
+            raise
+
+
+    def archive(self, *, user_id: UUID, schema_id: UUID) -> None:
+        self.schema_access_service.assert_custom_schemas_enabled(user_id=user_id)
+
+        try:
+            schema = self.repository.get_owned_schema_for_update(
+                user_id=user_id,
+                schema_id=schema_id,
+            )
+
+            if schema is None:
+                raise ExtractionSchemaNotFoundError("Schema di estrazione non trovato.")
+
+            if schema.archived_at is None:
+                schema.archived_at = datetime.now(timezone.utc)
+
+            self.session.commit()
+
+        except Exception:
+            self.session.rollback()
+            raise
+
+
+    def duplicate(self, *, user_id: UUID, schema_id: UUID, name: str) -> CustomSchemaResult:
+        self.schema_access_service.assert_custom_schemas_enabled(user_id=user_id)
+
+        if self.repository.name_exists_for_owner(user_id=user_id, name=name):
+            raise CustomSchemaNameConflictError("Esiste già uno schema personalizzato con questo nome.")
+
+        source_version = self.repository.get_owned_active_version_with_definitions(
+            user_id=user_id,
+            schema_id=schema_id,
+        )
+
+        if source_version is None:
+            raise ExtractionSchemaNotFoundError("Schema di estrazione non trovato.")
+
+        new_schema_id = uuid4()
+        new_version_id = uuid4()
+
+        schema = ExtractionSchemaModel(
+            id=new_schema_id,
+            owner_user_id=user_id,
+            structure_key=f"custom_{new_schema_id.hex}",
+            name=name,
+            domain=source_version.schema.domain,
+            is_builtin=False,
+        )
+
+        version = ExtractionSchemaVersionModel(
+            id=new_version_id,
+            schema_id=new_schema_id,
+            version=1,
+            is_active=True,
+        )
+
+        source_entities = sorted(source_version.entity_definitions, key=lambda item: item.sort_order)
+
+        entities = [
+            EntityDefinitionModel(
+                schema_version_id=new_version_id,
+                label=entity.label,
+                description=entity.description,
+                color=entity.color,
+                sort_order=index,
+            )
+            for index, entity in enumerate(source_entities)
+        ]
+
+        source_fields = sorted(source_version.field_definitions, key=lambda item: item.sort_order)
+
+        fields = [
+            FieldDefinitionModel(
+                schema_version_id=new_version_id,
+                field_key=field.field_key,
+                label=field.label,
+                description=field.description,
+                data_type=field.data_type,
+                is_required=field.is_required,
+                sort_order=index,
+            )
+            for index, field in enumerate(source_fields)
+        ]
+
+        try:
+            self.repository.add_schema(schema)
+            self.repository.add_version(version)
+            self.repository.add_entities(entities)
+            self.repository.add_fields(fields)
+            self.repository.flush()
+
+            result = CustomSchemaResult(
+                schema_id=schema.id,
+                schema_version_id=version.id,
+                name=schema.name,
+                domain=schema.domain,
+                version=version.version,
+                created_at=schema.created_at,
+                archived_at=schema.archived_at,
                 entities=tuple(
                     CustomEntityDefinitionResult(
                         id=entity.id,

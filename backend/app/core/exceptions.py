@@ -80,3 +80,7 @@ class CustomSchemasNotAvailableError(Exception):
 
 class CustomSchemaNameConflictError(Exception):
     pass
+
+
+class CustomSchemaArchivedError(Exception):
+    pass

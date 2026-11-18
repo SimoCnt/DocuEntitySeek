@@ -1,9 +1,9 @@
 from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
 
-from app.core.exceptions import CustomSchemasNotAvailableError, CustomSchemaNameConflictError, ExtractionSchemaNotFoundError
+from app.core.exceptions import CustomSchemasNotAvailableError, CustomSchemaNameConflictError, ExtractionSchemaNotFoundError, CustomSchemaArchivedError
 from app.dependencies import CurrentUserDep, CustomSchemaServiceDep, SchemaAccessServiceDep
-from app.schemas.custom_schema import CustomEntityDefinitionResponse, CustomFieldDefinitionResponse, CustomSchemaCreateRequest, CustomSchemaResponse, CustomSchemaSummaryResponse, CustomSchemaUpdateRequest
+from app.schemas.custom_schema import CustomEntityDefinitionResponse, CustomFieldDefinitionResponse, CustomSchemaCreateRequest, CustomSchemaResponse, CustomSchemaSummaryResponse, CustomSchemaUpdateRequest, CustomSchemaDuplicateRequest
 from app.schemas.extraction_schema import AvailableExtractionSchemaResponse
 from app.services.custom_schema_models import CustomEntityDefinitionInput, CustomFieldDefinitionInput, CustomSchemaCreateCommand
 
@@ -22,6 +22,8 @@ def _custom_schema_response(result) -> CustomSchemaResponse:
         domain=result.domain,
         version=result.version,
         created_at=result.created_at,
+        archived_at=result.archived_at,
+        is_archived=result.archived_at is not None,
         entities=[
             CustomEntityDefinitionResponse(
                 id=entity.id,
@@ -150,6 +152,8 @@ def list_custom_schemas(
             entity_count=schema.entity_count,
             field_count=schema.field_count,
             created_at=schema.created_at,
+            archived_at=schema.archived_at,
+            is_archived=schema.archived_at is not None
         )
         for schema in schemas
     ]
@@ -216,6 +220,94 @@ def update_custom_schema(
                     for field in payload.fields
                 ),
             ),
+        )
+
+    except ExtractionSchemaNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "EXTRACTION_SCHEMA_NOT_FOUND",
+                "message": "Schema di estrazione non trovato.",
+            },
+        ) from exc
+
+    except CustomSchemaNameConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "CUSTOM_SCHEMA_NAME_CONFLICT",
+                "message": "Esiste già uno schema personalizzato con questo nome.",
+            },
+        ) from exc
+
+    except CustomSchemasNotAvailableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "CUSTOM_SCHEMAS_NOT_AVAILABLE",
+                "message": "Gli schema personalizzati non sono disponibili per il piano corrente.",
+            },
+        ) from exc
+
+    except CustomSchemaArchivedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "CUSTOM_SCHEMA_ARCHIVED",
+                "message": "Uno schema archiviato non può essere modificato.",
+            },
+        ) from exc
+
+    return _custom_schema_response(result)
+
+
+@router.delete("/custom/{schema_id}", status_code=status.HTTP_204_NO_CONTENT)
+def archive_custom_schema(
+    schema_id: UUID,
+    current_user: CurrentUserDep,
+    service: CustomSchemaServiceDep,
+) -> None:
+    try:
+        service.archive(
+            user_id=current_user.id,
+            schema_id=schema_id,
+        )
+
+    except ExtractionSchemaNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "EXTRACTION_SCHEMA_NOT_FOUND",
+                "message": "Schema di estrazione non trovato.",
+            },
+        ) from exc
+
+    except CustomSchemasNotAvailableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "CUSTOM_SCHEMAS_NOT_AVAILABLE",
+                "message": "Gli schema personalizzati non sono disponibili per il piano corrente.",
+            },
+        ) from exc
+
+
+@router.post(
+    "/custom/{schema_id}/duplicate",
+    response_model=CustomSchemaResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def duplicate_custom_schema(
+    schema_id: UUID,
+    payload: CustomSchemaDuplicateRequest,
+    current_user: CurrentUserDep,
+    service: CustomSchemaServiceDep,
+) -> CustomSchemaResponse:
+    try:
+        result = service.duplicate(
+            user_id=current_user.id,
+            schema_id=schema_id,
+            name=payload.name,
         )
 
     except ExtractionSchemaNotFoundError as exc:

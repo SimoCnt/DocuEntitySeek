@@ -103,6 +103,8 @@ class CustomSchemaResponse(ApiModel):
     domain: str
     version: int
     created_at: datetime
+    archived_at: datetime | None
+    is_archived: bool
     entities: list[CustomEntityDefinitionResponse]
     fields: list[CustomFieldDefinitionResponse]
 
@@ -116,3 +118,17 @@ class CustomSchemaSummaryResponse(ApiModel):
     entity_count: int
     field_count: int
     created_at: datetime
+    archived_at: datetime | None
+    is_archived: bool
+
+
+class CustomSchemaDuplicateRequest(ApiModel):
+    name: str = Field(min_length=1, max_length=120)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def strip_name(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip()
+
+        return value

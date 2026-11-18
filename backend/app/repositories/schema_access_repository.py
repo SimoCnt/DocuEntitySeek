@@ -37,6 +37,7 @@ class SchemaAccessRepository:
             select(ExtractionSchemaModel, ExtractionSchemaVersionModel)
             .join(ExtractionSchemaVersionModel, ExtractionSchemaVersionModel.schema_id == ExtractionSchemaModel.id)
             .where(
+                ExtractionSchemaModel.archived_at.is_(None),
                 ExtractionSchemaVersionModel.is_active.is_(True),
                 access_condition,
             )
@@ -57,6 +58,7 @@ class SchemaAccessRepository:
             .where(
                 ExtractionSchemaVersionModel.id == schema_version_id,
                 ExtractionSchemaVersionModel.is_active.is_(True),
+                ExtractionSchemaModel.archived_at.is_(None),
                 or_(
                     ExtractionSchemaModel.is_builtin.is_(True),
                     ExtractionSchemaModel.owner_user_id == user_id,
