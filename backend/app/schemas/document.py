@@ -3,8 +3,6 @@ from enum import Enum
 from datetime import date
 from pydantic import Field
 from app.schemas.base import ApiModel
-from app.schemas.analysis import DocumentAnalysis
-
 
 
 class DocumentStatus(str, Enum):
@@ -32,4 +30,3 @@ class DocumentSummary(ApiModel):
 
 class DocumentDetailResponse(ApiModel):
     document: DocumentSummary
-    analysis: DocumentAnalysis | None = None

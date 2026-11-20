@@ -1,6 +1,3 @@
-import type { DocumentAnalysis } from './analysisDemo'
-
-
 export type DocumentStatus =
     | 'READY'
     | 'PROCESSING'
@@ -27,5 +24,4 @@ export type DocumentSummary = {
 
 export type DocumentDetailResponse = {
     document: DocumentSummary
-    analysis: DocumentAnalysis | null
 }
