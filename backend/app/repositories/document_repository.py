@@ -1,5 +1,5 @@
-
 from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -15,21 +15,28 @@ class DocumentRepository:
         statement = (
             select(DocumentModel)
             .where(DocumentModel.owner_user_id == owner_user_id)
+            .options(selectinload(DocumentModel.analyses))
             .order_by(DocumentModel.created_at.desc())
         )
-        
+
         return list(self.session.scalars(statement).all())
 
 
     def get_by_id_and_owner(self, document_id: UUID, owner_user_id: UUID) -> DocumentModel | None:
         statement = (
             select(DocumentModel)
-            .where(DocumentModel.id == document_id, DocumentModel.owner_user_id == owner_user_id)
-            .options(selectinload(DocumentModel.pages))
+            .where(
+                DocumentModel.id == document_id,
+                DocumentModel.owner_user_id == owner_user_id,
+            )
+            .options(
+                selectinload(DocumentModel.pages),
+                selectinload(DocumentModel.analyses),
+            )
         )
 
         return self.session.scalar(statement)
-    
+
 
     def create(
         self,
@@ -50,6 +57,7 @@ class DocumentRepository:
             page_count=None,
             storage_key=None,
         )
+
         self.session.add(document)
         self.session.flush()
 

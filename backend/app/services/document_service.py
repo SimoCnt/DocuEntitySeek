@@ -1,15 +1,14 @@
-
-from uuid import UUID
-from sqlalchemy.orm import Session
 from time import perf_counter
 from typing import BinaryIO
+from uuid import UUID
 
-from app.core.logging import get_logger
+from sqlalchemy.orm import Session
+
 from app.core.exceptions import DocumentNotFoundError
-from app.repositories.analysis_repository import AnalysisRepository
+from app.core.logging import get_logger
 from app.repositories.document_repository import DocumentRepository
 from app.schemas.document import DocumentCategory, DocumentDetailResponse, DocumentSummary
-from app.services.document_mapper import build_document_analysis, to_document_summary
+from app.services.document_mapper import to_document_summary
 from app.services.document_storage import DocumentStorage
 
 
@@ -21,12 +20,10 @@ class DocumentService:
         self.session = session
         self.storage = storage
         self.documents = DocumentRepository(session)
-        self.analyses = AnalysisRepository(session)
 
 
     def list_documents(self, owner_user_id: UUID) -> list[DocumentSummary]:
         documents = self.documents.list_by_owner(owner_user_id)
-
         return [to_document_summary(document) for document in documents]
 
 
@@ -36,10 +33,7 @@ class DocumentService:
         if document is None:
             raise DocumentNotFoundError(str(document_id))
 
-        analysis = self.analyses.get_latest_completed(document.id)
-        api_analysis = build_document_analysis(document, analysis) if analysis is not None else None
-
-        return DocumentDetailResponse(document=to_document_summary(document), analysis=api_analysis)
+        return DocumentDetailResponse(document=to_document_summary(document))
 
 
     def create_document(
@@ -72,7 +66,10 @@ class DocumentService:
                 size_bytes=size_bytes,
             )
 
-            logger.info("DOCUMENT_CREATE | phase=db_record_created | document_id=%s", document.id)
+            logger.info(
+                "DOCUMENT_CREATE | phase=db_record_created | document_id=%s",
+                document.id,
+            )
 
             storage_key = self.storage.save_original(
                 owner_user_id=owner_user_id,
@@ -108,7 +105,10 @@ class DocumentService:
                 try:
                     self.storage.delete(storage_key)
                 except Exception:
-                    logger.exception("DOCUMENT_CREATE | phase=rollback_storage_cleanup_failed | storage_key=%s", storage_key)
+                    logger.exception(
+                        "DOCUMENT_CREATE | phase=rollback_storage_cleanup_failed | storage_key=%s",
+                        storage_key,
+                    )
 
             logger.exception(
                 "DOCUMENT_CREATE | phase=failed | owner_user_id=%s | filename=%r",

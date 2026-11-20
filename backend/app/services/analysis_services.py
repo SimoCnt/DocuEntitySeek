@@ -1,10 +1,8 @@
 from time import perf_counter
 from uuid import UUID
-from datetime import datetime, timezone
-from app.db.models import DocumentModel
-from app.core.exceptions import DocumentNotFoundError
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import DocumentNotFoundError
 from app.core.exceptions import AnalysisExecutionError
 from app.core.logging import get_logger
 from app.domain.analysis import AnalysisStatus
@@ -150,19 +148,9 @@ class AnalysisService:
 
         if analysis is None:
             raise RuntimeError("Analysis non trovata dopo la pipeline.")
-
+        
         self.quota_service.consume_on_success(analysis=analysis, decision=quota_decision)
-        self.analyses.mark_ready(analysis)  
-
-        document = self.documents.get_by_id_and_owner(document_id=document_id, owner_user_id=owner_user_id)
-
-        if document is None:
-            raise RuntimeError("Documento non trovato al completamento dell'analisi.")
-
-        document.status = "READY"
-        document.error_message = None
-        document.updated_at = datetime.now(timezone.utc)
-
+        self.analyses.mark_ready(analysis)
         self.session.commit()
 
         elapsed_ms = (perf_counter() - started_at) * 1000
@@ -203,17 +191,9 @@ class AnalysisService:
             if analysis is None:
                 logger.error(
                     "ANALYSIS | phase=error_status_failed | analysis_id=%s | reason=analysis_not_found", analysis_id)
-                return
+                return         
 
             self.analyses.mark_error(analysis, error_message=self._safe_error_message(exc))
-
-            document = self.session.get(DocumentModel, document_id)
-
-            if document is not None and document.status != "READY":
-                document.status = "ERROR"
-                document.error_message = self._safe_error_message(exc)
-                document.updated_at = datetime.now(timezone.utc)
-
             self.session.commit()
 
             logger.info(
