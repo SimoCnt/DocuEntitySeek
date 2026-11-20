@@ -44,6 +44,8 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    max_pdf_size_bytes: int = 25 * 1024 * 1024
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -110,7 +110,7 @@ class DocumentModel(Base):
     owner_user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     original_name: Mapped[str] = mapped_column(String(255), nullable=False)
     category: Mapped[str] = mapped_column(String(30), nullable=False)
-    status: Mapped[str] = mapped_column(String(30), nullable=False, server_default=sql_text("'PROCESSING'"))
+    status: Mapped[str] = mapped_column(String(30), nullable=False, server_default=sql_text("'UPLOADED'"))
     mime_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
     size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     storage_key: Mapped[str | None] = mapped_column(Text, nullable=True)

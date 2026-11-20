@@ -399,7 +399,7 @@ CREATE TABLE documents (
     category VARCHAR(30) NOT NULL,
 
     -- Stato dell'elaborazione.
-    status VARCHAR(30) NOT NULL DEFAULT 'PROCESSING',
+    status VARCHAR(30) NOT NULL DEFAULT 'UPLOADED',
 
     -- Tipo MIME del documento. Esempio: application/pdf.
     mime_type VARCHAR(100),
@@ -445,6 +445,7 @@ CREATE TABLE documents (
     CONSTRAINT ck_document_status
         CHECK (
             status IN (
+                'UPLOADED',
                 'PROCESSING',
                 'READY',
                 'ERROR'

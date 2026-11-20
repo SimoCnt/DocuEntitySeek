@@ -9,6 +9,8 @@ import type { DocumentStatus } from '../types/document'
 
 function getStatusLabel(status: DocumentStatus) {
     switch (status) {
+        case 'UPLOADED':
+            return 'Da analizzare'
         case 'READY':
             return 'Pronto'
 

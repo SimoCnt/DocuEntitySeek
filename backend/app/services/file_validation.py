@@ -3,6 +3,7 @@ from fastapi import UploadFile
 
 from app.core.exceptions import InvalidDocumentFileError
 from app.core.logging import get_logger
+from app.core.config import get_settings
 
 
 logger = get_logger("validation")
@@ -41,6 +42,13 @@ def validate_pdf_upload(file: UploadFile) -> None:
         )
 
         raise InvalidDocumentFileError("Il file deve avere estensione .pdf.")
+
+    settings = get_settings()
+
+    if file.size is not None and file.size > settings.max_pdf_size_bytes:
+        max_size_mb = settings.max_pdf_size_bytes // (1024 * 1024)
+
+        raise InvalidDocumentFileError(f"Il PDF supera il limite massimo di {max_size_mb} MB")
 
     header = file.file.read(1024)
     file.file.seek(0)

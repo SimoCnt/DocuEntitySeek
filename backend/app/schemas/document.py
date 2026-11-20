@@ -6,6 +6,7 @@ from app.schemas.base import ApiModel
 
 
 class DocumentStatus(str, Enum):
+    UPLOADED = "UPLOADED"
     READY = "READY"
     PROCESSING = "PROCESSING"
     ERROR = "ERROR"

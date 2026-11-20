@@ -1459,3 +1459,8 @@
     justify-content: flex-start;
   }
 }
+
+.document-status--uploaded {
+  background: #eef1f8;
+  color: #536078;
+}

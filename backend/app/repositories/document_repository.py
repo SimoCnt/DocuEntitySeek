@@ -51,7 +51,7 @@ class DocumentRepository:
             owner_user_id=owner_user_id,
             original_name=original_name,
             category=category,
-            status="PROCESSING",
+            status="UPLOADED",
             mime_type=mime_type,
             size_bytes=size_bytes,
             page_count=None,

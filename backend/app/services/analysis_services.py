@@ -59,7 +59,7 @@ class AnalysisService:
             raise DocumentNotFoundError(str(document_id))
 
         authorized_schema_version_id = self.schema_access_service.authorize_for_analysis(user_id=owner_user_id, requested_schema_version_id=schema_version_id)
-        config = self.config_resolver.resolve(schema_version_id=authorized_schema_version_id)
+        config = self.config_resolver.resolve(schema_version_id=authorized_schema_version_id, owner_user_id=owner_user_id)
 
         try:
             quota_decision = self.quota_service.assert_can_queue(user_id=owner_user_id)

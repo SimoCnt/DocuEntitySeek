@@ -5,9 +5,8 @@ import { isAbortError, normalizeRequestError, type RequestError } from '../api/h
 import { useAuth } from '../auth/AuthContext'
 import type { DocumentSummary } from '../types/document'
 
-
-const PROCESSING_REFRESH_INTERVAL_MS = 2000
-
+const REFRESH_INTERVAL_MS = 2000
+const UPLOADED_GRACE_REFRESH_LIMIT = 5
 
 function useDocuments() {
   const { accessToken, logout } = useAuth()
@@ -28,7 +27,7 @@ function useDocuments() {
     const controller = new AbortController()
     let timer: number | undefined
     let active = true
-
+    let uploadedRefreshCount = 0
 
     async function loadDocuments(validToken: string, background: boolean) {
       if (!background) {
@@ -44,12 +43,27 @@ function useDocuments() {
         setDocuments(result)
         setError(null)
 
-        const hasProcessingDocuments = result.some((document) => document.status === 'PROCESSING')
+        const hasProcessingDocuments = result.some(
+          (document) => document.status === 'PROCESSING',
+        )
+
+        const hasUploadedDocuments = result.some(
+          (document) => document.status === 'UPLOADED',
+        )
+
+        let shouldRefresh = false
 
         if (hasProcessingDocuments) {
+          shouldRefresh = true
+        } else if (hasUploadedDocuments && uploadedRefreshCount < UPLOADED_GRACE_REFRESH_LIMIT) {
+          uploadedRefreshCount += 1
+          shouldRefresh = true
+        }
+
+        if (shouldRefresh) {
           timer = window.setTimeout(
             () => void loadDocuments(validToken, true),
-            PROCESSING_REFRESH_INTERVAL_MS,
+            REFRESH_INTERVAL_MS,
           )
         }
       } catch (requestError) {
@@ -84,7 +98,6 @@ function useDocuments() {
     }
   }, [accessToken, logout, reloadToken])
 
-  
   function reload() {
     setReloadToken((current) => current + 1)
   }
