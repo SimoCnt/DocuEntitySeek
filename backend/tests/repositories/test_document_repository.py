@@ -12,7 +12,6 @@ def test_create_and_list_documents_for_owner(db_session: Session, user_factory) 
     created = repository.create(
         owner_user_id=user.id,
         original_name="disciplinare.pdf",
-        category="DISCIPLINARE",
         mime_type="application/pdf",
         size_bytes=1200,
     )
@@ -34,7 +33,6 @@ def test_documents_are_isolated_by_owner(db_session: Session, user_factory) -> N
     repository.create(
         owner_user_id=user_a.id,
         original_name="private.pdf",
-        category="DISCIPLINARE",
         mime_type="application/pdf",
         size_bytes=100,
     )

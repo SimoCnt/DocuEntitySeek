@@ -43,14 +43,12 @@ class DocumentRepository:
         *,
         owner_user_id: UUID,
         original_name: str,
-        category: str,
         mime_type: str | None,
         size_bytes: int | None,
     ) -> DocumentModel:
         document = DocumentModel(
             owner_user_id=owner_user_id,
             original_name=original_name,
-            category=category,
             status="UPLOADED",
             mime_type=mime_type,
             size_bytes=size_bytes,

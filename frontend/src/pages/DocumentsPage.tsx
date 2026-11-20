@@ -28,75 +28,86 @@ function DocumentsPage() {
 
     const { documents, isLoading, error, reload } = useDocuments()
 
+    const pageHero = (
+        <header className="page-hero">
+            <div className="page-hero__top">
+                <div className="page-hero__content">
+                    <span className="page-hero__eyebrow">Workspace</span>
+                    <h1>I tuoi documenti</h1>
+                    <p>Consulta i documenti caricati e apri quelli per cui l'analisi è già disponibile.</p>
+                </div>
+                <Link to="/documents/new" className="button button--primary">Nuovo documento</Link>
+            </div>
+        </header>
+    )
+
     if (isLoading) {
         return (
-            <section className="page-section">
-                <LoadingState
-                    message="Caricamento dei documenti..."
-                />
-            </section>
+            <>
+                {pageHero}
+                <section className="page-section page-section--workspace">
+                    <LoadingState message="Caricamento dei documenti..." />
+                </section>
+            </>
         )
     }
 
     if (error) {
         return (
-            <section className="page-section">
-                <ErrorState
-                    message={error.message}
-                    onRetry={reload}
-                />
-            </section>
+            <>
+                {pageHero}
+                <section className="page-section page-section--workspace">
+                    <ErrorState message={error.message} onRetry={reload} />
+                </section>
+            </>
         )
     }
 
     return (
-        <section className="page-section">
-            <div className="page-heading__top">
-                <div>
-                    <span className="section-heading__eyebrow">Workspace</span>
-                    <h1>I tuoi documenti</h1>
+        <>
+            {pageHero}
+            <section className="page-section page-section--workspace">
+                <div className="section-heading">
+                    <span className="section-heading__eyebrow">Archivio</span>
+                    <h2>Documenti caricati</h2>
                 </div>
-                <Link to="/documents/new" className="button button--primary">Nuovo documento</Link>                
-            </div>
 
-            <p>Consulta i documenti caricati e apri quelli per cui l'analisi è già disponibile.</p>
-
-            {documents.length === 0 ? (
-                <div className="empty-state">
-                    <h2>Nessun documento</h2>
-                    <p>Non sono ancora presenti documenti.</p>
-                </div>
-            ) : (
-                <div className="documents-grid">
-                    {documents.map((document) => (
-                        <article
-                            key={document.id}
-                            className="document-card"
-                        >
-                            <div className="document-card__header">
-                                <span className="document-card__type">{document.category}</span>
-                                <span className={`document-status ` + `document-status--${document.status.toLowerCase()}`}>{getStatusLabel(document.status)}</span>
-                            </div>
-
-                            <h2>{document.name}</h2>
-
-                            <div className="document-card__meta">
-                                <span>{document.pages} pagine</span>
-                                <span>Caricato il{' '}{document.uploadedAt}</span>
-                            </div>
-
-                            <Link
-                                to={`/documents/${document.id}`}
-                                className="button button--primary"
+                {documents.length === 0 ? (
+                    <div className="empty-state">
+                        <h2>Nessun documento</h2>
+                        <p>Non sono ancora presenti documenti.</p>
+                    </div>
+                ) : (
+                    <div className="documents-grid">
+                        {documents.map((document) => (
+                            <article
+                                key={document.id}
+                                className="document-card"
                             >
-                                Apri documento
-                            </Link>
+                                <div className="document-card__header">
+                                    <span className={`document-status ` + `document-status--${document.status.toLowerCase()}`}>{getStatusLabel(document.status)}</span>
+                                </div>
+
+                                <h3>{document.name}</h3>
+
+                                <div className="document-card__meta">
+                                    <span>{document.pages} pagine</span>
+                                    <span>Caricato il{' '}{document.uploadedAt}</span>
+                                </div>
+
+                                <Link
+                                    to={`/documents/${document.id}`}
+                                    className="button button--primary"
+                                >
+                                    Apri documento
+                                </Link>
                             
-                        </article>
-                    ))}
-                </div>
-            )}
-        </section>
+                            </article>
+                        ))}
+                    </div>
+                )}
+            </section>
+        </>
     )
 }
 

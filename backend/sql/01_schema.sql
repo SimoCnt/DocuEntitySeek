@@ -395,9 +395,6 @@ CREATE TABLE documents (
     -- Nome originale del file.
     original_name VARCHAR(255) NOT NULL,
 
-    -- Categoria documentale.
-    category VARCHAR(30) NOT NULL,
-
     -- Stato dell'elaborazione.
     status VARCHAR(30) NOT NULL DEFAULT 'UPLOADED',
 
@@ -428,18 +425,6 @@ CREATE TABLE documents (
         FOREIGN KEY (owner_user_id)
         REFERENCES users(id)
         ON DELETE CASCADE,
-
-    -- Categorie documentali consentite.
-    CONSTRAINT ck_document_category
-        CHECK (
-            category IN (
-                'DISCIPLINARE',
-                'CAPITOLATO',
-                'CONTRATTO',
-                'BANDO',
-                'ALTRO'
-            )
-        ),
 
     -- Stati consentiti.
     CONSTRAINT ck_document_status

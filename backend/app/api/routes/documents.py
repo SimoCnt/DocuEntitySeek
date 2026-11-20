@@ -1,11 +1,11 @@
 
 from typing import Annotated
 from uuid import UUID
-from fastapi import APIRouter, File, Form, Path, UploadFile, status
+from fastapi import APIRouter, File, Path, UploadFile, status
 
 from app.dependencies import DocumentServiceDep, CurrentUserDep
 from app.schemas.common import ErrorResponse
-from app.schemas.document import DocumentCategory, DocumentDetailResponse, DocumentSummary
+from app.schemas.document import DocumentDetailResponse, DocumentSummary
 from app.services.file_validation import validate_pdf_upload
 
 
@@ -60,7 +60,6 @@ def get_document(
 )
 def create_document(
     file: Annotated[UploadFile, File(description="PDF document to upload.")],
-    category: Annotated[DocumentCategory, Form()],
     service: DocumentServiceDep,
     current_user: CurrentUserDep,
 ) -> DocumentSummary:
@@ -69,7 +68,6 @@ def create_document(
     return service.create_document(
         owner_user_id=current_user.id,
         file_name=file.filename or "document.pdf",
-        category=category,
         mime_type=file.content_type,
         size_bytes=file.size,
         file_stream=file.file

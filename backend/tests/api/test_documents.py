@@ -34,14 +34,13 @@ def test_create_document(client: TestClient) -> None:
         "/api/v1/documents",
         headers=headers,
         files={"file": ("document.pdf", PDF_BYTES, "application/pdf")},
-        data={"category": "DISCIPLINARE"},
     )
 
     assert response.status_code == 201
 
     body = response.json()
     assert body["name"] == "document.pdf"
-    assert body["category"] == "DISCIPLINARE"
+    assert "category" not in body
     assert body["status"] == "PROCESSING"
 
 
@@ -53,7 +52,6 @@ def test_created_document_is_listed(client: TestClient) -> None:
         "/api/v1/documents",
         headers=headers,
         files={"file": ("document.pdf", PDF_BYTES, "application/pdf")},
-        data={"category": "DISCIPLINARE"},
     )
 
     document_id = create_response.json()["id"]
@@ -64,6 +62,7 @@ def test_created_document_is_listed(client: TestClient) -> None:
     documents = list_response.json()
     assert len(documents) == 1
     assert documents[0]["id"] == document_id
+    assert "category" not in documents[0]
 
 
 @pytest.mark.api
@@ -75,7 +74,6 @@ def test_user_cannot_access_another_users_document(client: TestClient) -> None:
         "/api/v1/documents",
         headers=user_a_headers,
         files={"file": ("private.pdf", PDF_BYTES, "application/pdf")},
-        data={"category": "DISCIPLINARE"},
     )
 
     document_id = create_response.json()["id"]
@@ -97,7 +95,6 @@ def test_invalid_pdf_returns_400(client: TestClient) -> None:
         "/api/v1/documents",
         headers=headers,
         files={"file": ("fake.pdf", b"this is not a pdf", "application/pdf")},
-        data={"category": "DISCIPLINARE"},
     )
 
     assert response.status_code == 400

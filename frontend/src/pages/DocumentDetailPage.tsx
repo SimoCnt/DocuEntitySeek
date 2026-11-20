@@ -104,7 +104,7 @@ function DocumentDetailPage() {
 
     if (isLoading) {
         return (
-            <section className="page-section">
+            <section className="page-section page-section--workspace">
                 <LoadingState message="Caricamento del documento..." />
             </section>
         )
@@ -112,7 +112,7 @@ function DocumentDetailPage() {
 
     if (error?.status === 404) {
         return (
-            <section className="page-section">
+            <section className="page-section page-section--workspace">
                 <div className="empty-state">
                     <span className="empty-state__code">Documento non trovato</span>
                     <h1>Il documento richiesto non esiste.</h1>
@@ -127,7 +127,7 @@ function DocumentDetailPage() {
 
     if (error) {
         return (
-            <section className="page-section">
+            <section className="page-section page-section--workspace">
                 <ErrorState message={error.message} onRetry={reloadDocument} />
             </section>
         )
@@ -139,13 +139,13 @@ function DocumentDetailPage() {
 
     return (
         <>
-            <section className="document-detail-heading">
-                <div>
+            <header className="page-hero">
+                <div className="page-hero__content">
                     <Link to="/documents" className="back-link">
                         ← Documenti
                     </Link>
 
-                    <span className="section-heading__eyebrow">{document.category}</span>
+                    <span className="page-hero__eyebrow">Documento</span>
                     <h1>{document.name}</h1>
 
                     <p>
@@ -156,9 +156,9 @@ function DocumentDetailPage() {
                             : `${analyses.length} analisi disponibili`}
                     </p>
                 </div>
-            </section>
+            </header>
 
-            <section className="page-section">
+            <section className="page-section page-section--workspace">
                 <div className="page-heading__top">
                     <div>
                         <span className="section-heading__eyebrow">Analisi AI</span>
@@ -191,7 +191,7 @@ function DocumentDetailPage() {
                 )}
             </section>
 
-            <section className="page-section">
+            <section className="page-section page-section--workspace">
                 <div className="section-heading">
                     <span className="section-heading__eyebrow">Cronologia</span>
                     <h2>Analisi del documento</h2>
@@ -222,7 +222,7 @@ function DocumentDetailPage() {
                                     </span>
                                 </div>
 
-                                <h2>{new Date(analysis.createdAt).toLocaleString('it-IT')}</h2>
+                                <h3>{new Date(analysis.createdAt).toLocaleString('it-IT')}</h3>
 
                                 <div className="document-card__meta">
                                     <span>{analysis.id}</span>
@@ -250,7 +250,7 @@ function DocumentDetailPage() {
             </section>
 
             {selectedAnalysisId && (
-                <section className="page-section">
+                <section className="page-section page-section--workspace">
                     <div className="section-heading">
                         <span className="section-heading__eyebrow">Dettaglio API</span>
                         <h2>Analisi selezionata</h2>
@@ -282,13 +282,13 @@ function DocumentDetailPage() {
             )}
 
             {selectedAnalysisId && selectedAnalysisLoading && (
-                <section className="page-section">
+                <section className="page-section page-section--workspace">
                     <LoadingState message="Caricamento del risultato dell’analisi..." />
                 </section>
             )}
 
             {selectedAnalysisId && selectedAnalysisError && (
-                <section className="page-section">
+                <section className="page-section page-section--workspace">
                     <ErrorState
                         message={selectedAnalysisError.message}
                         onRetry={reloadSelectedAnalysis}
@@ -305,7 +305,7 @@ function DocumentDetailPage() {
             )}
 
             {selectedAnalysis?.status === 'READY' && !selectedAnalysis.result && (
-                <section className="page-section">
+                <section className="page-section page-section--workspace">
                     <div className="empty-state">
                         <h2>Risultato non disponibile</h2>
                         <p>
@@ -317,7 +317,7 @@ function DocumentDetailPage() {
 
             {selectedAnalysis &&
                 (selectedAnalysis.status === 'QUEUED' || selectedAnalysis.status === 'PROCESSING') && (
-                    <section className="page-section">
+                    <section className="page-section page-section--workspace">
                         <div className="empty-state">
                             <h2>Analisi in elaborazione</h2>
                             <p>
@@ -328,7 +328,7 @@ function DocumentDetailPage() {
                 )}
 
             {selectedAnalysis?.status === 'ERROR' && (
-                <section className="page-section">
+                <section className="page-section page-section--workspace">
                     <div className="empty-state">
                         <h2>Analisi non completata</h2>
                         <p>
@@ -339,7 +339,7 @@ function DocumentDetailPage() {
             )}
 
             {!selectedAnalysisId && !selectedAnalysisLoading && (
-                <section className="page-section">
+                <section className="page-section page-section--workspace">
                     <div className="empty-state">
                         <h2>Nessuna analisi selezionata</h2>
                         <p>Seleziona un’analisi disponibile oppure avviane una nuova.</p>

@@ -17,7 +17,6 @@ def make_analysis(db_session: Session, user_factory) -> AnalysisModel:
     document = DocumentRepository(db_session).create(
         owner_user_id=user.id,
         original_name="document.pdf",
-        category="TEST",
         mime_type="application/pdf",
         size_bytes=100,
     )

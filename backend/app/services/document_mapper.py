@@ -1,6 +1,6 @@
 from app.db.models import DocumentModel
 from app.domain.analysis import AnalysisStatus
-from app.schemas.document import DocumentCategory, DocumentStatus, DocumentSummary
+from app.schemas.document import DocumentStatus, DocumentSummary
 
 
 def derive_document_status(document: DocumentModel) -> DocumentStatus:
@@ -22,7 +22,6 @@ def to_document_summary(document: DocumentModel) -> DocumentSummary:
     return DocumentSummary(
         id=document.id,
         name=document.original_name,
-        category=DocumentCategory(document.category),
         pages=document.page_count if document.page_count is not None else 0,
         status=derive_document_status(document),
         uploaded_at=document.created_at.date(),

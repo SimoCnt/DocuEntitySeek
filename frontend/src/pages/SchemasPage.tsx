@@ -165,16 +165,24 @@ function SchemasPage() {
 
   if (!customSchemasEnabled) {
     return (
-      <section className="page-section">
-        <div className="empty-state">
-          <span className="section-heading__eyebrow">Funzionalità Premium</span>
-          <h1>Schemi personalizzati</h1>
-          <p>
-            Il tuo piano attuale utilizza lo schema predefinito. La creazione e gestione di
-            schemi personalizzati richiede un piano che abilita questa funzione.
-          </p>
-        </div>
-      </section>
+      <>
+        <header className="page-hero">
+          <div className="page-hero__content">
+            <span className="page-hero__eyebrow">Funzionalità Premium</span>
+            <h1>Schemi personalizzati</h1>
+            <p>Crea e gestisci schemi di estrazione personalizzati.</p>
+          </div>
+        </header>
+        <section className="page-section page-section--workspace">
+          <div className="empty-state">
+            <h2>Funzionalità non disponibile</h2>
+            <p>
+              Il tuo piano attuale utilizza lo schema predefinito. La creazione e gestione di
+              schemi personalizzati richiede un piano che abilita questa funzione.
+            </p>
+          </div>
+        </section>
+      </>
     )
   }
 
@@ -183,17 +191,17 @@ function SchemasPage() {
 
   return (
     <>
-      <section className="page-section">
-        <div className="section-heading">
-          <span className="section-heading__eyebrow">Premium</span>
+      <header className="page-hero">
+        <div className="page-hero__content">
+          <span className="page-hero__eyebrow">Premium</span>
           <h1>I miei schemi</h1>
           <p>Crea e versiona schemi di estrazione personalizzati.</p>
         </div>
-      </section>
+      </header>
 
       {successMessage && (
         <div
-            className="frontend-notice"
+            className="frontend-notice page-feedback"
             role="status"
         >
             <strong>
@@ -207,7 +215,7 @@ function SchemasPage() {
       )}      
 
       {editingSchema ? (
-        <section className="page-section">
+        <section className="page-section page-section--workspace">
           <div className="section-heading">
             <span className="section-heading__eyebrow">Modifica schema</span>
             <h2>{editingSchema.name}</h2>
@@ -228,7 +236,7 @@ function SchemasPage() {
           />
         </section>
       ) : (
-        <section className="page-section">
+        <section className="page-section page-section--workspace">
           <div className="section-heading">
             <span className="section-heading__eyebrow">Nuovo schema</span>
             <h2>Crea uno schema</h2>
@@ -243,7 +251,7 @@ function SchemasPage() {
         </section>
       )}
 
-      <section className="page-section">
+      <section className="page-section page-section--workspace">
         <div className="section-heading">
           <span className="section-heading__eyebrow">Schemi disponibili</span>
           <h2>Schemi attivi</h2>
@@ -313,7 +321,7 @@ function SchemasPage() {
       </section>
 
       {archivedSchemas.length > 0 && (
-        <section className="page-section">
+        <section className="page-section page-section--workspace">
           <div className="section-heading">
             <span className="section-heading__eyebrow">Storico</span>
             <h2>Schemi archiviati</h2>

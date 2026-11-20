@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.exceptions import DocumentNotFoundError
 from app.core.logging import get_logger
 from app.repositories.document_repository import DocumentRepository
-from app.schemas.document import DocumentCategory, DocumentDetailResponse, DocumentSummary
+from app.schemas.document import DocumentDetailResponse, DocumentSummary
 from app.services.document_mapper import to_document_summary
 from app.services.document_storage import DocumentStorage
 
@@ -41,7 +41,6 @@ class DocumentService:
         *,
         owner_user_id: UUID,
         file_name: str,
-        category: DocumentCategory,
         mime_type: str | None,
         size_bytes: int | None,
         file_stream: BinaryIO,
@@ -50,10 +49,9 @@ class DocumentService:
         storage_key: str | None = None
 
         logger.info(
-            "DOCUMENT_CREATE | phase=start | owner_user_id=%s | filename=%r | category=%s | size_bytes=%s",
+            "DOCUMENT_CREATE | phase=start | owner_user_id=%s | filename=%r | size_bytes=%s",
             owner_user_id,
             file_name,
-            category.value,
             size_bytes,
         )
 
@@ -61,7 +59,6 @@ class DocumentService:
             document = self.documents.create(
                 owner_user_id=owner_user_id,
                 original_name=file_name,
-                category=category.value,
                 mime_type=mime_type,
                 size_bytes=size_bytes,
             )

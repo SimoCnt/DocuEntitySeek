@@ -12,18 +12,10 @@ class DocumentStatus(str, Enum):
     ERROR = "ERROR"
 
 
-class DocumentCategory(str, Enum):
-    DISCIPLINARE = "DISCIPLINARE"
-    CAPITOLATO = "CAPITOLATO"
-    CONTRATTO = "CONTRATTO"
-    BANDO = "BANDO"
-    ALTRO = "ALTRO"
-
 
 class DocumentSummary(ApiModel):
     id: UUID
     name: str = Field(min_length=1, max_length=255)
-    category: DocumentCategory
     pages: int = Field(ge=0)
     status: DocumentStatus
     uploaded_at: date

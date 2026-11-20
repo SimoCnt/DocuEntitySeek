@@ -7,7 +7,6 @@ import UploadSummary from '../components/upload/UploadSummary'
 import Panel from '../components/common/Panel'
 import useDocumentTitle from '../hooks/useDocumentTitle'
 import { validatePdfFile } from '../utils/fileValidation'
-import type { DocumentCategory } from '../types/upload'
 import ErrorState from '../components/feedback/ErrorState'
 import useCreateDocument from '../hooks/useCreateDocument'
 import { useAuth } from '../auth/AuthContext'
@@ -18,7 +17,6 @@ function NewDocumentPage() {
     useDocumentTitle('Nuovo documento | DocuEntitySeek')
 
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
-    const [category, setCategory] = useState<DocumentCategory>('DISCIPLINARE')
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [schemaSelectionError, setSchemaSelectionError] = useState<string | null>(null)
     const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)    
@@ -121,7 +119,7 @@ function NewDocumentPage() {
 
         setIsConfirmationOpen(false)
         
-        const document = await uploadDocument(selectedFile, category, customSchemasEnabled ? selectedSchemaVersionId : undefined)
+        const document = await uploadDocument(selectedFile, customSchemasEnabled ? selectedSchemaVersionId : undefined)
 
         if (!document) {
             return
@@ -141,104 +139,96 @@ function NewDocumentPage() {
 
 
     return (
-        <section className="page-section">
-            <div className="page-heading">
-                <Link
-                    to="/documents"
-                    className="back-link"
-                >
-                    ← Documenti
-                </Link>
-
-                <span className="section-heading__eyebrow">New document</span>
-                <h1>Carica un documento</h1>
-                <p>Prepara un PDF per l'analisi di DocuEntitySeek.</p>
-            </div>
-
-            <div className="upload-layout">
-                <Panel
-                    title="Documento"
-                    description="Seleziona il PDF e specifica il tipo di documento."
-                >
-                    <DocumentUploadForm
-                        selectedFile={selectedFile}
-                        category={category}
-                        errorMessage={errorMessage}
-                        showSchemaSelector={
-                            customSchemasEnabled
-                        }
-                        schemas={schemas}
-                        schemasLoading={
-                            schemasLoading
-                        }
-                        schemaVersionId={
-                            selectedSchemaVersionId ??
-                            ''
-                        }
-                        schemaErrorMessage={
-                            schemaSelectionError ??
-                            schemasError?.message ??
-                            null
-                        }
-                        onSchemaVersionChange={
-                            handleSchemaVersionChange
-                        }
-                        onFileChange={
-                            handleFileChange
-                        }
-                        onCategoryChange={
-                            setCategory
-                        }
-                        onSubmit={
-                            handleSubmit
-                        }
-                    />
-                </Panel>
-
-                <Panel
-                    title="Riepilogo"
-                    description="Informazioni che verranno associate al documento."
-                >
-                    {selectedFile ? (
-                        <UploadSummary
-                            file={selectedFile}
-                            category={category}
-                            schemaName={schemaDisplayName}
-                        />
-                    ) : (
-                        <div className="upload-empty-summary">Seleziona un PDF per visualizzare il riepilogo.</div>
-                    )}
-                </Panel>
-            </div>
-
-            {isSubmitting && (
-                <div
-                    className="frontend-notice"
-                    role="status"
-                >                    
-                    <p>Invio del documento al backend...</p>
+        <>
+            <header className="page-hero">
+                <div className="page-hero__content">
+                    <Link to="/documents" className="back-link">← Documenti</Link>
+                    <span className="page-hero__eyebrow">Nuovo documento</span>
+                    <h1>Carica un documento</h1>
+                    <p>Prepara un PDF per l'analisi di DocuEntitySeek.</p>
                 </div>
-            )}
+            </header>
 
-            {uploadError && (
-                <ErrorState
-                    message={uploadError.message}
+            <section className="page-section page-section--workspace">
+                <div className="upload-layout">
+                    <Panel
+                        title="Documento"
+                        description="Seleziona il PDF e lo schema di estrazione."
+                    >
+                        <DocumentUploadForm
+                            selectedFile={selectedFile}
+                            errorMessage={errorMessage}
+                            showSchemaSelector={
+                                customSchemasEnabled
+                            }
+                            schemas={schemas}
+                            schemasLoading={
+                                schemasLoading
+                            }
+                            schemaVersionId={
+                                selectedSchemaVersionId ??
+                                ''
+                            }
+                            schemaErrorMessage={
+                                schemaSelectionError ??
+                                schemasError?.message ??
+                                null
+                            }
+                            onSchemaVersionChange={
+                                handleSchemaVersionChange
+                            }
+                            onFileChange={
+                                handleFileChange
+                            }
+                            onSubmit={
+                                handleSubmit
+                            }
+                        />
+                    </Panel>
+
+                    <Panel
+                        title="Riepilogo"
+                        description="Informazioni che verranno associate al documento."
+                    >
+                        {selectedFile ? (
+                            <UploadSummary
+                                file={selectedFile}
+                                schemaName={schemaDisplayName}
+                            />
+                        ) : (
+                            <div className="upload-empty-summary">Seleziona un PDF per visualizzare il riepilogo.</div>
+                        )}
+                    </Panel>
+                </div>
+
+                {isSubmitting && (
+                    <div
+                        className="frontend-notice"
+                        role="status"
+                    >                    
+                        <p>Invio del documento al backend...</p>
+                    </div>
+                )}
+
+                {uploadError && (
+                    <ErrorState
+                        message={uploadError.message}
+                    />
+                )}
+
+                <ConfirmUploadDialog
+                    isOpen={isConfirmationOpen}
+                    file={selectedFile}
+                    schemaName={schemaDisplayName}
+                    onCancel={() =>
+                        setIsConfirmationOpen(
+                            false,
+                        )
+                    }
+                    onConfirm={handleConfirm}
                 />
-            )}
-
-            <ConfirmUploadDialog
-                isOpen={isConfirmationOpen}
-                file={selectedFile}
-                category={category}
-                schemaName={schemaDisplayName}
-                onCancel={() =>
-                    setIsConfirmationOpen(
-                        false,
-                    )
-                }
-                onConfirm={handleConfirm}
-            />
-        </section>
+            </section>
+        </>
     )
 }
 

@@ -1,9 +1,7 @@
-import type { DocumentCategory } from '../../types/upload'
 
 
 type UploadSummaryProps = {
     file: File
-    category: DocumentCategory
     schemaName: string
 }
 
@@ -21,7 +19,7 @@ function formatFileSize(bytes: number) {
 }
 
 
-function UploadSummary({ file, category, schemaName }: UploadSummaryProps) {
+function UploadSummary({ file, schemaName }: UploadSummaryProps) {
     return (
         <dl className="upload-summary">
             <div>
@@ -32,11 +30,6 @@ function UploadSummary({ file, category, schemaName }: UploadSummaryProps) {
             <div>
                 <dt>Dimensione</dt>
                 <dd>{formatFileSize(file.size)}</dd>
-            </div>
-
-            <div>
-                <dt>Tipo documento</dt>
-                <dd>{category}</dd>
             </div>
 
             <div>

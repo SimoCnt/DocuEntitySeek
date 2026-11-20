@@ -13,7 +13,6 @@ def test_replace_document_pages(db_session: Session, user_factory) -> None:
     document = DocumentRepository(db_session).create(
         owner_user_id=user.id,
         original_name="document.pdf",
-        category="DISCIPLINARE",
         mime_type="application/pdf",
         size_bytes=100,
     )

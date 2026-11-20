@@ -1,13 +1,11 @@
 import { useEffect, useRef } from 'react'
 
-import type { DocumentCategory } from '../../types/upload'
 import UploadSummary from './UploadSummary'
 
 
 type ConfirmUploadDialogProps = {
   isOpen: boolean
   file: File | null
-  category: DocumentCategory
   schemaName: string
   onCancel: () => void
   onConfirm: () => void
@@ -17,7 +15,6 @@ type ConfirmUploadDialogProps = {
 function ConfirmUploadDialog({
   isOpen,
   file,
-  category,
   schemaName,
   onCancel,
   onConfirm,
@@ -54,7 +51,6 @@ function ConfirmUploadDialog({
         {file && (
           <UploadSummary
             file={file}
-            category={category}
             schemaName={schemaName}
           />
         )}

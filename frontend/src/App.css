@@ -94,7 +94,8 @@
 }
 
 .hero__eyebrow,
-.section-heading__eyebrow {
+.section-heading__eyebrow,
+.page-hero__eyebrow {
   display: inline-block;
   margin-bottom: 18px;
   color: #536ee8;
@@ -576,24 +577,107 @@
   padding: 72px 0 100px;
 }
 
-.page-heading {
-  max-width: 720px;
-  margin-bottom: 42px;
+
+/* ==========================================================
+   Workspace: pagina (h1) -> sezione (h2) -> card (h3)
+   ========================================================== */
+
+.page-hero {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 60px 0 22px;
 }
 
-.page-heading h1, .document-detail-heading h1 {
-  margin-bottom: 14px;
+.page-hero__content {
+  min-width: 0;
+  max-width: 780px;
+}
+
+.page-hero__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.page-hero__top > .button {
+  flex-shrink: 0;
+}
+
+.page-hero__eyebrow {
+  margin-bottom: 12px;
+}
+
+.page-hero h1 {
+  margin: 0 0 14px;
   color: #172033;
-  font-size: clamp(34px, 5vw, 52px);
-  line-height: 1.05;
-  letter-spacing: -0.035em;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
 }
 
-.page-heading p, .document-detail-heading p {
+.page-hero p {
+  max-width: 68ch;
+  margin: 0;
   color: #69758b;
-  line-height: 1.7;
+  font-size: 1rem;
+  line-height: 1.65;
 }
 
+.page-hero .back-link {
+  margin-bottom: 24px;
+}
+
+.page-section--workspace {
+  padding-top: 24px;
+  padding-bottom: 42px;
+}
+
+.page-section--workspace + .page-section--workspace {
+  padding-top: 12px;
+}
+
+.page-section--workspace .section-heading {
+  max-width: 780px;
+  margin-bottom: 26px;
+}
+
+.page-section--workspace .section-heading h2,
+.page-section--workspace .page-heading__top h2 {
+  margin: 0 0 12px;
+  color: #25324a;
+  font-size: clamp(1.375rem, 2.4vw, 1.8rem);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.page-section--workspace .section-heading p,
+.page-section--workspace .page-heading__top p {
+  margin: 0;
+  color: #69758b;
+  line-height: 1.65;
+}
+
+.page-feedback {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto 12px;
+}
+
+@media (max-width: 640px) {
+  .page-hero {
+    padding-top: 40px;
+  }
+
+  .page-hero__top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-hero__top > .button {
+    align-self: flex-start;
+  }
+}
 
 /* ==========================================================
    Documents
@@ -631,11 +715,13 @@
   letter-spacing: 0.08em;
 }
 
-.document-card h2 {
-  margin-bottom: 16px;
+.document-card h3 {
+  margin: 0 0 16px;
   overflow-wrap: anywhere;
   color: #27334a;
-  font-size: 19px;
+  font-size: 1.125rem;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
 }
 
 .document-card__meta {
@@ -683,12 +769,6 @@
 /* ==========================================================
    Document detail
    ========================================================== */
-
-.document-detail-heading {
-  width: min(1180px, calc(100% - 40px));
-  margin: 0 auto;
-  padding: 58px 0 0;
-}
 
 .back-link {
   display: block;

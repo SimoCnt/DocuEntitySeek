@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { createDocument } from '../api/documentsApi'
 import { normalizeRequestError, type RequestError } from '../api/http'
 import { useAuth } from '../auth/AuthContext'
-import type { DocumentCategory, DocumentSummary } from '../types/document'
+import type { DocumentSummary } from '../types/document'
 import { startAnalysis } from '../api/analyses'
 
 
@@ -16,7 +16,6 @@ function useCreateDocument() {
 
     async function uploadDocument(
         file: File, 
-        category: DocumentCategory,
         schemaVersionId?: string
     ): Promise<DocumentSummary | null> {
         if (!accessToken) {
@@ -37,7 +36,7 @@ function useCreateDocument() {
         setError(null)
 
         try {
-            const document = await createDocument(file, category, accessToken)
+            const document = await createDocument(file, accessToken)
 
             void startAnalysis(document.id, accessToken, schemaVersionId)
             .catch((analysisError) => {

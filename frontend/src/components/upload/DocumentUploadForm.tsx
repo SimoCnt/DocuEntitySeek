@@ -1,12 +1,10 @@
 import type { ChangeEvent, FormEvent } from 'react'
 
 import type { AvailableExtractionSchema } from '../../types/extractionSchema'
-import type { DocumentCategory } from '../../types/upload'
 
 
 type DocumentUploadFormProps = {
   selectedFile: File | null
-  category: DocumentCategory
   errorMessage: string | null
   showSchemaSelector: boolean
   schemas: AvailableExtractionSchema[]
@@ -15,14 +13,12 @@ type DocumentUploadFormProps = {
   schemaErrorMessage: string | null
   onSchemaVersionChange: (schemaVersionId: string) => void
   onFileChange: (file: File | null) => void
-  onCategoryChange: (category: DocumentCategory) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
 }
 
 
 function DocumentUploadForm({
   selectedFile,
-  category,
   errorMessage,
   showSchemaSelector,
   schemas,
@@ -31,7 +27,6 @@ function DocumentUploadForm({
   schemaErrorMessage,
   onSchemaVersionChange,
   onFileChange,
-  onCategoryChange,
   onSubmit,
 }: DocumentUploadFormProps) {
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -72,23 +67,6 @@ function DocumentUploadForm({
             {errorMessage}
           </p>
         )}
-      </div>
-
-      <div className="form-field">
-        <label htmlFor="document-category">Tipo di documento</label>
-
-        <select
-          id="document-category"
-          name="documentCategory"
-          value={category}
-          onChange={(event) => onCategoryChange(event.target.value as DocumentCategory)}
-        >
-          <option value="DISCIPLINARE">Disciplinare</option>
-          <option value="CAPITOLATO">Capitolato</option>
-          <option value="CONTRATTO">Contratto</option>
-          <option value="BANDO">Bando</option>
-          <option value="ALTRO">Altro</option>
-        </select>
       </div>
 
       {showSchemaSelector && (
