@@ -1569,3 +1569,32 @@
 .pdf-document-viewer__highlight:hover,
 .pdf-document-viewer__highlight:focus-visible { opacity: .72; outline: 2px solid #1d4ed8; outline-offset: 1px; }
 .pdf-document-viewer__highlight--selected { opacity: .78; border: 2px solid #1d4ed8; z-index: 2; }
+
+/* Richiesta di passaggio a Premium */
+.premium-upgrade {
+  max-width: 800px;
+}
+.premium-upgrade__content {
+  display: grid;
+  gap: 18px;
+}
+.premium-upgrade__content > p {
+  margin: 0;
+  color: #536078;
+  line-height: 1.65;
+}
+.premium-upgrade__account {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid #dfe4ed;
+  border-radius: 12px;
+  background: #f7f9fc;
+  overflow-wrap: anywhere;
+}
+.premium-upgrade__account span { color: #69758b; font-size: 13px; }
+.premium-upgrade__account strong { color: #25324a; }
+.premium-upgrade__content .premium-upgrade__note { font-size: 14px; }
+.premium-upgrade__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+

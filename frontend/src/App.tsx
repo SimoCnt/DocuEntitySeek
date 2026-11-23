@@ -11,6 +11,7 @@ import NewDocumentPage from './pages/NewDocumentPage'
 import NotFoundPage from './pages/NotFoundPage'
 import RegisterPage from './pages/RegisterPage'
 import SchemasPage from './pages/SchemasPage'
+import UpgradeToPremiumPage from './pages/UpgradeToPremiumPage'
 
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
           <Route path="documents/new" element={<NewDocumentPage />} />
           <Route path="documents/:documentId" element={<DocumentDetailPage />} />
           <Route path="schemas" element={<SchemasPage />} />
+          <Route path="premium" element={<UpgradeToPremiumPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
