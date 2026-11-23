@@ -1,6 +1,7 @@
 from uuid import UUID
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.core.exceptions import (
     AiConfigurationError,
@@ -9,9 +10,10 @@ from app.core.exceptions import (
     CustomSchemasNotAvailableError,
     ExtractionSchemaNotFoundError,
 )
-from app.dependencies import AnalysisQueryServiceDep, AnalysisServiceDep, CurrentUserDep
+from app.dependencies import AnalysisQueryServiceDep, AnalysisServiceDep, CurrentUserDep, DocumentStorageDep, DbSessionDep
 from app.schemas.analysis import (
     AnalysisDetailResponse,
+    PdfPageGeometryResponse,
     AnalysisEntityDefinitionResponse,
     AnalysisFieldDefinitionResponse,
     AnalysisPipelineSummaryResponse,
@@ -25,6 +27,11 @@ from app.schemas.analysis import (
     ExtractedFieldResponse,
     FieldCandidateResponse,
 )
+
+from app.core.config import get_settings
+from app.core.exceptions import DocumentStorageError
+from app.repositories.document_repository import DocumentRepository
+from app.services.pdf_geometry_service import PdfGeometryService, TextRegionRequest
 
 
 router = APIRouter()
@@ -299,3 +306,61 @@ def get_analysis(
         ai_runtime_config_id=analysis.ai_runtime_config_id,
         result=result,
     )
+
+
+@router.get(
+    "/documents/{document_id}/analyses/{analysis_id}/geometry",
+    response_model=PdfPageGeometryResponse,
+)
+def get_pdf_page_geometry(
+    document_id: UUID,
+    analysis_id: UUID,
+    page_number: Annotated[int, Query(ge=1)],
+    current_user: CurrentUserDep,
+    service: AnalysisQueryServiceDep,
+    storage: DocumentStorageDep,
+    session: DbSessionDep,
+) -> PdfPageGeometryResponse:
+    try:
+        analysis, _, pages, entities, fields, _ = service.get_detail(
+            analysis_id=analysis_id, document_id=document_id, owner_user_id=current_user.id
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail="Analisi non trovata.") from exc
+
+    if analysis.status != "READY":
+        raise HTTPException(status_code=409, detail="Analisi non ancora completata.")
+
+    page = next((item for item in pages if item.page_number == page_number), None)
+    if page is None:
+        raise HTTPException(status_code=404, detail="Pagina non trovata.")
+
+    document = DocumentRepository(session).get_by_id_and_owner(document_id, current_user.id)
+    if document is None or not document.storage_key:
+        raise HTTPException(status_code=404, detail="PDF originale non disponibile.")
+
+    requests = []
+    for entity in entities:
+        if entity.page == page_number and entity.is_visible and 0 <= entity.page_start < entity.page_end <= len(page.extracted_text):
+            if page.extracted_text[entity.page_start:entity.page_end] == entity.text:
+                requests.append(TextRegionRequest("entity", str(entity.id), entity.label, entity.page_start, entity.page_end))
+    for field in fields:
+        if field.page == page_number and field.value_text and field.global_start is not None and field.global_end is not None:
+            start = field.global_start - page.global_start
+            end = field.global_end - page.global_start
+            if 0 <= start < end <= len(page.extracted_text) and page.extracted_text[start:end] == field.value_text:
+                requests.append(TextRegionRequest("field", str(field.id), field.field_key, start, end))
+
+    try:
+        with storage.materialize(document.storage_key) as pdf_path:
+            result = PdfGeometryService(sort_text=get_settings().pdf_text_sort).map_page(
+                pdf_path=pdf_path, page_number=page_number,
+                expected_text=page.extracted_text, regions=requests,
+            )
+    except (DocumentStorageError, FileNotFoundError) as exc:
+        raise HTTPException(status_code=404, detail="PDF originale non disponibile.") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="PDF o pagina non validi.") from exc
+
+    return PdfPageGeometryResponse.model_validate(result)
+

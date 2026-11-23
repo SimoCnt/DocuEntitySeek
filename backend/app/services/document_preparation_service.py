@@ -57,15 +57,9 @@ class DocumentPreparationService:
 
                 raise DocumentStorageError("Il documento non possiede un file persistito.")
 
-            pdf_path = self.storage.get_path(document.storage_key)
-
-            logger.info(
-                "TEXT_PREPARATION | phase=storage_resolved | document_id=%s | storage_key=%s",
-                document_id,
-                document.storage_key,
-            )
-
-            extraction = self.pdf_extractor.extract(document_id=document_id, pdf_path=pdf_path)
+            with self.storage.materialize(document.storage_key) as pdf_path:
+                logger.info("TEXT_PREPARATION | phase=storage_resolved | document_id=%s", document_id)
+                extraction = self.pdf_extractor.extract(document_id=document_id, pdf_path=pdf_path)
             prepared = self.provenance_builder.build(document_id=document_id, extraction=extraction)
 
             logger.info(

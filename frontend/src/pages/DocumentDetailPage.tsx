@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 
 import AnalysisResultViewer from '../components/analysis/AnalysisResultViewer'
+import PdfDocumentViewer from '../components/pdf/PdfDocumentViewer'
 import ErrorState from '../components/feedback/ErrorState'
 import LoadingState from '../components/feedback/LoadingState'
 import useAnalysis from '../hooks/useAnalysis'
@@ -19,6 +20,7 @@ function DocumentDetailPage() {
         isLoading: analysesLoading,
         error: analysesError,
         reload: reloadAnalyses,
+        refreshSilently: refreshAnalysesSilently,
     } = useDocumentAnalyses(documentId || undefined)
 
     const {
@@ -50,6 +52,7 @@ function DocumentDetailPage() {
         isLoading: selectedAnalysisLoading,
         error: selectedAnalysisError,
         reload: reloadSelectedAnalysis,
+        refreshSilently: refreshSelectedAnalysisSilently,
     } = useAnalysis(documentId || undefined, selectedAnalysisId)
 
     const hasRunningAnalyses = analyses.some(
@@ -63,21 +66,21 @@ function DocumentDetailPage() {
         if (!hasRunningAnalyses) return
 
         const intervalId = window.setInterval(() => {
-            reloadAnalyses()
-        }, 2000)
+            if (window.document.visibilityState === "visible") refreshAnalysesSilently()
+        }, 6000)
 
         return () => window.clearInterval(intervalId)
-    }, [hasRunningAnalyses, reloadAnalyses])
+    }, [hasRunningAnalyses, refreshAnalysesSilently])
 
     useEffect(() => {
         if (!selectedAnalysisId || !selectedAnalysisIsRunning) return
 
         const intervalId = window.setInterval(() => {
-            reloadSelectedAnalysis()
-        }, 2000)
+            if (window.document.visibilityState === "visible") refreshSelectedAnalysisSilently()
+        }, 6000)
 
         return () => window.clearInterval(intervalId)
-    }, [selectedAnalysisId, selectedAnalysisIsRunning, reloadSelectedAnalysis])
+    }, [selectedAnalysisId, selectedAnalysisIsRunning, refreshSelectedAnalysisSilently])
 
     useDocumentTitle(data ? `${data.document.name} | DocuEntitySeek` : 'Documento | DocuEntitySeek')
 
@@ -99,7 +102,7 @@ function DocumentDetailPage() {
             result.data.analysisId,
         )
 
-        reloadAnalyses()
+        refreshAnalysesSilently()
     }
 
     if (isLoading) {
@@ -296,9 +299,18 @@ function DocumentDetailPage() {
                 </section>
             )}
 
+            {(!selectedAnalysis || selectedAnalysis.status !== 'READY' || !selectedAnalysis.result) && (
+                <section className="page-section page-section--workspace">
+                    <div className="section-heading"><h2>Documento originale</h2></div>
+                    <PdfDocumentViewer documentId={documentId} />
+                </section>
+            )}
+
             {selectedAnalysis?.status === 'READY' && selectedAnalysis.result && (
                 <AnalysisResultViewer
                     key={selectedAnalysis.id}
+                    documentId={documentId}
+                    analysisId={selectedAnalysis.id}
                     documentName={document.name}
                     result={selectedAnalysis.result}
                 />

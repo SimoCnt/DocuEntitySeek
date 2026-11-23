@@ -180,3 +180,23 @@ class AnalysisDetailResponse(ApiModel):
 
 class AnalysisStartRequest(ApiModel):
     schema_version_id: UUID | None = None
+
+
+class PdfHighlightRect(ApiModel):
+    x: float = Field(ge=0, le=1)
+    y: float = Field(ge=0, le=1)
+    width: float = Field(gt=0, le=1)
+    height: float = Field(gt=0, le=1)
+
+
+class PdfHighlightRegion(ApiModel):
+    kind: Literal["entity", "field"]
+    id: UUID
+    label: str
+    rects: list[PdfHighlightRect]
+
+
+class PdfPageGeometryResponse(ApiModel):
+    page_number: int = Field(ge=1)
+    aligned: bool
+    regions: list[PdfHighlightRegion]

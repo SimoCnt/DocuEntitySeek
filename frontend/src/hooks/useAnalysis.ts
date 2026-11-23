@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { getAnalysis } from '../api/analyses'
 import { isAbortError, normalizeRequestError, type RequestError } from '../api/http'
@@ -11,8 +11,8 @@ function useAnalysis(documentId: string | undefined, analysisId: string | undefi
     const [analysis, setAnalysis] = useState<AnalysisDetail | null>(null)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<RequestError | null>(null)
-    const [reloadToken, setReloadToken] = useState(0)
-
+    const [refreshRequest, setRefreshRequest] = useState({ sequence: 0, silent: false })
+    const lastLoadedIdentityRef = useRef<string | null>(null)
     useEffect(() => {
         const validDocumentId = documentId
         const validAnalysisId = analysisId
@@ -20,6 +20,7 @@ function useAnalysis(documentId: string | undefined, analysisId: string | undefi
 
         if (!validDocumentId || !validAnalysisId || !token) {
             setAnalysis(null)
+            lastLoadedIdentityRef.current = null
             setError(null)
             setIsLoading(false)
             return
@@ -29,14 +30,21 @@ function useAnalysis(documentId: string | undefined, analysisId: string | undefi
 
 
         async function loadAnalysis(documentIdValue: string, analysisIdValue: string, validToken: string) {
-            setIsLoading(true)
-            setError(null)
+            const requestIdentity = `${documentIdValue}:${analysisIdValue}:${validToken}`
+            const silent = refreshRequest.silent && lastLoadedIdentityRef.current === requestIdentity
+            if (!silent) {
+                if (lastLoadedIdentityRef.current !== requestIdentity) setAnalysis(null)
+                setIsLoading(true)
+                setError(null)
+            }
 
             try {
                 const result = await getAnalysis(documentIdValue, analysisIdValue, validToken, controller.signal)
 
                 if (!controller.signal.aborted) {
                     setAnalysis(result)
+                    lastLoadedIdentityRef.current = requestIdentity
+                    setError(null)
                 }
             } catch (requestError) {
                 if (controller.signal.aborted || isAbortError(requestError)) return
@@ -48,7 +56,7 @@ function useAnalysis(documentId: string | undefined, analysisId: string | undefi
                     return
                 }
 
-                setError(normalized)
+                if (!silent) setError(normalized)
             } finally {
                 if (!controller.signal.aborted) setIsLoading(false)
             }
@@ -57,14 +65,17 @@ function useAnalysis(documentId: string | undefined, analysisId: string | undefi
         void loadAnalysis(validDocumentId, validAnalysisId, token)
 
         return () => controller.abort()
-    }, [accessToken, analysisId, documentId, logout, reloadToken])
+    }, [accessToken, analysisId, documentId, logout, refreshRequest])
 
-    
-    function reload() {
-        setReloadToken((current) => current + 1)
-    }
+    const reload = useCallback(() => {
+        setRefreshRequest((current) => ({ sequence: current.sequence + 1, silent: false }))
+    }, [])
 
-    return { analysis, isLoading, error, reload }
+    const refreshSilently = useCallback(() => {
+        setRefreshRequest((current) => ({ sequence: current.sequence + 1, silent: true }))
+    }, [])
+
+    return { analysis, isLoading, error, reload, refreshSilently }
 }
 
 export default useAnalysis

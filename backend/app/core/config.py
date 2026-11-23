@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     app_log_level: str = "INFO"
     api_v1_prefix: str = "/api/v1"
     document_storage_root: Path = Path("storage/documents")
+    document_storage_backend: str = "local"  # "local" or "s3"
+    document_s3_endpoint_url: str | None = None
+    document_s3_bucket: str = "docuentityseek-documents"
+    document_s3_region: str = "us-east-1"
+    document_s3_access_key: str | None = None
+    document_s3_secret_key: str | None = None
     pdf_text_sort: bool = False
     
     cors_origins: list[str] = [

@@ -36,6 +36,13 @@ class DocumentService:
         return DocumentDetailResponse(document=to_document_summary(document))
 
 
+    def get_original_storage_key(self, document_id: UUID, owner_user_id: UUID) -> str:
+        document = self.documents.get_by_id_and_owner(document_id, owner_user_id)
+        if document is None or not document.storage_key:
+            raise DocumentNotFoundError(str(document_id))
+        return document.storage_key
+
+
     def create_document(
         self,
         *,
