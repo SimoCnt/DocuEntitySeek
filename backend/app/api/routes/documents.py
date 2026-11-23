@@ -1,12 +1,13 @@
 
 from typing import Annotated
 from uuid import UUID
-from fastapi import APIRouter, File, Path, UploadFile, status
+from fastapi import APIRouter, Header, File, Path, UploadFile, status
 
 from app.dependencies import DocumentServiceDep, CurrentUserDep
 from app.schemas.common import ErrorResponse
 from app.schemas.document import DocumentDetailResponse, DocumentSummary
 from app.services.file_validation import validate_pdf_upload
+from app.services.pdf_content_response import build_pdf_response
 
 
 router = APIRouter(
@@ -72,3 +73,14 @@ def create_document(
         size_bytes=file.size,
         file_stream=file.file
     )
+
+
+@router.get("/{document_id}/file", summary="Read original PDF (authenticated, supports byte ranges)")
+def read_original_pdf(
+    document_id: Annotated[UUID, Path()],
+    service: DocumentServiceDep,
+    current_user: CurrentUserDep,
+    byte_range: Annotated[str | None, Header(alias="Range")] = None,
+):
+    storage_key = service.get_original_storage_key(document_id, current_user.id)
+    return build_pdf_response(service.storage, storage_key, byte_range)

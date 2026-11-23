@@ -1,0 +1,47 @@
+# Variante locale: docker compose --env-file .env.docker -f compose.yaml -f compose.storage.yaml up -d --build
+services:
+  minio:
+    image: docker.io/pgsty/silo:RELEASE.2026-11-12T00-00-00Z
+    command: server /data --console-address ':9001'
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Imposta MINIO_ROOT_USER nel file .env.docker}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Imposta MINIO_ROOT_PASSWORD nel file .env.docker}
+    ports:
+      - '127.0.0.1:9000:9000'
+      - '127.0.0.1:9001:9001'
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+
+  minio-init:
+    image: docker.io/pgsty/mc:RELEASE.2026-11-12T00-00-00Z
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        until mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do
+          sleep 2
+        done
+        mc mb --ignore-existing local/docuentityseek-documents
+        mc anonymous set none local/docuentityseek-documents
+    depends_on:
+      - minio
+    restart: "no"
+
+  backend:
+    environment:
+      DOCUMENT_STORAGE_BACKEND: s3
+      DOCUMENT_STORAGE_ROOT: storage/documents
+      DOCUMENT_S3_ENDPOINT_URL: http://minio:9000
+      DOCUMENT_S3_BUCKET: docuentityseek-documents
+      DOCUMENT_S3_REGION: us-east-1
+      DOCUMENT_S3_ACCESS_KEY: ${MINIO_ROOT_USER:?}
+      DOCUMENT_S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?}
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+
+volumes:
+  minio_data:

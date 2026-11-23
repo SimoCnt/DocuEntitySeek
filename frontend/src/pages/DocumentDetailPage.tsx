@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 
 import AnalysisResultViewer from '../components/analysis/AnalysisResultViewer'
+import StartAnalysisSchemaDialog from '../components/analysis/StartAnalysisSchemaDialog'
+import PdfDocumentViewer from '../components/pdf/PdfDocumentViewer'
 import ErrorState from '../components/feedback/ErrorState'
 import LoadingState from '../components/feedback/LoadingState'
 import useAnalysis from '../hooks/useAnalysis'
@@ -19,6 +21,7 @@ function DocumentDetailPage() {
         isLoading: analysesLoading,
         error: analysesError,
         reload: reloadAnalyses,
+        refreshSilently: refreshAnalysesSilently,
     } = useDocumentAnalyses(documentId || undefined)
 
     const {
@@ -29,6 +32,8 @@ function DocumentDetailPage() {
     } = useStartAnalysis()
 
     const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | undefined>(undefined)
+
+    const [isSchemaDialogOpen, setIsSchemaDialogOpen] = useState(false)
 
     useEffect(() => {
         if (analyses.length === 0) {
@@ -50,6 +55,7 @@ function DocumentDetailPage() {
         isLoading: selectedAnalysisLoading,
         error: selectedAnalysisError,
         reload: reloadSelectedAnalysis,
+        refreshSilently: refreshSelectedAnalysisSilently,
     } = useAnalysis(documentId || undefined, selectedAnalysisId)
 
     const hasRunningAnalyses = analyses.some(
@@ -63,44 +69,38 @@ function DocumentDetailPage() {
         if (!hasRunningAnalyses) return
 
         const intervalId = window.setInterval(() => {
-            reloadAnalyses()
-        }, 2000)
+            if (window.document.visibilityState === "visible") refreshAnalysesSilently()
+        }, 6000)
 
         return () => window.clearInterval(intervalId)
-    }, [hasRunningAnalyses, reloadAnalyses])
+    }, [hasRunningAnalyses, refreshAnalysesSilently])
 
     useEffect(() => {
         if (!selectedAnalysisId || !selectedAnalysisIsRunning) return
 
         const intervalId = window.setInterval(() => {
-            reloadSelectedAnalysis()
-        }, 2000)
+            if (window.document.visibilityState === "visible") refreshSelectedAnalysisSilently()
+        }, 6000)
 
         return () => window.clearInterval(intervalId)
-    }, [selectedAnalysisId, selectedAnalysisIsRunning, reloadSelectedAnalysis])
+    }, [selectedAnalysisId, selectedAnalysisIsRunning, refreshSelectedAnalysisSilently])
 
     useDocumentTitle(data ? `${data.document.name} | DocuEntitySeek` : 'Documento | DocuEntitySeek')
 
-    async function handleStartAnalysis() {
-        if (
-            !documentId ||
-            hasRunningAnalyses
-        ) {
-            return
-        }
+    
+    async function handleStartAnalysis(schemaVersionId?: string) {
+        if (!documentId || hasRunningAnalyses || analysisRunning) return
 
-        const result = await runAnalysis(documentId)
+        setIsSchemaDialogOpen(false)
 
-        if (!result.ok) {
-            return
-        }
+        const outcome = await runAnalysis(documentId, schemaVersionId)
+        if (!outcome.ok) return
 
-        setSelectedAnalysisId(
-            result.data.analysisId,
-        )
-
-        reloadAnalyses()
+        setSelectedAnalysisId(outcome.data.analysisId)
+        void refreshAnalysesSilently()
     }
+
+
 
     if (isLoading) {
         return (
@@ -139,6 +139,13 @@ function DocumentDetailPage() {
 
     return (
         <>
+            <StartAnalysisSchemaDialog
+                isOpen={isSchemaDialogOpen}
+                isSubmitting={analysisRunning}
+                errorMessage={analysisStartError?.message ?? null}
+                onCancel={() => setIsSchemaDialogOpen(false)}
+                onConfirm={handleStartAnalysis}
+            />
             <header className="page-hero">
                 <div className="page-hero__content">
                     <Link to="/documents" className="back-link">
@@ -170,7 +177,7 @@ function DocumentDetailPage() {
                         type="button"
                         className="button button--primary"
                         disabled={analysisRunning || hasRunningAnalyses}
-                        onClick={() => void handleStartAnalysis()}
+                        onClick={() => setIsSchemaDialogOpen(true)}
                     >
                         {analysisRunning || hasRunningAnalyses ? 'Analisi in corso...' : 'Analizza documento'}
                     </button>
@@ -225,8 +232,9 @@ function DocumentDetailPage() {
                                 <h3>{new Date(analysis.createdAt).toLocaleString('it-IT')}</h3>
 
                                 <div className="document-card__meta">
-                                    <span>{analysis.id}</span>
-                                    <span>Schema version: {analysis.schemaVersionId.slice(0, 8)}</span>
+                                    <span>Schema: <strong>{analysis.schemaName}</strong> · v{analysis.schemaVersion}</span>
+                                    
+                                    
                                 </div>
 
                                 {(analysis.status === 'QUEUED' || analysis.status === 'PROCESSING') && (
@@ -296,9 +304,18 @@ function DocumentDetailPage() {
                 </section>
             )}
 
+            {(!selectedAnalysis || selectedAnalysis.status !== 'READY' || !selectedAnalysis.result) && (
+                <section className="page-section page-section--workspace">
+                    <div className="section-heading"><h2>Documento originale</h2></div>
+                    <PdfDocumentViewer documentId={documentId} />
+                </section>
+            )}
+
             {selectedAnalysis?.status === 'READY' && selectedAnalysis.result && (
                 <AnalysisResultViewer
                     key={selectedAnalysis.id}
+                    documentId={documentId}
+                    analysisId={selectedAnalysis.id}
                     documentName={document.name}
                     result={selectedAnalysis.result}
                 />

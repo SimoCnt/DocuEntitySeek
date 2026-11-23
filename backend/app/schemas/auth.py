@@ -2,7 +2,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Literal
 from uuid import UUID
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+from email_validator import EmailNotValidError, validate_email
 
 from app.schemas.base import ApiModel
 
@@ -20,6 +21,15 @@ class PlanCode(str, Enum):
 class RegisterRequest(ApiModel):
     email: EmailStr
     password: str = Field(min_length=12, max_length=128, repr=False)
+
+    @field_validator("email")
+    @classmethod
+    def validate_registration_email_domain(cls, value: str) -> str:
+        try:
+            validate_email(str(value), check_deliverability=True)
+        except EmailNotValidError as exc:
+            raise ValueError("Dominio email non valido o non abilitato a ricevere posta.") from exc
+        return value
 
 
 class PlanResponse(ApiModel):

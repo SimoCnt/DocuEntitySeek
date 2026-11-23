@@ -10,6 +10,7 @@ from app.repositories.document_repository import DocumentRepository
 from app.schemas.document import DocumentDetailResponse, DocumentSummary
 from app.services.document_mapper import to_document_summary
 from app.services.document_storage import DocumentStorage
+from app.services.pdf_page_counter import count_pdf_pages
 
 
 logger = get_logger("document")
@@ -36,6 +37,13 @@ class DocumentService:
         return DocumentDetailResponse(document=to_document_summary(document))
 
 
+    def get_original_storage_key(self, document_id: UUID, owner_user_id: UUID) -> str:
+        document = self.documents.get_by_id_and_owner(document_id, owner_user_id)
+        if document is None or not document.storage_key:
+            raise DocumentNotFoundError(str(document_id))
+        return document.storage_key
+
+
     def create_document(
         self,
         *,
@@ -56,6 +64,8 @@ class DocumentService:
         )
 
         try:
+            page_count = count_pdf_pages(file_stream)
+
             document = self.documents.create(
                 owner_user_id=owner_user_id,
                 original_name=file_name,
@@ -75,6 +85,7 @@ class DocumentService:
             )
 
             document.storage_key = storage_key
+            document.page_count = page_count
 
             logger.info(
                 "DOCUMENT_CREATE | phase=storage_linked | document_id=%s | storage_key=%s",

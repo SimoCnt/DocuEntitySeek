@@ -11,7 +11,7 @@ from app.db.session import get_db_session
 from app.db.models import UserModel
 from app.repositories.user_repository import UserRepository
 from app.services.document_service import DocumentService
-from app.services.document_storage import DocumentStorage
+from app.services.document_storage import DocumentStorage, S3DocumentStorage
 from app.services.auth_service import AuthService
 from app.pipeline.pdf_text_extractor import PdfTextExtractor
 from app.pipeline.provenance import DocumentProvenanceBuilder
@@ -39,10 +39,29 @@ from app.services.custom_schema_service import CustomSchemaService
 DbSessionDep = Annotated[Session, Depends(get_db_session)]
 
 
+@lru_cache(maxsize=1)
 def get_document_storage() -> DocumentStorage:
     settings = get_settings()
     
-    return DocumentStorage(settings.document_storage_root)
+    backend = settings.document_storage_backend.lower()
+    if backend == "local":
+        return DocumentStorage(settings.document_storage_root)
+    if backend == "s3":
+        import boto3
+        from botocore.config import Config
+        if not settings.document_s3_bucket:
+            raise ValueError("DOCUMENT_S3_BUCKET deve essere configurato.")
+        if bool(settings.document_s3_access_key) != bool(settings.document_s3_secret_key):
+            raise ValueError("Configurare entrambe le credenziali S3 o utilizzare credenziali IAM.")
+        client = boto3.client(
+            "s3", endpoint_url=settings.document_s3_endpoint_url,
+            region_name=settings.document_s3_region,
+            aws_access_key_id=settings.document_s3_access_key,
+            aws_secret_access_key=settings.document_s3_secret_key,
+            config=Config(s3={"addressing_style": "path"}, signature_version="s3v4"),
+        )
+        return S3DocumentStorage(settings.document_storage_root, bucket=settings.document_s3_bucket, client=client)
+    raise ValueError(f"DOCUMENT_STORAGE_BACKEND non supportato: {backend}")
 
 
 DocumentStorageDep = Annotated[DocumentStorage, Depends(get_document_storage)]

@@ -33,6 +33,8 @@ export type AnalysisSummary = {
     completedAt: string | null
     errorMessage: string | null
     schemaVersionId: string
+    schemaName: string
+    schemaVersion: number
     aiRuntimeConfigId: string
 }
 

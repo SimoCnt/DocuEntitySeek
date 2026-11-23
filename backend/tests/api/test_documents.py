@@ -2,9 +2,15 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-PDF_BYTES = b"%PDF-1.7\n1 0 obj\n<<>>\nendobj\n%%EOF\n"
+def make_pdf() -> bytes:
+    import pymupdf
+    with pymupdf.open() as pdf:
+        pdf.new_page()
+        pdf.new_page()
+        return pdf.tobytes()
 
 
+PDF_BYTES = make_pdf()
 def register_and_login(client: TestClient, *, email: str) -> dict[str, str]:
     password = "ValidPassword123!"
 
@@ -40,6 +46,7 @@ def test_create_document(client: TestClient) -> None:
 
     body = response.json()
     assert body["name"] == "document.pdf"
+    assert body["pages"] == 2
     assert "category" not in body
     assert body["status"] == "PROCESSING"
 
@@ -62,6 +69,7 @@ def test_created_document_is_listed(client: TestClient) -> None:
     documents = list_response.json()
     assert len(documents) == 1
     assert documents[0]["id"] == document_id
+    assert documents[0]["pages"] == 2
     assert "category" not in documents[0]
 
 

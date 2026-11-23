@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { getDocumentAnalyses } from '../api/analyses'
 import { isAbortError, normalizeRequestError, type RequestError } from '../api/http'
@@ -11,14 +11,15 @@ function useDocumentAnalyses(documentId: string | undefined) {
     const [analyses, setAnalyses] = useState<AnalysisSummary[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<RequestError | null>(null)
-    const [reloadToken, setReloadToken] = useState(0)
-
+    const [refreshRequest, setRefreshRequest] = useState({ sequence: 0, silent: false })
+    const lastLoadedIdentityRef = useRef<string | null>(null)
     useEffect(() => {
         const validDocumentId = documentId
         const token = accessToken
 
         if (!validDocumentId || !token) {
             setAnalyses([])
+            lastLoadedIdentityRef.current = null
             setError(null)
             setIsLoading(false)
             return
@@ -28,14 +29,21 @@ function useDocumentAnalyses(documentId: string | undefined) {
 
 
         async function loadAnalyses(id: string, validToken: string) {
-            setIsLoading(true)
-            setError(null)
+            const requestIdentity = `${id}:${validToken}`
+            const silent = refreshRequest.silent && lastLoadedIdentityRef.current === requestIdentity
+            if (!silent) {
+                if (lastLoadedIdentityRef.current !== requestIdentity) setAnalyses([])
+                setIsLoading(true)
+                setError(null)
+            }
 
             try {
                 const result = await getDocumentAnalyses(id, validToken, controller.signal)
 
                 if (!controller.signal.aborted) {
                     setAnalyses(result)
+                    lastLoadedIdentityRef.current = requestIdentity
+                    setError(null)
                 }
             } catch (requestError) {
                 if (controller.signal.aborted || isAbortError(requestError)) return
@@ -47,7 +55,7 @@ function useDocumentAnalyses(documentId: string | undefined) {
                     return
                 }
 
-                setError(normalized)
+                if (!silent) setError(normalized)
             } finally {
                 if (!controller.signal.aborted) setIsLoading(false)
             }
@@ -56,14 +64,17 @@ function useDocumentAnalyses(documentId: string | undefined) {
         void loadAnalyses(validDocumentId, token)
 
         return () => controller.abort()
-    }, [accessToken, documentId, logout, reloadToken])
+    }, [accessToken, documentId, logout, refreshRequest])
 
-    
-    function reload() {
-        setReloadToken((current) => current + 1)
-    }
+    const reload = useCallback(() => {
+        setRefreshRequest((current) => ({ sequence: current.sequence + 1, silent: false }))
+    }, [])
 
-    return { analyses, isLoading, error, reload }
+    const refreshSilently = useCallback(() => {
+        setRefreshRequest((current) => ({ sequence: current.sequence + 1, silent: true }))
+    }, [])
+
+    return { analyses, isLoading, error, reload, refreshSilently }
 }
 
 export default useDocumentAnalyses

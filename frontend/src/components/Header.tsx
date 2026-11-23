@@ -35,6 +35,9 @@ function Header() {
           <>
             <NavLink to="/documents" className={navLinkClass}>Documenti</NavLink>
             <NavLink to="/schemas" className={navLinkClass}>Schemi</NavLink>
+            {user?.plan.code === 'BASE' && (
+              <NavLink to="/premium" className={navLinkClass}>Passa a Premium</NavLink>
+            )}
           </>
         )}
       </nav>

@@ -59,6 +59,9 @@ function RegisterPage() {
                             id="register-email"
                             type="email"
                             autoComplete="email"
+                            inputMode="email"
+                            pattern="[^@\s]+@(?:[^@\s.]+\.)+[^@\s.]{2,}"
+                            title="Inserisci un indirizzo completo, ad esempio nome@esempio.it"
                             required
                             value={email}
                             onChange={(event) => setEmail(event.target.value)}

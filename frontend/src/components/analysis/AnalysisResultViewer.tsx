@@ -1,105 +1,21 @@
 import { useMemo, useState } from 'react'
 
+import PdfDocumentViewer from '../pdf/PdfDocumentViewer'
+
 import type {
   AnalysisExtractedField,
   AnalysisResult,
-  AnalysisResultPage,
-  EntityOccurrence,
 } from '../../types/analysis'
 
 
 type AnalysisResultViewerProps = {
+  documentId: string
+  analysisId: string
   documentName: string
   result: AnalysisResult
 }
 
-type PageSegment =
-  | {
-      type: 'text'
-      key: string
-      text: string
-    }
-  | {
-      type: 'entity'
-      key: string
-      text: string
-      entity: EntityOccurrence
-    }
-
-const FIELD_STATUS_LABELS: Record<string, string> = {
-  EXTRACTED: 'Estratto',
-  AMBIGUOUS: 'Ambiguo',
-  NOT_FOUND: 'Non trovato',
-  ERROR: 'Errore',
-}
-
-function formatConfidence(confidence: number | null): string {
-  if (confidence === null) return '—'
-  return `${Math.round(confidence * 100)}%`
-}
-
-function buildPageSegments(
-  page: AnalysisResultPage,
-  entities: EntityOccurrence[],
-  activeLabels: Set<string>,
-): PageSegment[] {
-  const pageEntities = entities
-    .filter(
-      (entity) =>
-        entity.isVisible &&
-        entity.page === page.pageNumber &&
-        activeLabels.has(entity.label),
-    )
-    .filter(
-      (entity) =>
-        entity.pageStart >= 0 &&
-        entity.pageEnd > entity.pageStart &&
-        entity.pageEnd <= page.text.length,
-    )
-    .sort((left, right) => {
-      if (left.pageStart !== right.pageStart) {
-        return left.pageStart - right.pageStart
-      }
-
-      return right.pageEnd - left.pageEnd
-    })
-
-  const segments: PageSegment[] = []
-  let cursor = 0
-
-  for (const entity of pageEntities) {
-    if (entity.pageStart < cursor) continue
-
-    if (entity.pageStart > cursor) {
-      segments.push({
-        type: 'text',
-        key: `text-${cursor}-${entity.pageStart}`,
-        text: page.text.slice(cursor, entity.pageStart),
-      })
-    }
-
-    segments.push({
-      type: 'entity',
-      key: entity.id,
-      text: page.text.slice(entity.pageStart, entity.pageEnd),
-      entity,
-    })
-
-    cursor = entity.pageEnd
-  }
-
-  if (cursor < page.text.length) {
-    segments.push({
-      type: 'text',
-      key: `text-${cursor}-${page.text.length}`,
-      text: page.text.slice(cursor),
-    })
-  }
-
-  return segments
-}
-
-function AnalysisResultViewer({ documentName, result }: AnalysisResultViewerProps) {
+function AnalysisResultViewer({ documentId, analysisId, documentName, result }: AnalysisResultViewerProps) {
   const { schema, pages, entities, fields } = result
 
   const orderedPages = useMemo(
@@ -121,6 +37,7 @@ function AnalysisResultViewer({ documentName, result }: AnalysisResultViewerProp
     orderedPages[0]?.pageNumber ?? null,
   )
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null)
+  const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null)
   const [activeLabels, setActiveLabels] = useState<Set<string>>(
     () => new Set(orderedEntityDefinitions.map((definition) => definition.label)),
   )
@@ -132,10 +49,7 @@ function AnalysisResultViewer({ documentName, result }: AnalysisResultViewerProp
 
   const selectedEntity = entities.find((entity) => entity.id === selectedEntityId) ?? null
 
-  const entityDefinitionByLabel = useMemo(
-    () => new Map(schema.entityDefinitions.map((definition) => [definition.label, definition])),
-    [schema.entityDefinitions],
-  )
+  const entityColors = useMemo(() => Object.fromEntries(schema.entityDefinitions.map((definition) => [definition.label, definition.color])), [schema.entityDefinitions])
 
   const fieldDefinitionByKey = useMemo(
     () => new Map(schema.fieldDefinitions.map((definition) => [definition.fieldKey, definition])),
@@ -146,15 +60,6 @@ function AnalysisResultViewer({ documentName, result }: AnalysisResultViewerProp
     () => new Map(fields.map((field) => [field.fieldKey, field])),
     [fields],
   )
-
-  const pageSegments = useMemo(
-    () => selectedPage ? buildPageSegments(selectedPage, entities, activeLabels) : [],
-    [selectedPage, entities, activeLabels],
-  )
-
-  const currentPageIndex = selectedPage
-    ? orderedPages.findIndex((page) => page.pageNumber === selectedPage.pageNumber)
-    : -1
 
   function toggleLabel(label: string) {
     setActiveLabels((current) => {
@@ -188,14 +93,19 @@ function AnalysisResultViewer({ documentName, result }: AnalysisResultViewerProp
 
     setSelectedPageNumber(pageNumber)
     setSelectedEntityId(null)
+    setSelectedFieldId(null)
+  }
+
+  function goToField(field: AnalysisExtractedField) {
+    if (field.page === null) return
+    goToPage(field.page)
+    setSelectedFieldId(field.id)
   }
 
   function renderField(field: AnalysisExtractedField | undefined, fieldKey: string) {
     const definition = fieldDefinitionByKey.get(fieldKey)
 
     if (!definition) return null
-
-    const status = field?.status ?? 'NOT_FOUND'
 
     return (
       <article key={fieldKey} className="analysis-viewer__field">
@@ -204,57 +114,22 @@ function AnalysisResultViewer({ documentName, result }: AnalysisResultViewerProp
             <strong>{definition.label}</strong>
             <span className="analysis-viewer__field-key">{definition.fieldKey}</span>
           </div>
-
-          <span className={`analysis-viewer__field-status analysis-viewer__field-status--${status.toLowerCase()}`}>
-            {FIELD_STATUS_LABELS[status] ?? status}
-          </span>
         </div>
 
         <p className="analysis-viewer__field-description">{definition.description}</p>
-        <div className="analysis-viewer__field-value">{field?.value ?? 'Nessun valore estratto'}</div>
+        <div className="analysis-viewer__field-value">{field?.status === 'ERROR' ? 'Errore durante l’estrazione' : field?.value ?? 'Nessun valore estratto'}</div>
 
         <div className="analysis-viewer__field-meta">
-          <span>Confidence: {formatConfidence(field?.confidence ?? null)}</span>
-
           {field?.page !== null && field?.page !== undefined && (
             <button
               type="button"
               className="button button--secondary"
-              onClick={() => goToPage(field.page)}
+              onClick={() => goToField(field)}
             >
               Pagina {field.page}
             </button>
           )}
         </div>
-
-        {field && field.candidates.length > 0 && (
-          <details className="analysis-viewer__candidates">
-            <summary>Candidati alternativi ({field.candidates.length})</summary>
-
-            <div className="analysis-viewer__candidate-list">
-              {[...field.candidates]
-                .sort((left, right) => left.rank - right.rank)
-                .map((candidate) => (
-                  <div key={candidate.id} className="analysis-viewer__candidate">
-                    <div>
-                      <strong>{candidate.value}</strong>
-                      <span>Confidence: {formatConfidence(candidate.confidence)}</span>
-                    </div>
-
-                    {candidate.page !== null && (
-                      <button
-                        type="button"
-                        className="button button--secondary"
-                        onClick={() => goToPage(candidate.page)}
-                      >
-                        Pagina {candidate.page}
-                      </button>
-                    )}
-                  </div>
-                ))}
-            </div>
-          </details>
-        )}
       </article>
     )
   }
@@ -344,76 +219,26 @@ function AnalysisResultViewer({ documentName, result }: AnalysisResultViewerProp
               <span className="section-heading__eyebrow">Entità selezionata</span>
               <strong>{selectedEntity.text}</strong>
               <span>{selectedEntity.label}</span>
-              <span>Confidence: {formatConfidence(selectedEntity.confidence)}</span>
               <span>Pagina {selectedEntity.page}</span>
             </div>
           )}
         </aside>
 
         <main className="analysis-viewer__document">
-          <div className="analysis-viewer__page-nav">
-            <button
-              type="button"
-              className="button button--secondary"
-              disabled={currentPageIndex <= 0}
-              onClick={() => {
-                const previous = orderedPages[currentPageIndex - 1]
-
-                if (previous) {
-                  goToPage(previous.pageNumber)
-                }
-              }}
-            >
-              ← Precedente
-            </button>
-
-            <span>
-              Pagina {selectedPage?.pageNumber} · {currentPageIndex + 1} di {orderedPages.length}
-            </span>
-
-            <button
-              type="button"
-              className="button button--secondary"
-              disabled={currentPageIndex === orderedPages.length - 1}
-              onClick={() => {
-                const next = orderedPages[currentPageIndex + 1]
-
-                if (next) {
-                  goToPage(next.pageNumber)
-                }
-              }}
-            >
-              Successiva →
-            </button>
-          </div>
-
-          <article className="analysis-viewer__page">
-            {pageSegments.map((segment) => {
-              if (segment.type === 'text') {
-                return <span key={segment.key}>{segment.text}</span>
-              }
-
-              const definition = entityDefinitionByLabel.get(segment.entity.label)
-              const selected = segment.entity.id === selectedEntityId
-
-              return (
-                <button
-                  key={segment.key}
-                  type="button"
-                  className={
-                    selected
-                      ? 'analysis-viewer__entity analysis-viewer__entity--selected'
-                      : 'analysis-viewer__entity'
-                  }
-                  style={{ backgroundColor: definition?.color ?? '#e5e7eb' }}
-                  title={`${segment.entity.label} · ${formatConfidence(segment.entity.confidence)}`}
-                  onClick={() => setSelectedEntityId(segment.entity.id)}
-                >
-                  {segment.text}
-                </button>
-              )
-            })}
-          </article>
+          <PdfDocumentViewer
+            documentId={documentId}
+            analysisId={analysisId}
+            pageNumber={selectedPage?.pageNumber ?? 1}
+            onPageChange={goToPage}
+            activeLabels={[...activeLabels]}
+            entityColors={entityColors}
+            selectedEntityId={selectedEntityId}
+            selectedFieldId={selectedFieldId}
+            onRegionSelect={(kind, id) => {
+              if (kind === 'entity') { setSelectedEntityId(id); setSelectedFieldId(null) }
+              else { setSelectedFieldId(id); setSelectedEntityId(null) }
+            }}
+          />
         </main>
 
         <aside className="analysis-viewer__fields">

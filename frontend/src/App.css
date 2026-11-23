@@ -1419,39 +1419,9 @@
   min-width: 0;
 }
 
-.analysis-viewer__page-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
 
-.analysis-viewer__page {
-  min-height: 30rem;
-  padding: 2rem;
-  border: 1px solid var(--border-color, #d9dee8);
-  border-radius: 0.75rem;
-  white-space: pre-wrap;
-  line-height: 1.8;
-  overflow-wrap: anywhere;
-}
 
-.analysis-viewer__entity {
-  display: inline;
-  padding: 0.08rem 0.15rem;
-  border: 0;
-  border-radius: 0.2rem;
-  color: inherit;
-  font: inherit;
-  line-height: inherit;
-  cursor: pointer;
-}
 
-.analysis-viewer__entity--selected {
-  outline: 2px solid currentColor;
-  outline-offset: 1px;
-}
 
 .analysis-viewer__field {
   display: grid;
@@ -1488,34 +1458,8 @@
 .analysis-viewer__field-meta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 0.75rem;
-}
-
-.analysis-viewer__field-status {
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.analysis-viewer__candidate-list {
-  display: grid;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.analysis-viewer__candidate {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.65rem;
-  border: 1px solid var(--border-color, #d9dee8);
-  border-radius: 0.5rem;
-}
-
-.analysis-viewer__candidate > div {
-  display: grid;
-  gap: 0.2rem;
 }
 
 @media (max-width: 1100px) {
@@ -1544,3 +1488,113 @@
   background: #eef1f8;
   color: #536078;
 }
+
+/* Punto 3: PDF.js originale, con zoom e paginazione */
+.pdf-document-viewer {
+  min-width: 0;
+  border: 1px solid var(--border-color, #d9dee8);
+  border-radius: .75rem;
+  overflow: hidden;
+}
+.pdf-document-viewer__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: .6rem;
+  padding: .75rem;
+  border-bottom: 1px solid var(--border-color, #d9dee8);
+}
+.pdf-document-viewer__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+  align-items: center;
+}
+.pdf-document-viewer__page-label,
+.pdf-document-viewer__zoom {
+  font-size: .9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pdf-document-viewer__viewport {
+  min-width: 0;
+  width: 100%;
+  min-height: min(70vh, 760px);
+  max-height: 85vh;
+  overflow: auto;
+  padding: 1rem 0;
+  background: #e8edf3;
+}
+.pdf-document-viewer__canvas {
+  margin: 0 auto;
+  display: block;
+  background: #fff;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, .14);
+}
+.pdf-document-viewer__message {
+  margin: 0;
+  padding: .85rem 1rem;
+}
+@media (max-width: 700px) {
+  .pdf-document-viewer__toolbar { flex-direction: column; }
+  .pdf-document-viewer__viewport { min-height: 55vh; max-height: 75vh; }
+}
+
+/* Punto 4: evidenziazioni in coordinate relative alla pagina PDF visualizzata */
+.pdf-document-viewer__page {
+  position: relative;
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: 0 3px 14px rgba(0,0,0,.14);
+}
+.pdf-document-viewer__page .pdf-document-viewer__canvas {
+  margin: 0;
+  box-shadow: none;
+}
+.pdf-document-viewer__overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.pdf-document-viewer__highlight {
+  position: absolute;
+  display: block;
+  border: 1px solid rgba(15, 23, 42, .33);
+  border-radius: 2px;
+  opacity: .42;
+  padding: 0;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.pdf-document-viewer__highlight:hover,
+.pdf-document-viewer__highlight:focus-visible { opacity: .72; outline: 2px solid #1d4ed8; outline-offset: 1px; }
+.pdf-document-viewer__highlight--selected { opacity: .78; border: 2px solid #1d4ed8; z-index: 2; }
+
+/* Richiesta di passaggio a Premium */
+.premium-upgrade {
+  max-width: 800px;
+}
+.premium-upgrade__content {
+  display: grid;
+  gap: 18px;
+}
+.premium-upgrade__content > p {
+  margin: 0;
+  color: #536078;
+  line-height: 1.65;
+}
+.premium-upgrade__account {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid #dfe4ed;
+  border-radius: 12px;
+  background: #f7f9fc;
+  overflow-wrap: anywhere;
+}
+.premium-upgrade__account span { color: #69758b; font-size: 13px; }
+.premium-upgrade__account strong { color: #25324a; }
+.premium-upgrade__content .premium-upgrade__note { font-size: 14px; }
+.premium-upgrade__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+

@@ -93,6 +93,7 @@ class AnalysisRepository:
                 DocumentModel.owner_user_id == owner_user_id,
             )
             .order_by(AnalysisModel.created_at.desc())
+            .options(joinedload(AnalysisModel.schema_version).joinedload(ExtractionSchemaVersionModel.schema))
         )
 
         return list(self.session.scalars(statement).all())
