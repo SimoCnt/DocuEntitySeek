@@ -160,6 +160,8 @@ def list_analyses(
             completed_at=analysis.completed_at,
             error_message=analysis.error_message,
             schema_version_id=analysis.schema_version_id,
+            schema_name=analysis.schema_version.schema.name,
+            schema_version=analysis.schema_version.version,
             ai_runtime_config_id=analysis.ai_runtime_config_id,
         )
         for analysis in analyses

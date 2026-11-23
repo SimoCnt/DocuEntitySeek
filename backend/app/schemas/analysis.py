@@ -87,6 +87,8 @@ class AnalysisSummaryResponse(ApiModel):
     completed_at: datetime | None
     error_message: str | None
     schema_version_id: UUID
+    schema_name: str
+    schema_version: int
     ai_runtime_config_id: UUID
 
 

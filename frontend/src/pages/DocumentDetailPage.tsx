@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 
 import AnalysisResultViewer from '../components/analysis/AnalysisResultViewer'
+import StartAnalysisSchemaDialog from '../components/analysis/StartAnalysisSchemaDialog'
 import PdfDocumentViewer from '../components/pdf/PdfDocumentViewer'
 import ErrorState from '../components/feedback/ErrorState'
 import LoadingState from '../components/feedback/LoadingState'
@@ -31,6 +32,8 @@ function DocumentDetailPage() {
     } = useStartAnalysis()
 
     const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | undefined>(undefined)
+
+    const [isSchemaDialogOpen, setIsSchemaDialogOpen] = useState(false)
 
     useEffect(() => {
         if (analyses.length === 0) {
@@ -84,26 +87,20 @@ function DocumentDetailPage() {
 
     useDocumentTitle(data ? `${data.document.name} | DocuEntitySeek` : 'Documento | DocuEntitySeek')
 
-    async function handleStartAnalysis() {
-        if (
-            !documentId ||
-            hasRunningAnalyses
-        ) {
-            return
-        }
+    
+    async function handleStartAnalysis(schemaVersionId?: string) {
+        if (!documentId || hasRunningAnalyses || analysisRunning) return
 
-        const result = await runAnalysis(documentId)
+        setIsSchemaDialogOpen(false)
 
-        if (!result.ok) {
-            return
-        }
+        const outcome = await runAnalysis(documentId, schemaVersionId)
+        if (!outcome.ok) return
 
-        setSelectedAnalysisId(
-            result.data.analysisId,
-        )
-
-        refreshAnalysesSilently()
+        setSelectedAnalysisId(outcome.data.analysisId)
+        void refreshAnalysesSilently()
     }
+
+
 
     if (isLoading) {
         return (
@@ -142,6 +139,13 @@ function DocumentDetailPage() {
 
     return (
         <>
+            <StartAnalysisSchemaDialog
+                isOpen={isSchemaDialogOpen}
+                isSubmitting={analysisRunning}
+                errorMessage={analysisStartError?.message ?? null}
+                onCancel={() => setIsSchemaDialogOpen(false)}
+                onConfirm={handleStartAnalysis}
+            />
             <header className="page-hero">
                 <div className="page-hero__content">
                     <Link to="/documents" className="back-link">
@@ -173,7 +177,7 @@ function DocumentDetailPage() {
                         type="button"
                         className="button button--primary"
                         disabled={analysisRunning || hasRunningAnalyses}
-                        onClick={() => void handleStartAnalysis()}
+                        onClick={() => setIsSchemaDialogOpen(true)}
                     >
                         {analysisRunning || hasRunningAnalyses ? 'Analisi in corso...' : 'Analizza documento'}
                     </button>
@@ -228,8 +232,9 @@ function DocumentDetailPage() {
                                 <h3>{new Date(analysis.createdAt).toLocaleString('it-IT')}</h3>
 
                                 <div className="document-card__meta">
-                                    <span>{analysis.id}</span>
-                                    <span>Schema version: {analysis.schemaVersionId.slice(0, 8)}</span>
+                                    <span>Schema: <strong>{analysis.schemaName}</strong> · v{analysis.schemaVersion}</span>
+                                    
+                                    
                                 </div>
 
                                 {(analysis.status === 'QUEUED' || analysis.status === 'PROCESSING') && (
