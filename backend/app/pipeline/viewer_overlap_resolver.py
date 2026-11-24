@@ -1,3 +1,5 @@
+"""Choose which overlapping NER spans to display while retaining hidden candidates for auditing."""
+
 from time import perf_counter
 from uuid import UUID
 
@@ -9,7 +11,11 @@ logger = get_logger("pipeline.viewer")
 
 
 class ViewerOverlapResolver:
+    """Choose compatible NER spans for highlighting without discarding audit evidence."""
+
     def resolve(self, *, document_id: UUID, result: NerExtractionResult) -> ViewerNerSelectionResult:
+        """Select non-conflicting visible entity highlights and record hidden overlaps."""
+
         started_at = perf_counter()
 
         logger.info(
@@ -82,15 +88,21 @@ class ViewerOverlapResolver:
 
     @staticmethod
     def _candidate_key(candidate: NerCandidate) -> tuple[str, int, int]:
+        """Build the identity used to identify redundant entity spans."""
+
         return (candidate.label, candidate.start, candidate.end)
 
 
     @staticmethod
     def _ranking_key(candidate: NerCandidate) -> tuple[float, int, int, str]:
+        """Rank competing highlights deterministically by confidence and span."""
+
         return (-candidate.confidence, -candidate.length, candidate.start, candidate.label)
 
 
     def _find_blocker(self, *, candidate: NerCandidate, selected: list[NerCandidate]) -> NerCandidate | None:
+        """Find a selected span conflicting with a new candidate."""
+
         for visible in selected:
             if self._overlaps(candidate, visible):
                 return visible
@@ -100,4 +112,6 @@ class ViewerOverlapResolver:
 
     @staticmethod
     def _overlaps(first: NerCandidate, second: NerCandidate) -> bool:
+        """Return whether two candidate character intervals overlap."""
+
         return first.start < second.end and second.start < first.end

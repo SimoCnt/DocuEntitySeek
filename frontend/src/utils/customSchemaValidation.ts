@@ -1,3 +1,7 @@
+/**
+ * Validate custom schema names, entity labels, fields, and duplicate definitions.
+ */
+
 import type { CustomSchemaCreateRequest, CustomSchemaSummary } from '../types/customSchema'
 
 const ENTITY_LABEL_PATTERN = /^[A-Z][A-Z0-9_]*$/
@@ -10,6 +14,9 @@ type ValidateCustomSchemaOptions = {
 }
 
 
+/**
+ * Validate schema names and field/entity definitions before submission.
+ */
 export function validateCustomSchema(
     payload: CustomSchemaCreateRequest,
     { existingSchemas, currentSchemaId }: ValidateCustomSchemaOptions,

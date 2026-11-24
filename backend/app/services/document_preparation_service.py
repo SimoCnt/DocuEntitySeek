@@ -1,3 +1,5 @@
+"""Read original PDFs, construct page-aware extraction text, and synchronize document metadata."""
+
 from time import perf_counter
 from uuid import UUID
 from sqlalchemy.orm import Session
@@ -16,6 +18,8 @@ logger = get_logger("pipeline.preparation")
 
 
 class DocumentPreparationService:
+    """Load and prepare PDF text, persisting provenance for downstream analysis."""
+
     def __init__(
         self,
         *,
@@ -38,6 +42,12 @@ class DocumentPreparationService:
             document_id: UUID, 
             owner_user_id: UUID
             ) -> PreparedDocumentText:
+        """Materialize the owner's PDF and build page-aware extraction text.
+
+        Stores extracted page text and provenance so model results can later be
+        mapped back to the original document.
+        """
+
         started_at = perf_counter()
 
         logger.info(

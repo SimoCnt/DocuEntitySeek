@@ -1,3 +1,5 @@
+"""Resolve and validate active AI runtime settings and an authorized extraction schema version."""
+
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -16,12 +18,20 @@ logger = get_logger("pipeline.config")
 
 
 class AiConfigurationResolver:
+    """Load validated runtime and schema settings for an analysis request."""
+
     def __init__(self, session: Session) -> None:
         self.session = session
         self.runtime_configs = AiRuntimeConfigRepository(session)
         self.schemas = ExtractionSchemaRepository(session)
 
     def resolve(self, *, schema_version_id: UUID | None = None, owner_user_id: UUID | None = None) -> ResolvedAiConfiguration:
+        """Combine the active AI runtime and authorized schema version.
+
+        Validates model settings and resolves immutable extraction definitions
+        for one analysis, preserving a reproducible configuration snapshot.
+        """
+
         logger.info("AI_CONFIG | phase=resolve_start | requested_schema_version_id=%s", schema_version_id)
         runtime_model = self.runtime_configs.get_active()
 

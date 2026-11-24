@@ -1,3 +1,7 @@
+/**
+ * Load one analysis result and refresh it without discarding the active PDF view.
+ */
+
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { getAnalysis } from '../api/analyses'
@@ -6,6 +10,12 @@ import { useAuth } from '../auth/AuthContext'
 import type { AnalysisDetail } from '../types/analysis'
 
 
+/**
+ * Load an analysis and support silent polling for an in-progress result.
+ *
+ * A silent refresh preserves the previous successful result and avoids
+ * resetting the visible PDF while waiting for updated analysis state.
+ */
 function useAnalysis(documentId: string | undefined, analysisId: string | undefined) {
     const { accessToken, logout } = useAuth()
     const [analysis, setAnalysis] = useState<AnalysisDetail | null>(null)

@@ -1,3 +1,7 @@
+/**
+ * Manage custom-schema creation requests, loading state, and API errors.
+ */
+
 import { useState } from 'react'
 
 import { createCustomSchema } from '../api/customSchemasApi'
@@ -6,6 +10,9 @@ import { useAuth } from '../auth/AuthContext'
 import type { CustomSchema, CustomSchemaCreateRequest } from '../types/customSchema'
 
 
+/**
+ * Submit a new custom-schema definition with loading and error feedback.
+ */
 function useCreateCustomSchema() {
     const { accessToken, logout } = useAuth()
 

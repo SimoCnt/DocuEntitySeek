@@ -1,3 +1,4 @@
+"""Implement account registration and password-based authentication."""
 
 from datetime import datetime, timezone
 
@@ -11,11 +12,15 @@ from app.repositories.user_repository import UserRepository
 
 
 class AuthService:
+    """Register user accounts and validate password credentials."""
+
     def __init__(self, session: Session) -> None:
         self.session = session
         self.users = UserRepository(session)
 
     def register(self, *, email: str, password: str) -> UserModel:
+        """Create a Base-plan account with a hashed password and normalized email."""
+
         normalized_email = email.strip().lower()
 
         if self.users.get_by_email(normalized_email) is not None:
@@ -38,6 +43,8 @@ class AuthService:
         return created_user
 
     def authenticate(self, *, email: str, password: str) -> UserModel:
+        """Validate account status and credentials, including password-hash upgrades."""
+
         normalized_email = email.strip().lower()
         user = self.users.get_by_email(normalized_email)
 

@@ -1,3 +1,5 @@
+"""Rank and resolve structured field candidates into extracted, ambiguous, or missing values."""
+
 from collections import defaultdict
 from time import perf_counter
 from uuid import UUID
@@ -14,6 +16,8 @@ logger = get_logger("pipeline.field_resolution")
 
 
 class FieldResultResolver:
+    """Rank field candidates and determine final value status per schema field."""
+
     def resolve(
         self,
         *,
@@ -21,6 +25,8 @@ class FieldResultResolver:
         config: ResolvedAiConfiguration,
         mapping: FieldPageMappingResult,
     ) -> FieldResolutionResult:
+        """Resolve each schema field into a ranked candidate and final extraction status."""
+
         started_at = perf_counter()
 
         logger.info(
@@ -95,12 +101,16 @@ class FieldResultResolver:
 
     @staticmethod
     def _ensure_known_field(candidate: StructuredFieldCandidate, definitions: dict[str, object]) -> None:
+        """Reject candidates whose field key is absent from the selected schema."""
+
         if candidate.field_key not in definitions:
             raise AiInferenceError(f"Candidato IE associato a un field non presente nello schema: {candidate.field_key!r}.")
 
 
     @staticmethod
     def _candidate_sort_key(candidate: RankedFieldCandidate) -> tuple[float, bool, int, int, str, int, int]:
+        """Produce a deterministic ordering key for comparable field candidates."""
+
         value = candidate.candidate
 
         return (
@@ -115,6 +125,8 @@ class FieldResultResolver:
 
 
     def _resolve_field(self, *, field_key: str, candidates: list[RankedFieldCandidate]) -> ResolvedExtractedField:
+        """Determine the selected value and status for one schema field."""
+
         if not candidates:
             return ResolvedExtractedField(
                 field_key=field_key,

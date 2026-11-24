@@ -1,3 +1,5 @@
+"""Enforce daily analysis quotas and account for successful analysis executions."""
+
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
@@ -12,6 +14,8 @@ logger = get_logger("analysis.quota")
 
 
 class AnalysisQuotaService:
+    """Enforce daily quota windows and register successful executions."""
+
     def __init__(self, repository: AnalysisQuotaRepository) -> None:
         self.repository = repository
 
@@ -22,6 +26,12 @@ class AnalysisQuotaService:
             user_id: UUID, 
             now: datetime | None = None
             ) -> AnalysisQuotaDecision:
+        """Check whether a new analysis can reserve capacity in the UTC day.
+
+        Locks the user/plan row to serialize concurrent reservations, then
+        counts already used or reserved analyses within the current UTC window.
+        """
+
         current = now or datetime.now(timezone.utc)
         window_start = current.replace(hour=0, minute=0, second=0, microsecond=0)
         window_end = window_start + timedelta(days=1)
@@ -74,6 +84,8 @@ class AnalysisQuotaService:
             user_id: UUID, 
             now: datetime | None = None
             ) -> AnalysisQuotaStatus:
+        """Return the account's current daily quota, remaining capacity, and reset time."""
+
         current = now or datetime.now(timezone.utc)
         window_start = current.replace(hour=0, minute=0, second=0, microsecond=0)
         window_end = window_start + timedelta(days=1)
@@ -116,6 +128,8 @@ class AnalysisQuotaService:
 
     @staticmethod
     def consume_on_success(*, analysis: AnalysisModel, decision: AnalysisQuotaDecision) -> None:
+        """Mark quota as consumed only after an analysis completes successfully."""
+
         if decision.is_unlimited:
             return
 

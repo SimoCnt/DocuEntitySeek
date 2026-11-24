@@ -1,3 +1,5 @@
+"""Apply plan- and ownership-based rules to schema visibility and analysis authorization."""
+
 from uuid import UUID
 
 from app.core.exceptions import CustomSchemasNotAvailableError, ExtractionSchemaNotFoundError
@@ -6,11 +8,15 @@ from app.services.schema_access_models import AvailableExtractionSchema
 
 
 class SchemaAccessService:
+    """Enforce plan, ownership, and schema visibility for analysis requests."""
+
     def __init__(self, repository: SchemaAccessRepository) -> None:
         self.repository = repository
 
 
     def list_available(self, *, user_id: UUID) -> list[AvailableExtractionSchema]:
+        """List schema versions available to a user under their current plan."""
+
         custom_schemas_enabled = self.repository.get_custom_schemas_enabled(user_id)
 
         if custom_schemas_enabled is None:
@@ -35,6 +41,8 @@ class SchemaAccessService:
 
 
     def assert_custom_schemas_enabled(self, *, user_id: UUID) -> None:
+        """Reject custom-schema operations for plans without that capability."""
+
         custom_schemas_enabled = self.repository.get_custom_schemas_enabled(user_id)
 
         if custom_schemas_enabled is None:
@@ -50,6 +58,8 @@ class SchemaAccessService:
         user_id: UUID,
         requested_schema_version_id: UUID | None,
     ) -> UUID | None:
+        """Validate that a requested schema version is visible and usable for analysis."""
+
         if requested_schema_version_id is None:
             return None
 

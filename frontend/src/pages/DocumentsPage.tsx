@@ -1,3 +1,7 @@
+/**
+ * Show uploaded documents and their current processing states.
+ */
+
 import { Link } from 'react-router'
 
 import ErrorState from '../components/feedback/ErrorState'
@@ -7,6 +11,9 @@ import useDocuments from '../hooks/useDocuments'
 import type { DocumentStatus } from '../types/document'
 
 
+/**
+ * Translate a persisted document status into a readable UI label.
+ */
 function getStatusLabel(status: DocumentStatus) {
     switch (status) {
         case 'UPLOADED':
@@ -23,6 +30,9 @@ function getStatusLabel(status: DocumentStatus) {
 }
 
 
+/**
+ * Display the authenticated user's uploaded documents and their statuses.
+ */
 function DocumentsPage() {
     useDocumentTitle('Documenti | DocuEntitySeek')
 

@@ -1,3 +1,10 @@
+/**
+ * Render consistent error feedback and optional recovery actions.
+ */
+
+/**
+ * Properties configuring the error state component.
+ */
 type ErrorStateProps = {
     title?: string
     message: string
@@ -5,6 +12,9 @@ type ErrorStateProps = {
 }
 
 
+/**
+ * Display a request error with an optional retry action.
+ */
 function ErrorState({ title = 'Qualcosa è andato storto', message, onRetry }: ErrorStateProps) {
     return (
         <div

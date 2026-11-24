@@ -1,3 +1,6 @@
+"""Define SQLAlchemy mappings for accounts, plans, documents, schemas, analyses, and extracted
+results.
+"""
 
 from __future__ import annotations
 from uuid import UUID
@@ -16,6 +19,8 @@ from app.db.base import Base
 # ============================================================
 
 class PlanModel(Base):
+    """Persisted subscription tier defining analysis limits and custom-schema access."""
+
     __tablename__ = "plans"
     code: Mapped[str] = mapped_column(String(20), primary_key=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -30,6 +35,8 @@ class PlanModel(Base):
 # ============================================================
 
 class UserModel(Base):
+    """Persisted account with credentials, role, plan, and ownership relationships."""
+
     __tablename__ = "users"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
     email: Mapped[str] = mapped_column(String(320), nullable=False)
@@ -50,6 +57,8 @@ class UserModel(Base):
 # ============================================================
 
 class ExtractionSchemaModel(Base):
+    """Persisted extraction schema, optionally owned by a user and archived."""
+
     __tablename__ = "extraction_schemas"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
     structure_key: Mapped[str] = mapped_column(String(120), nullable=False, unique=True)
@@ -64,6 +73,8 @@ class ExtractionSchemaModel(Base):
 
 
 class ExtractionSchemaVersionModel(Base):
+    """Versioned extraction configuration referenced by historical analyses."""
+
     __tablename__ = "extraction_schema_versions"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
     schema_id: Mapped[UUID] = mapped_column(ForeignKey("extraction_schemas.id", ondelete="CASCADE"), nullable=False)
@@ -77,6 +88,8 @@ class ExtractionSchemaVersionModel(Base):
 
 
 class EntityDefinitionModel(Base):
+    """Named entity label, description, and display color in a schema version."""
+
     __tablename__ = "entity_definitions"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
     schema_version_id: Mapped[UUID] = mapped_column(ForeignKey("extraction_schema_versions.id", ondelete="CASCADE"), nullable=False)
@@ -88,6 +101,8 @@ class EntityDefinitionModel(Base):
 
 
 class FieldDefinitionModel(Base):
+    """Structured extraction field and validation metadata in a schema version."""
+
     __tablename__ = "field_definitions"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
     schema_version_id: Mapped[UUID] = mapped_column(ForeignKey("extraction_schema_versions.id", ondelete="CASCADE"), nullable=False)
@@ -105,6 +120,8 @@ class FieldDefinitionModel(Base):
 # ============================================================
 
 class DocumentModel(Base):
+    """Original uploaded PDF metadata, storage key, owner, and page count."""
+
     __tablename__ = "documents"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
     owner_user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -123,6 +140,8 @@ class DocumentModel(Base):
 
 
 class DocumentPageModel(Base):
+    """Text extracted from a document page with global offset boundaries."""
+
     __tablename__ = "document_pages"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
     document_id: Mapped[UUID] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
@@ -134,6 +153,8 @@ class DocumentPageModel(Base):
 
 
 class AiRuntimeConfigModel(Base):
+    """Versioned GLiNER2 runtime settings and active-model selection."""
+
     __tablename__ = "ai_runtime_configs"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
     name: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -159,6 +180,8 @@ class AiRuntimeConfigModel(Base):
 # ============================================================
 
 class AnalysisModel(Base):
+    """Persisted execution record linking a document to its schema and AI runtime."""
+
     __tablename__ = "analyses"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
     document_id: Mapped[UUID] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
@@ -179,6 +202,8 @@ class AnalysisModel(Base):
 
 
 class EntityOccurrenceModel(Base):
+    """Recognized entity occurrence with text offsets and page coordinates."""
+
     __tablename__ = "entity_occurrences"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
     analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id", ondelete="CASCADE"), nullable=False)
@@ -195,6 +220,8 @@ class EntityOccurrenceModel(Base):
 
 
 class ExtractedFieldModel(Base):
+    """Resolved structured field value with status, confidence, and provenance."""
+
     __tablename__ = "extracted_fields"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
     analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id", ondelete="CASCADE"), nullable=False)
@@ -210,6 +237,8 @@ class ExtractedFieldModel(Base):
 
 
 class FieldCandidateModel(Base):
+    """Ranked alternative value suggested for a structured field."""
+
     __tablename__ = "field_candidates"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=sql_text("gen_random_uuid()"))
     extracted_field_id: Mapped[UUID] = mapped_column(ForeignKey("extracted_fields.id", ondelete="CASCADE"), nullable=False)

@@ -1,3 +1,7 @@
+/**
+ * Guide PDF selection, validation, confirmation, and upload.
+ */
+
 import { useState, type FormEvent, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router'
 
@@ -13,6 +17,9 @@ import { useAuth } from '../auth/AuthContext'
 import useAvailableSchemas from '../hooks/useAvailableSchemas'
 
 
+/**
+ * Guide the user from local PDF validation to upload confirmation.
+ */
 function NewDocumentPage() {
     useDocumentTitle('Nuovo documento | DocuEntitySeek')
 

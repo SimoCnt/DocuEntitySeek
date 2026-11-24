@@ -1,3 +1,7 @@
+/**
+ * Show the Base and Premium capability comparison.
+ */
+
 import PlanCard from './PlanCard'
 
 
@@ -19,6 +23,9 @@ const premiumFeatures = [
 ]
 
 
+/**
+ * Compare the Base and Premium plans for prospective users.
+ */
 function PlansSection() {
   return (
     <section id="plans" className="plans-section">

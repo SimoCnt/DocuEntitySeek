@@ -1,9 +1,16 @@
+/**
+ * Explain manual Premium activation and offer configured administrator email contact.
+ */
+
 import { Link, Navigate } from 'react-router'
 
 import { useAuth } from '../auth/AuthContext'
 import useDocumentTitle from '../hooks/useDocumentTitle'
 
 
+/**
+ * Explain manual Premium activation and show the administrator contact option.
+ */
 function UpgradeToPremiumPage() {
     const { user } = useAuth()
     useDocumentTitle('Passa a Premium | DocuEntitySeek')

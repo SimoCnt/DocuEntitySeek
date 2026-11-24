@@ -1,3 +1,8 @@
+/**
+ * Display AI results alongside the original PDF, synchronize selected fields/entities and filter
+ * highlights.
+ */
+
 import { useMemo, useState } from 'react'
 
 import PdfDocumentViewer from '../pdf/PdfDocumentViewer'
@@ -8,6 +13,9 @@ import type {
 } from '../../types/analysis'
 
 
+/**
+ * Properties configuring the analysis result viewer component.
+ */
 type AnalysisResultViewerProps = {
   documentId: string
   analysisId: string
@@ -15,6 +23,12 @@ type AnalysisResultViewerProps = {
   result: AnalysisResult
 }
 
+/**
+ * Present NER/IE results beside the source PDF.
+ *
+ * Maintains the selected page, field, entity, and active label set so lists
+ * and original-document highlights remain synchronized.
+ */
 function AnalysisResultViewer({ documentId, analysisId, documentName, result }: AnalysisResultViewerProps) {
   const { schema, pages, entities, fields } = result
 

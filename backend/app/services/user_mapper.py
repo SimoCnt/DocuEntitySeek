@@ -1,8 +1,12 @@
+"""Serialize persisted users, plan capabilities, and role metadata into public API models."""
+
 from app.db.models import UserModel
 from app.schemas.auth import PlanCode, PlanResponse, UserResponse, UserRole
 
 
 def to_user_response(user: UserModel) -> UserResponse:
+    """Map a stored account and plan into a safe public user profile."""
+
     return UserResponse(
         id=user.id,
         email=user.email,

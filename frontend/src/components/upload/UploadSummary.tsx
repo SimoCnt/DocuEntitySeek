@@ -1,11 +1,19 @@
+/**
+ * Display selected PDF metadata and formatted size.
+ */
 
-
+/**
+ * Properties configuring the upload summary component.
+ */
 type UploadSummaryProps = {
     file: File
     schemaName: string
 }
 
 
+/**
+ * Format the size of a PDF for user-facing upload feedback.
+ */
 function formatFileSize(bytes: number) {
     if (bytes < 1024) return `${bytes} B`
 
@@ -19,6 +27,9 @@ function formatFileSize(bytes: number) {
 }
 
 
+/**
+ * Summarize selected PDF filename, size, and content type.
+ */
 function UploadSummary({ file, schemaName }: UploadSummaryProps) {
     return (
         <dl className="upload-summary">

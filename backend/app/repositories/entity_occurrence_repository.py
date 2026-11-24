@@ -1,3 +1,5 @@
+"""Persist and query recognized named entity occurrences associated with analyses."""
+
 from decimal import Decimal
 from uuid import UUID
 from sqlalchemy import delete, select
@@ -8,6 +10,8 @@ from app.pipeline.page_mapping_models import MappedNerOccurrence
 
 
 class EntityOccurrenceRepository:
+    """Persist recognized entities associated with a completed analysis."""
+
     def __init__(self, session: Session) -> None:
         self.session = session
 
@@ -18,6 +22,8 @@ class EntityOccurrenceRepository:
         analysis_id: UUID,
         occurrences: tuple[MappedNerOccurrence, ...],
     ) -> list[EntityOccurrenceModel]:
+        """Replace an analysis's previously stored entity occurrences."""
+
         self.session.execute(
             delete(EntityOccurrenceModel).where(EntityOccurrenceModel.analysis_id == analysis_id)
         )
@@ -45,6 +51,8 @@ class EntityOccurrenceRepository:
 
 
     def list_for_analysis(self, analysis_id: UUID) -> list[EntityOccurrenceModel]:
+        """List recognized entity occurrences for an analysis."""
+
         statement = (
             select(EntityOccurrenceModel)
             .where(EntityOccurrenceModel.analysis_id == analysis_id)

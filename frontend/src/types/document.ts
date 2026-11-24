@@ -1,3 +1,10 @@
+/**
+ * Define document metadata and status contracts shared by components and API clients.
+ */
+
+/**
+ * Document state returned by the API and displayed in the listing.
+ */
 export type DocumentStatus =
     | 'UPLOADED'
     | 'READY'
@@ -6,6 +13,9 @@ export type DocumentStatus =
 
 
 
+/**
+ * Owner-scoped document metadata, page count, and current status.
+ */
 export type DocumentSummary = {
     id: string
     name: string
@@ -15,6 +25,9 @@ export type DocumentSummary = {
 }
 
 
+/**
+ * API wrapper containing the detail of one owned document.
+ */
 export type DocumentDetailResponse = {
     document: DocumentSummary
 }

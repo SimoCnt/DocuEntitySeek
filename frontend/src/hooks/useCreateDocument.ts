@@ -1,3 +1,7 @@
+/**
+ * Manage a PDF upload request, response, and error state.
+ */
+
 import { useState } from 'react'
 
 import { createDocument } from '../api/documentsApi'
@@ -7,6 +11,9 @@ import type { DocumentSummary } from '../types/document'
 import { startAnalysis } from '../api/analyses'
 
 
+/**
+ * Upload a PDF and expose the created document or normalized request error.
+ */
 function useCreateDocument() {
     const { accessToken, logout, analysisQuota, refreshAnalysisQuota } = useAuth()
 

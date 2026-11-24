@@ -1,3 +1,6 @@
+/**
+ * Provide authenticated account state, token validation, login/logout, and quota refresh to React.
+ */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 
@@ -7,9 +10,15 @@ import { clearStoredAccessToken, getStoredAccessToken, storeAccessToken } from '
 import type { UserResponse, AnalysisQuotaResponse } from '../types/auth'
 
 
+/**
+ * Lifecycle of restoring, validating, or ending an authenticated browser session.
+ */
 type AuthStatus = 'checking' | 'authenticated' | 'anonymous' | 'error'
 
 
+/**
+ * Account state, authentication commands, and quota metadata provided by AuthProvider.
+ */
 type AuthContextValue = {
   user: UserResponse | null
   analysisQuota: AnalysisQuotaResponse | null
@@ -26,6 +35,12 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 
+/**
+ * Manage JWT session state and expose authenticated user and quota data.
+ *
+ * Restores the token from session storage, validates it against the API,
+ * and clears session state when authorization fails.
+ */
 function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserResponse | null>(null)
   const [analysisQuota, setAnalysisQuota] = useState<AnalysisQuotaResponse | null>(null)
@@ -151,6 +166,9 @@ function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 
+/**
+ * Access authenticated account state; requires a surrounding AuthProvider.
+ */
 export function useAuth() {
   const context = useContext(AuthContext)
   if (!context) throw new Error('useAuth deve essere utilizzato dentro AuthProvider.')

@@ -1,3 +1,10 @@
+/**
+ * Define the summary of an extraction schema available for analysis.
+ */
+
+/**
+ * Authorized schema version available in the analysis picker.
+ */
 export type AvailableExtractionSchema = {
     schemaId: string
     schemaVersionId: string

@@ -1,3 +1,7 @@
+"""Coordinate synchronous analysis execution, schema authorization, quotas, lifecycle, and
+recovery.
+"""
+
 from time import perf_counter
 from uuid import UUID
 from sqlalchemy.orm import Session
@@ -20,6 +24,8 @@ logger = get_logger("analysis")
 
 
 class AnalysisService:
+    """Orchestrate owner checks, schema selection, quota reservation, and synchronous inference."""
+
     def __init__(
         self,
         *,
@@ -45,6 +51,13 @@ class AnalysisService:
         owner_user_id: UUID,
         schema_version_id: UUID | None = None,
     ) -> AnalysisExecutionResult:
+        """Create and execute a document analysis synchronously.
+
+        Validates ownership and schema access, reserves quota by committing a
+        QUEUED record, and invokes the pipeline in the same HTTP request.
+        The method returns only after the pipeline succeeds or fails.
+        """
+
         started_at = perf_counter()
 
         logger.info(
@@ -123,6 +136,10 @@ class AnalysisService:
         quota_decision: AnalysisQuotaDecision,
         started_at: float,
     ) -> AnalysisExecutionResult:
+        """Transition the persisted analysis to PROCESSING, run the pipeline,
+        consume a successful quota reservation, and commit READY state.
+        """
+
         analysis = self.analyses.get_by_id(analysis_id)
 
         if analysis is None:
@@ -176,6 +193,8 @@ class AnalysisService:
         document_id: UUID,
         exc: Exception,
     ) -> None:
+        """Roll back failed work and persist a sanitized ERROR state when possible."""
+
         self.session.rollback()
 
         logger.exception(
@@ -214,6 +233,8 @@ class AnalysisService:
 
     @staticmethod
     def _safe_error_message(exc: Exception) -> str:
+        """Avoid exposing internal implementation details in user-visible failure messages."""
+
         error_type = type(exc).__name__
 
         safe_messages = {

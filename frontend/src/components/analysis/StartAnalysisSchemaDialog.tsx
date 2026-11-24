@@ -1,9 +1,16 @@
+/**
+ * Select an authorized extraction schema version before launching document analysis.
+ */
+
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 import { useAuth } from '../../auth/AuthContext'
 import useAvailableSchemas from '../../hooks/useAvailableSchemas'
 
 
+/**
+ * Properties configuring the start analysis schema dialog component.
+ */
 type StartAnalysisSchemaDialogProps = {
     isOpen: boolean
     isSubmitting: boolean
@@ -13,6 +20,9 @@ type StartAnalysisSchemaDialogProps = {
 }
 
 
+/**
+ * Allow a user to choose an authorized schema version before analysis.
+ */
 function StartAnalysisSchemaDialog({ isOpen, isSubmitting, errorMessage, onCancel, onConfirm }: StartAnalysisSchemaDialogProps) {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const { user } = useAuth()

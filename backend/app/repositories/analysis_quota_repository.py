@@ -1,3 +1,5 @@
+"""Read and lock user-plan rows and count analyses reserved or consumed in a quota window."""
+
 from datetime import datetime
 from uuid import UUID
 from sqlalchemy import and_, func, or_, select
@@ -8,11 +10,15 @@ from app.domain.analysis import AnalysisStatus
 
 
 class AnalysisQuotaRepository:
+    """Perform quota window queries and plan-row locking in PostgreSQL."""
+
     def __init__(self, session: Session) -> None:
         self.session = session
 
 
     def get_user_and_plan(self, user_id: UUID) -> tuple[UserModel, PlanModel] | None:
+        """Fetch account and plan metadata used to display the current quota."""
+
         statement = (
             select(UserModel, PlanModel)
             .join(PlanModel, PlanModel.code == UserModel.plan_code)
@@ -25,6 +31,8 @@ class AnalysisQuotaRepository:
 
 
     def lock_user_and_plan(self, user_id: UUID) -> tuple[UserModel, PlanModel] | None:
+        """Lock the account row before checking quota reservations for concurrency safety."""
+
         statement = (
             select(UserModel, PlanModel)
             .join(PlanModel, PlanModel.code == UserModel.plan_code)
@@ -44,6 +52,8 @@ class AnalysisQuotaRepository:
         window_start: datetime,
         window_end: datetime,
     ) -> int:
+        """Count analyses that consume or reserve quota within a UTC window."""
+
         consumed = and_(
             AnalysisModel.quota_consumed_at.is_not(None),
             AnalysisModel.quota_consumed_at >= window_start,

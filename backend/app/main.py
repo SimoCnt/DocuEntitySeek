@@ -1,3 +1,6 @@
+"""Build and configure the FastAPI application, its middleware, exception handlers, and API routes.
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,6 +11,8 @@ from app.core.error_handlers import register_exception_handlers
 
 
 def create_application() -> FastAPI:
+    """Construct and configure the FastAPI application and its route tree."""
+
     configure_logging()
     settings = get_settings()
 

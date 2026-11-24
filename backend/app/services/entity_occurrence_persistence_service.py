@@ -1,3 +1,5 @@
+"""Transform mapped NER spans into persisted entity occurrences."""
+
 from collections import Counter
 from time import perf_counter
 from uuid import UUID
@@ -13,11 +15,15 @@ logger = get_logger("pipeline.entity_persistence")
 
 
 class EntityOccurrencePersistenceService:
+    """Persist validated, page-mapped NER output for an analysis."""
+
     def __init__(self, session: Session) -> None:
         self.repository = EntityOccurrenceRepository(session)
         
 
     def persist(self, *, analysis_id: UUID, mapping: NerPageMappingResult) -> list[EntityOccurrenceModel]:
+        """Replace stored entity occurrences with validated, page-mapped NER results."""
+
         started_at = perf_counter()
 
         visible_count = sum(occurrence.is_visible for occurrence in mapping.mapped)

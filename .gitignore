@@ -84,3 +84,6 @@ logs/
 # Storage files
 # ============================================================
 backend/storage/
+
+# Local portfolio runtime secrets
+.env.portfolio

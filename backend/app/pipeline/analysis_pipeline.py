@@ -1,3 +1,6 @@
+"""Orchestrate document preparation, GLiNER2 inference, provenance mapping, and result persistence.
+"""
+
 from time import perf_counter
 from uuid import UUID
 
@@ -23,6 +26,8 @@ logger = get_logger("pipeline")
 
 
 class AnalysisPipeline:
+    """Coordinate the end-to-end, synchronous document intelligence pipeline."""
+
     def __init__(
         self,
         *,
@@ -57,6 +62,13 @@ class AnalysisPipeline:
         owner_user_id: UUID,
         config: ResolvedAiConfiguration,
     ) -> AiPipelineExecutionResult:
+        """Execute the complete PDF-to-structured-results workflow.
+
+        Prepares a stable text representation, gets the configured model, runs
+        NER and field extraction, resolves text provenance, and persists the
+        mapped results in the caller's transaction.
+        """
+
         started_at = perf_counter()
 
         logger.info(
@@ -149,6 +161,8 @@ class AnalysisPipeline:
             document_id: UUID, 
             owner_user_id: UUID
             ):
+        """Load the owner's PDF and construct the page-aware analysis input."""
+
         logger.info(
             "AI_PIPELINE | phase=document_preparation_start | analysis_id=%s | document_id=%s",
             analysis_id,
@@ -174,6 +188,8 @@ class AnalysisPipeline:
             analysis_id: UUID, 
             config: ResolvedAiConfiguration
             ):
+        """Retrieve a cached compatible GLiNER2 model for the selected runtime."""
+
         logger.info(
             "AI_PIPELINE | phase=model_start | analysis_id=%s | model_id=%s",
             analysis_id,
@@ -200,6 +216,8 @@ class AnalysisPipeline:
         config: ResolvedAiConfiguration,
         model,
     ) -> NerPageMappingResult:
+        """Extract, deduplicate, resolve overlap, map, and persist named entities."""
+
         logger.info(
             "AI_PIPELINE | phase=ner_start | analysis_id=%s | document_id=%s | entity_definitions=%d",
             analysis_id,
@@ -257,6 +275,8 @@ class AnalysisPipeline:
         config: ResolvedAiConfiguration,
         model,
     ) -> tuple[FieldResolutionResult, FieldPageMappingResult]:
+        """Extract structured fields, map candidate spans, and resolve final values."""
+
         logger.info(
             "AI_PIPELINE | phase=field_extraction_start | analysis_id=%s | document_id=%s | field_definitions=%d",
             analysis_id,
@@ -318,6 +338,9 @@ class AnalysisPipeline:
         ner_mapping: NerPageMappingResult,
         field_resolution: FieldResolutionResult,
     ) -> None:
+        """Persist page-mapped entities and resolved fields within the active database transaction.
+        """
+
         logger.info("AI_PIPELINE | phase=persistence_start | analysis_id=%s", analysis_id)
         self.entity_persistence.persist(analysis_id=analysis_id, mapping=ner_mapping)
         self.field_persistence.persist(analysis_id=analysis_id, result=field_resolution)

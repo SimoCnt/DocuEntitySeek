@@ -1,3 +1,6 @@
+"""Wire FastAPI dependencies into repositories, authorization services, storage backends, and AI
+components.
+"""
 
 from typing import Annotated
 from fastapi import Depends
@@ -41,6 +44,8 @@ DbSessionDep = Annotated[Session, Depends(get_db_session)]
 
 @lru_cache(maxsize=1)
 def get_document_storage() -> DocumentStorage:
+    """Retrieve document storage within the current module workflow."""
+
     settings = get_settings()
     
     backend = settings.document_storage_backend.lower()
@@ -68,14 +73,20 @@ DocumentStorageDep = Annotated[DocumentStorage, Depends(get_document_storage)]
 
 
 def get_document_service(session: DbSessionDep, storage: DocumentStorageDep) -> DocumentService:
+    """Retrieve document service within the current module workflow."""
+
     return DocumentService(session, storage)
 
 
 def get_auth_service(session: DbSessionDep) -> AuthService:
+    """Retrieve auth service within the current module workflow."""
+
     return AuthService(session)
 
 
 def get_current_user(session: DbSessionDep, token: Annotated[str | None, Depends(oauth2_scheme)]) -> UserModel:
+    """Retrieve current user within the current module workflow."""
+
     if token is None:
         raise AuthenticationError("Autenticazione richiesta.")
 
@@ -95,6 +106,8 @@ CurrentUserDep = Annotated[UserModel, Depends(get_current_user)]
 
 
 def require_admin(current_user: CurrentUserDep) -> UserModel:
+    """Perform require admin for the module workflow."""
+
     if current_user.role != "ADMIN":
         raise ForbiddenError("Permessi amministrativi richiesti.")
 
@@ -107,6 +120,8 @@ AdminUserDep = Annotated[UserModel, Depends(require_admin)]
 
 
 def get_pdf_text_extractor() -> PdfTextExtractor:
+    """Retrieve pdf text extractor within the current module workflow."""
+
     settings = get_settings()
 
     return PdfTextExtractor(sort_text=settings.pdf_text_sort)
@@ -116,6 +131,8 @@ PdfTextExtractorDep = Annotated[PdfTextExtractor, Depends(get_pdf_text_extractor
 
 
 def get_provenance_builder() -> DocumentProvenanceBuilder:
+    """Retrieve provenance builder within the current module workflow."""
+
     return (DocumentProvenanceBuilder())
 
 
@@ -128,6 +145,8 @@ def get_document_preparation_service(
     pdf_extractor: PdfTextExtractorDep,
     provenance_builder: ProvenanceBuilderDep,
 ) -> DocumentPreparationService:
+    """Retrieve document preparation service within the current module workflow."""
+
     return (DocumentPreparationService(
         session=session,
         storage=storage,
@@ -141,6 +160,8 @@ DocumentPreparationServiceDep = Annotated[DocumentPreparationService, Depends(ge
 
 
 def get_ai_configuration_resolver(session: DbSessionDep) -> AiConfigurationResolver:
+    """Retrieve ai configuration resolver within the current module workflow."""
+
     return AiConfigurationResolver(session)
 
 
@@ -149,6 +170,8 @@ AiConfigurationResolverDep = Annotated[AiConfigurationResolver, Depends(get_ai_c
 
 @lru_cache(maxsize=1)
 def get_ai_model_provider() -> AiModelProvider:
+    """Retrieve ai model provider within the current module workflow."""
+
     settings = get_settings()
 
     return AiModelProvider(
@@ -163,6 +186,8 @@ AiModelProviderDep = Annotated[AiModelProvider, Depends(get_ai_model_provider)]
 
 
 def get_gliner2_ner_extractor() -> Gliner2NerExtractor:
+    """Retrieve gliner2 ner extractor within the current module workflow."""
+
     return Gliner2NerExtractor()
 
 
@@ -170,6 +195,8 @@ Gliner2NerExtractorDep = Annotated[Gliner2NerExtractor, Depends(get_gliner2_ner_
 
 
 def get_gliner2_field_extractor() -> Gliner2FieldExtractor:
+    """Retrieve gliner2 field extractor within the current module workflow."""
+
     return Gliner2FieldExtractor()
 
 
@@ -177,6 +204,8 @@ Gliner2FieldExtractorDep = Annotated[Gliner2FieldExtractor, Depends(get_gliner2_
 
 
 def get_candidate_deduplicator() -> CandidateDeduplicator:
+    """Retrieve candidate deduplicator within the current module workflow."""
+
     return CandidateDeduplicator()
 
 
@@ -184,6 +213,8 @@ CandidateDeduplicatorDep = Annotated[CandidateDeduplicator, Depends(get_candidat
 
 
 def get_viewer_overlap_resolver() -> ViewerOverlapResolver:
+    """Retrieve viewer overlap resolver within the current module workflow."""
+
     return ViewerOverlapResolver()
 
 
@@ -191,6 +222,8 @@ ViewerOverlapResolverDep = Annotated[ViewerOverlapResolver, Depends(get_viewer_o
 
 
 def get_page_span_mapper() -> PageSpanMapper:
+    """Retrieve page span mapper within the current module workflow."""
+
     return PageSpanMapper()
 
 
@@ -198,6 +231,8 @@ PageSpanMapperDep = Annotated[PageSpanMapper, Depends(get_page_span_mapper)]
 
 
 def get_entity_occurrence_persistence_service(session: DbSessionDep) -> EntityOccurrencePersistenceService:
+    """Retrieve entity occurrence persistence service within the current module workflow."""
+
     return EntityOccurrencePersistenceService(session)
 
 
@@ -205,6 +240,8 @@ EntityOccurrencePersistenceServiceDep = Annotated[EntityOccurrencePersistenceSer
 
 
 def get_field_result_resolver() -> FieldResultResolver:
+    """Retrieve field result resolver within the current module workflow."""
+
     return FieldResultResolver()
 
 
@@ -212,6 +249,8 @@ FieldResultResolverDep = Annotated[FieldResultResolver, Depends(get_field_result
 
 
 def get_field_result_persistence_service(session: DbSessionDep) -> FieldResultPersistenceService:
+    """Retrieve field result persistence service within the current module workflow."""
+
     return FieldResultPersistenceService(session)
 
 
@@ -230,6 +269,8 @@ def get_analysis_pipeline(
     entity_persistence: EntityOccurrencePersistenceServiceDep,
     field_persistence: FieldResultPersistenceServiceDep,
 ) -> AnalysisPipeline:
+    """Retrieve analysis pipeline within the current module workflow."""
+
     return AnalysisPipeline(
         preparation_service=preparation_service,
         model_provider=model_provider,
@@ -248,6 +289,8 @@ AnalysisPipelineDep = Annotated[AnalysisPipeline, Depends(get_analysis_pipeline)
 
 
 def get_analysis_quota_service(session: DbSessionDep) -> AnalysisQuotaService:
+    """Retrieve analysis quota service within the current module workflow."""
+
     return AnalysisQuotaService(AnalysisQuotaRepository(session))
 
 
@@ -256,6 +299,8 @@ AnalysisQuotaServiceDep = Annotated[AnalysisQuotaService, Depends(get_analysis_q
 
 
 def get_schema_access_service(session: DbSessionDep) -> SchemaAccessService:
+    """Retrieve schema access service within the current module workflow."""
+
     return SchemaAccessService(SchemaAccessRepository(session))
 
 
@@ -263,6 +308,8 @@ SchemaAccessServiceDep = Annotated[SchemaAccessService, Depends(get_schema_acces
 
 
 def get_custom_schema_service(session: DbSessionDep, schema_access_service: SchemaAccessServiceDep) -> CustomSchemaService:
+    """Retrieve custom schema service within the current module workflow."""
+
     return CustomSchemaService(session=session, schema_access_service=schema_access_service)
 
 
@@ -276,6 +323,8 @@ def get_analysis_service(
     schema_access_service: SchemaAccessServiceDep,
     pipeline: AnalysisPipelineDep,
 ) -> AnalysisService:
+    """Retrieve analysis service within the current module workflow."""
+
     return AnalysisService(
         session=session,
         config_resolver=config_resolver,
@@ -289,6 +338,8 @@ AnalysisServiceDep = Annotated[AnalysisService, Depends(get_analysis_service)]
 
 
 def get_analysis_query_service(session: DbSessionDep) -> AnalysisQueryService:
+    """Retrieve analysis query service within the current module workflow."""
+
     return AnalysisQueryService(session)
 
 

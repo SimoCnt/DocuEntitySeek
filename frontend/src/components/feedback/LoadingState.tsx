@@ -1,8 +1,18 @@
+/**
+ * Render a consistent loading indicator for pending operations.
+ */
+
+/**
+ * Properties configuring the loading state component.
+ */
 type LoadingStateProps = {
     message?: string
 }
 
 
+/**
+ * Display consistent feedback while asynchronous data is loading.
+ */
 function LoadingState({ message = 'Caricamento in corso...' }: LoadingStateProps) {
     return (
         <div

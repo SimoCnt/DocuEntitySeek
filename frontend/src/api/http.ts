@@ -1,3 +1,7 @@
+/**
+ * Shared HTTP transport with bearer authorization, JSON decoding, and normalized errors.
+ */
+
 const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL
 
 if (!rawApiBaseUrl) {
@@ -7,12 +11,18 @@ if (!rawApiBaseUrl) {
 export const API_BASE_URL = rawApiBaseUrl.replace(/\/+$/, '')
 
 
+/**
+ * Accepted structured error envelope variants returned by the API.
+ */
 type ApiErrorPayload = {
     error?: { code?: string; message?: string; details?: unknown }
     detail?: string | { msg?: string }[]
 }
 
 
+/**
+ * Normalized request failure consumed by hooks and error components.
+ */
 export type RequestError = {
     message: string
     status?: number
@@ -21,11 +31,17 @@ export type RequestError = {
 }
 
 
+/**
+ * Fetch options extended with the bearer token for authenticated requests.
+ */
 type RequestOptions = RequestInit & {
     token?: string | null
 }
 
 
+/**
+ * HTTP error retaining the status, URL, and normalized API details.
+ */
 export class HttpError extends Error {
     readonly status: number
     readonly url: string
@@ -43,11 +59,17 @@ export class HttpError extends Error {
 }
 
 
+/**
+ * Check whether api error payload.
+ */
 function isApiErrorPayload(value: unknown): value is ApiErrorPayload {
     return typeof value === 'object' && value !== null && ('error' in value || 'detail' in value)
 }
 
 
+/**
+ * Perform the parse body operation for the current UI workflow.
+ */
 async function parseBody(response: Response): Promise<unknown> {
     const text = await response.text()
 
@@ -63,11 +85,17 @@ async function parseBody(response: Response): Promise<unknown> {
 }
 
 
+/**
+ * Identify intentional AbortController cancellation.
+ */
 export function isAbortError(error: unknown): boolean {
     return error instanceof DOMException && error.name === 'AbortError'
 }
 
 
+/**
+ * Convert network and HTTP failures into a common UI error shape.
+ */
 export function normalizeRequestError(error: unknown): RequestError {
     if (error instanceof HttpError) {
         return {

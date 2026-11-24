@@ -1,3 +1,5 @@
+"""Assemble authorized analysis history and detailed extraction results from repositories."""
+
 from collections import defaultdict
 from uuid import UUID
 
@@ -12,6 +14,8 @@ from app.repositories.field_candidate_repository import FieldCandidateRepository
 
 
 class AnalysisQueryService:
+    """Assemble authorized analysis history and result details."""
+
     def __init__(self, session: Session) -> None:
         self.analyses = AnalysisRepository(session)
         self.pages = DocumentPageRepository(session)
@@ -21,10 +25,14 @@ class AnalysisQueryService:
 
 
     def list_for_document(self, *, document_id: UUID, owner_user_id: UUID):
+        """Return analysis history limited to documents owned by the caller."""
+
         return self.analyses.list_for_document_and_owner(document_id=document_id, owner_user_id=owner_user_id)
 
 
     def get_detail(self, *, analysis_id: UUID, document_id: UUID, owner_user_id: UUID):
+        """Load an authorized analysis with pages, entities, fields, and candidates."""
+
         analysis = self.analyses.get_for_document_and_owner(
             analysis_id=analysis_id,
             document_id=document_id,

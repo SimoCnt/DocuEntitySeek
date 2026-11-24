@@ -1,3 +1,7 @@
+"""Build the PostgreSQL engine and provide request-scoped SQLAlchemy sessions with rollback on
+failure.
+"""
+
 from collections.abc import Generator
 from sqlalchemy import URL, create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -30,6 +34,8 @@ SessionLocal = sessionmaker(
 
 
 def get_db_session() -> Generator[Session, None, None]:
+    """Yield a request-scoped session, rolling back failures and closing afterward."""
+
     session = SessionLocal()
 
     try:

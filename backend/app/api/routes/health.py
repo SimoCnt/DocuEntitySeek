@@ -1,3 +1,5 @@
+"""Expose application liveness and PostgreSQL connectivity diagnostics."""
+
 from fastapi import APIRouter
 from sqlalchemy import text
 
@@ -15,6 +17,8 @@ router = APIRouter(prefix="/health", tags=["health"])
         summary="Check API health"
         )
 async def health_check() -> HealthResponse:
+    """Report application liveness without performing a database query."""
+
     settings = get_settings()
 
     return HealthResponse(
@@ -31,6 +35,8 @@ async def health_check() -> HealthResponse:
         summary="Check database health"
         )
 def database_health_check(session: DbSessionDep) -> DatabaseHealthResponse:
+    """Confirm database connectivity using the request-scoped SQLAlchemy session."""
+
     row = session.execute(
         text("""
             SELECT

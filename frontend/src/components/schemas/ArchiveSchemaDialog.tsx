@@ -1,5 +1,12 @@
+/**
+ * Confirm archival of a user-owned schema without permanently deleting history.
+ */
+
 import { useEffect, useRef } from 'react'
 
+/**
+ * Properties configuring the archive schema dialog component.
+ */
 type ArchiveSchemaDialogProps = {
   isOpen: boolean
   schemaName: string
@@ -10,6 +17,9 @@ type ArchiveSchemaDialogProps = {
 }
 
 
+/**
+ * Ask for explicit confirmation before archiving a custom schema.
+ */
 function ArchiveSchemaDialog({
   isOpen,
   schemaName,

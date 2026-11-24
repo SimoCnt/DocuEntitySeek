@@ -1,3 +1,5 @@
+"""Query schema visibility and custom-schema capabilities for a specific user."""
+
 from uuid import UUID
 
 from sqlalchemy import or_, select
@@ -7,10 +9,14 @@ from app.db.models import ExtractionSchemaModel, ExtractionSchemaVersionModel, P
 
 
 class SchemaAccessRepository:
+    """Read plan-dependent visibility of built-in and custom schema versions."""
+
     def __init__(self, session: Session) -> None:
         self.session = session
 
     def get_custom_schemas_enabled(self, user_id: UUID) -> bool | None:
+        """Check whether the account's subscription permits custom schemas."""
+
         statement = (
             select(PlanModel.custom_schemas_enabled)
             .join(UserModel, UserModel.plan_code == PlanModel.code)
@@ -25,6 +31,8 @@ class SchemaAccessRepository:
         user_id: UUID,
         include_custom: bool,
     ) -> list[tuple[ExtractionSchemaModel, ExtractionSchemaVersionModel]]:
+        """Find schema versions visible to a user under the current plan."""
+
         access_condition = ExtractionSchemaModel.is_builtin.is_(True)
 
         if include_custom:
@@ -52,6 +60,8 @@ class SchemaAccessRepository:
         user_id: UUID,
         schema_version_id: UUID,
     ) -> tuple[ExtractionSchemaModel, ExtractionSchemaVersionModel] | None:
+        """Resolve a particular schema version only if visible to the user."""
+
         statement = (
             select(ExtractionSchemaModel, ExtractionSchemaVersionModel)
             .join(ExtractionSchemaVersionModel, ExtractionSchemaVersionModel.schema_id == ExtractionSchemaModel.id)

@@ -1,3 +1,7 @@
+/**
+ * Launch an analysis for a selected schema and normalize API outcomes.
+ */
+
 import { useState } from 'react'
 
 import { startAnalysis } from '../api/analyses'
@@ -11,6 +15,9 @@ export type StartAnalysisOutcome =
   | { ok: false; error: RequestError }
 
 
+/**
+ * Start a document analysis with a selected schema and expose request state.
+ */
 function useStartAnalysis() {
   const { accessToken, logout, refreshAnalysisQuota } = useAuth()
   const [data, setData] = useState<AnalysisStartResponse | null>(null)

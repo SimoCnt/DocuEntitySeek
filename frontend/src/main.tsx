@@ -1,3 +1,7 @@
+/**
+ * Bootstrap the React application and configure its global providers.
+ */
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'

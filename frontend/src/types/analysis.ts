@@ -1,7 +1,20 @@
+/**
+ * Define TypeScript contracts for analysis lifecycle, NER/IE results, quotas, and PDF highlighting.
+ */
+
+/**
+ * Persisted analysis state used to control polling and result rendering.
+ */
 export type AnalysisStatus = 'QUEUED' | 'PROCESSING' | 'READY' | 'ERROR'
+/**
+ * Allowed values for extracted field status as defined by the API.
+ */
 export type ExtractedFieldStatus = 'EXTRACTED' | 'AMBIGUOUS' | 'NOT_FOUND' | 'ERROR'
 
 
+/**
+ * Counters and execution duration returned when an analysis completes.
+ */
 export type AnalysisPipelineSummary = {
     pageCount: number
     documentCharacters: number
@@ -18,12 +31,18 @@ export type AnalysisPipelineSummary = {
     elapsedMs: number
 }
 
+/**
+ * Execution outcome returned by the synchronous analysis start endpoint.
+ */
 export type AnalysisStartResponse = {
     analysisId: string
     status: AnalysisStatus
     pipeline: AnalysisPipelineSummary
 }
 
+/**
+ * Historical analysis metadata with the selected extraction schema name and version.
+ */
 export type AnalysisSummary = {
     id: string
     documentId: string
@@ -38,6 +57,9 @@ export type AnalysisSummary = {
     aiRuntimeConfigId: string
 }
 
+/**
+ * A PDF page's extracted text and its global provenance offset range.
+ */
 export type AnalysisResultPage = {
     pageNumber: number
     text: string
@@ -46,6 +68,9 @@ export type AnalysisResultPage = {
 }
 
 
+/**
+ * A recognized entity, including page-local text offsets and visibility.
+ */
 export type EntityOccurrence = {
     id: string
     label: string
@@ -60,6 +85,9 @@ export type EntityOccurrence = {
 }
 
 
+/**
+ * A ranked alternative value for a structured extraction field.
+ */
 export type FieldCandidate = {
     id: string
     value: string
@@ -71,6 +99,9 @@ export type FieldCandidate = {
 }
 
 
+/**
+ * Resolved value or ambiguity status for one schema-defined field.
+ */
 export type AnalysisExtractedField = {
     id: string
     fieldKey: string
@@ -84,6 +115,9 @@ export type AnalysisExtractedField = {
 }
 
 
+/**
+ * AI result containing source pages, schema definitions, NER spans, and resolved fields.
+ */
 export type AnalysisResult = {
     schema: AnalysisSchema
     pages: AnalysisResultPage[]
@@ -92,11 +126,17 @@ export type AnalysisResult = {
 }
 
 
+/**
+ * Analysis state and optional results for the selected history entry.
+ */
 export type AnalysisDetail = AnalysisSummary & {
     result: AnalysisResult | null
 }
 
 
+/**
+ * TypeScript contract for analysis quota exceeded details values.
+ */
 export type AnalysisQuotaExceededDetails = {
     dailyLimit: number
     used: number
@@ -104,11 +144,17 @@ export type AnalysisQuotaExceededDetails = {
 }
 
 
+/**
+ * TypeScript contract for analysis failed details values.
+ */
 export type AnalysisFailedDetails = {
     analysisId: string
 }
 
 
+/**
+ * TypeScript contract for analysis entity definition values.
+ */
 export type AnalysisEntityDefinition = {
     label: string
     description: string
@@ -117,6 +163,9 @@ export type AnalysisEntityDefinition = {
 }
 
 
+/**
+ * TypeScript contract for analysis field definition values.
+ */
 export type AnalysisFieldDefinition = {
     fieldKey: string
     label: string
@@ -127,6 +176,9 @@ export type AnalysisFieldDefinition = {
 }
 
 
+/**
+ * TypeScript contract for analysis schema values.
+ */
 export type AnalysisSchema = {
     schemaId: string
     schemaVersionId: string

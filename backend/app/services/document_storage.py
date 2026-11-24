@@ -1,3 +1,5 @@
+"""Provide local and S3-compatible private PDF storage with materialization and range reads."""
+
 import os
 from pathlib import Path
 from contextlib import contextmanager
@@ -14,6 +16,8 @@ logger = get_logger("storage")
 
 
 class DocumentStorage:
+    """Store private original PDFs on the local filesystem using safe relative keys."""
+
     def __init__(self, root: Path) -> None:
         self.root = root.resolve()
 
@@ -25,6 +29,12 @@ class DocumentStorage:
             document_id: UUID, 
             source: BinaryIO
             ) -> str:
+        """Write the original PDF to a private local path using an atomic rename.
+
+        The upload is staged in a temporary file, synchronized to disk, and
+        moved into place; the source stream is reset for callers.
+        """
+
         relative_path = Path(str(owner_user_id)) / str(document_id) / "original.pdf"
         destination = self.root / relative_path
         temporary = destination.parent / "original.pdf.part"
@@ -74,6 +84,8 @@ class DocumentStorage:
 
 
     def get_path(self, storage_key: str) -> Path:
+        """Resolve a storage key beneath the configured root, rejecting path traversal."""
+
         path = (self.root / storage_key).resolve()
 
         if path != self.root and self.root not in path.parents:
@@ -85,6 +97,8 @@ class DocumentStorage:
 
 
     def delete(self, storage_key: str) -> None:
+        """Delete a local original PDF, tolerating an already missing file."""
+
         path = self.get_path(storage_key)
 
         try:
@@ -97,6 +111,8 @@ class DocumentStorage:
             raise DocumentStorageError("Errore durante l'eliminazione del PDF.") from exc
 
     def get_size(self, storage_key: str) -> int:
+        """Return the size of a stored local PDF, raising if it does not exist."""
+
         path = self.get_path(storage_key)
         if not path.is_file():
             raise FileNotFoundError("PDF originale non trovato.")
@@ -104,6 +120,8 @@ class DocumentStorage:
 
 
     def open_range(self, storage_key: str, start: int = 0, end: int | None = None):
+        """Open a bounded binary read stream from a stored original PDF."""
+
         path = self.get_path(storage_key)
         if not path.is_file():
             raise FileNotFoundError("PDF originale non trovato.")
@@ -114,6 +132,8 @@ class DocumentStorage:
 
     @contextmanager
     def materialize(self, storage_key: str):
+        """Expose a local PDF path within a context manager for parser access."""
+
         path = self.get_path(storage_key)
         if not path.is_file():
             raise DocumentStorageError("Il PDF originale non esiste nello storage.")
@@ -136,6 +156,9 @@ class S3DocumentStorage(DocumentStorage):
 
     @staticmethod
     def _is_not_found(error: Exception) -> bool:
+        """Identify an object-not-found response without treating all storage failures as missing.
+        """
+
         response = getattr(error, "response", None)
         code = (response or {}).get("Error", {}).get("Code", "")
         return str(code) in {"404", "NoSuchKey", "NotFound"}
@@ -143,10 +166,14 @@ class S3DocumentStorage(DocumentStorage):
 
     @staticmethod
     def _key(owner_user_id: UUID, document_id: UUID) -> str:
+        """Construct a deterministic owner-scoped S3 key for an original PDF."""
+
         return f"{owner_user_id}/{document_id}/original.pdf"
 
     
     def save_original(self, *, owner_user_id: UUID, document_id: UUID, source: BinaryIO) -> str:
+        """Upload the original PDF to a private S3-compatible bucket and return its key."""
+
         key = self._key(owner_user_id, document_id)
         try:
             source.seek(0)
@@ -159,6 +186,8 @@ class S3DocumentStorage(DocumentStorage):
 
 
     def get_size(self, storage_key: str) -> int:
+        """Query remote object size, with compatibility fallback for legacy local PDFs."""
+
         self.get_path(storage_key)  # valida chiave anche per S3
         try:
             response = self.client.head_object(Bucket=self.bucket, Key=storage_key)
@@ -171,6 +200,8 @@ class S3DocumentStorage(DocumentStorage):
 
 
     def open_range(self, storage_key: str, start: int = 0, end: int | None = None):
+        """Stream a requested remote byte range, falling back to legacy local storage."""
+
         self.get_path(storage_key)  # valida chiave anche per S3
         args = {"Bucket": self.bucket, "Key": storage_key}
         if start > 0 or end is not None:
@@ -187,6 +218,8 @@ class S3DocumentStorage(DocumentStorage):
 
     @contextmanager
     def materialize(self, storage_key: str):
+        """Download an S3 object into a temporary local path for PDF processing."""
+
         with TemporaryDirectory(prefix="docuentityseek-pdf-") as directory:
             destination = Path(directory) / "original.pdf"
             stream = self.open_range(storage_key)
@@ -201,6 +234,8 @@ class S3DocumentStorage(DocumentStorage):
 
 
     def delete(self, storage_key: str) -> None:
+        """Delete the remote original object, with legacy storage cleanup as applicable."""
+
         self.get_path(storage_key)  # valida chiave
         try:
             self.client.delete_object(Bucket=self.bucket, Key=storage_key)

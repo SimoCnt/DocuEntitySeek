@@ -1,3 +1,5 @@
+"""Build a global document text layout and stable page offsets for extraction provenance."""
+
 from time import perf_counter
 from uuid import UUID
 
@@ -12,12 +14,16 @@ PAGE_SEPARATOR = "\n\n"
 
 
 class DocumentProvenanceBuilder:
+    """Assemble global text and page boundaries for reproducible extraction offsets."""
+
     def build(
             self, 
             *, 
             document_id: UUID, 
             extraction: PdfExtractionResult
             ) -> PreparedDocumentText:
+        """Concatenate page text into a stable global layout with per-page offsets."""
+
         started_at = perf_counter()
 
         logger.info(
@@ -92,6 +98,8 @@ class DocumentProvenanceBuilder:
             document_id: UUID, 
             result: PreparedDocumentText
             ) -> None:
+        """Assert offset and text invariants before downstream span mapping."""
+
         for page in result.pages:
             reconstructed = result.text[page.global_start:page.global_end]
 
