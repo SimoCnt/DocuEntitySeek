@@ -1,3 +1,5 @@
+"""Persist, version, lock, and query user-owned extraction schemas and their definitions."""
+
 from uuid import UUID
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session, joinedload, selectinload
@@ -6,27 +8,39 @@ from app.db.models import EntityDefinitionModel, ExtractionSchemaModel, Extracti
 
 
 class CustomSchemaRepository:
+    """Persist and query user-owned, versioned extraction schema structures."""
+
     def __init__(self, session: Session) -> None:
         self.session = session
 
 
     def add_schema(self, schema: ExtractionSchemaModel) -> None:
+        """Stage a new extraction schema in the current SQLAlchemy session."""
+
         self.session.add(schema)
 
 
     def add_version(self, version: ExtractionSchemaVersionModel) -> None:
+        """Stage a new immutable schema version in the active transaction."""
+
         self.session.add(version)
 
 
     def add_entities(self, entities: list[EntityDefinitionModel]) -> None:
+        """Stage entity definitions associated with a versioned schema."""
+
         self.session.add_all(entities)
 
 
     def add_fields(self, fields: list[FieldDefinitionModel]) -> None:
+        """Stage field definitions associated with a versioned schema."""
+
         self.session.add_all(fields)
 
 
     def flush(self) -> None:
+        """Flush pending ORM changes to obtain generated identifiers without committing."""
+
         self.session.flush()
 
 
@@ -37,6 +51,8 @@ class CustomSchemaRepository:
             UUID, 
             schema_id: UUID
             ) -> ExtractionSchemaModel | None:
+        """Lock a user-owned custom schema before performing a versioned update."""
+
         statement = (
             select(ExtractionSchemaModel)
             .where(
@@ -55,6 +71,8 @@ class CustomSchemaRepository:
         *,
         schema_id: UUID,
     ) -> ExtractionSchemaVersionModel | None:
+        """Load the currently active version of a schema."""
+
         statement = (
             select(ExtractionSchemaVersionModel)
             .where(
@@ -67,6 +85,8 @@ class CustomSchemaRepository:
 
 
     def get_max_version_number(self, *, schema_id: UUID) -> int:
+        """Return the greatest existing version number for a schema."""
+
         statement = select(func.max(ExtractionSchemaVersionModel.version)).where(ExtractionSchemaVersionModel.schema_id == schema_id)
 
         return self.session.scalar(statement) or 0
@@ -79,6 +99,8 @@ class CustomSchemaRepository:
         name: str,
         exclude_schema_id: UUID | None = None,
     ) -> bool:
+        """Check a case-insensitive schema name conflict for a user."""
+
         statement = select(ExtractionSchemaModel.id).where(
             ExtractionSchemaModel.owner_user_id == user_id,
             func.lower(ExtractionSchemaModel.name) == name.lower(),
@@ -95,6 +117,8 @@ class CustomSchemaRepository:
         *,
         user_id: UUID,
     ) -> list[ExtractionSchemaVersionModel]:
+        """List active schema versions belonging to a user."""
+
         statement = (
             select(ExtractionSchemaVersionModel)
             .join(
@@ -127,6 +151,8 @@ class CustomSchemaRepository:
         user_id: UUID,
         schema_id: UUID,
     ) -> ExtractionSchemaVersionModel | None:
+        """Load a user's current schema version with all extraction definitions."""
+
         statement = (
             select(ExtractionSchemaVersionModel)
             .join(ExtractionSchemaModel, ExtractionSchemaModel.id == ExtractionSchemaVersionModel.schema_id)

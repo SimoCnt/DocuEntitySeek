@@ -1,8 +1,15 @@
+/**
+ * Render the fallback for unrecognized application routes.
+ */
+
 import { Link } from 'react-router'
 
 import useDocumentTitle from '../hooks/useDocumentTitle'
 
 
+/**
+ * Provide navigation after an unknown route.
+ */
 function NotFoundPage() {
     useDocumentTitle('Pagina non trovata | DocuEntitySeek')
 

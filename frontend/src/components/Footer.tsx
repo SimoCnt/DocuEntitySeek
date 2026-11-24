@@ -1,3 +1,10 @@
+/**
+ * Render the common application footer.
+ */
+
+/**
+ * Render the application footer and supporting links.
+ */
 function Footer() {
   return (
     <footer className="app-footer">

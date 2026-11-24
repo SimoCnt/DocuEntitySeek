@@ -1,3 +1,7 @@
+/**
+ * Load and refresh user-owned custom extraction schemas.
+ */
+
 import { useEffect, useState } from 'react'
 
 import { getCustomSchemas } from '../api/customSchemasApi'
@@ -6,6 +10,9 @@ import { useAuth } from '../auth/AuthContext'
 import type { CustomSchemaSummary } from '../types/customSchema'
 
 
+/**
+ * Fetch custom schema summaries and expose an explicit refresh trigger.
+ */
 function useCustomSchemas(enabled: boolean) {
     const { accessToken, logout } = useAuth()
 

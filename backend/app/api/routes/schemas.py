@@ -1,3 +1,5 @@
+"""Expose available schemas and the lifecycle of user-owned, versioned extraction schemas."""
+
 from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
 
@@ -15,6 +17,8 @@ router = APIRouter(
 
 
 def _custom_schema_response(result) -> CustomSchemaResponse:
+    """Serialize a service-level custom schema into the public API contract."""
+
     return CustomSchemaResponse(
         schema_id=result.schema_id,
         schema_version_id=result.schema_version_id,
@@ -51,6 +55,8 @@ def _custom_schema_response(result) -> CustomSchemaResponse:
 
 @router.get("/available", response_model=list[AvailableExtractionSchemaResponse])
 def list_available_schemas(current_user: CurrentUserDep, service: SchemaAccessServiceDep) -> list[AvailableExtractionSchemaResponse]:
+    """List built-in and user-owned schema versions authorized for the caller."""
+
     schemas = service.list_available(user_id=current_user.id)
 
     return [
@@ -76,6 +82,8 @@ def create_custom_schema(
     current_user: CurrentUserDep,
     service: CustomSchemaServiceDep,
 ) -> CustomSchemaResponse:
+    """Create a new user-owned extraction schema and its first version."""
+
     try:
         result = service.create(
             user_id=current_user.id,
@@ -130,6 +138,8 @@ def list_custom_schemas(
     current_user: CurrentUserDep,
     service: CustomSchemaServiceDep,
 ) -> list[CustomSchemaSummaryResponse]:
+    """List custom schemas belonging to the authenticated user."""
+
     try:
         schemas = service.list_owned(user_id=current_user.id)
 
@@ -165,6 +175,8 @@ def get_custom_schema(
     current_user: CurrentUserDep,
     service: CustomSchemaServiceDep,
 ) -> CustomSchemaResponse:
+    """Return a user-owned custom schema with its definitions."""
+
     try:
         result = service.get_owned(user_id=current_user.id, schema_id=schema_id)
 
@@ -196,6 +208,8 @@ def update_custom_schema(
     current_user: CurrentUserDep,
     service: CustomSchemaServiceDep,
 ) -> CustomSchemaResponse:
+    """Create an updated version of a user-owned custom schema."""
+
     try:
         result = service.update(
             user_id=current_user.id,
@@ -267,6 +281,8 @@ def archive_custom_schema(
     current_user: CurrentUserDep,
     service: CustomSchemaServiceDep,
 ) -> CustomSchemaArchiveResponse:
+    """Archive a custom schema without deleting historical analysis references."""
+
     try:
         archived_at = service.archive(user_id=current_user.id, schema_id=schema_id)
 
@@ -305,6 +321,8 @@ def duplicate_custom_schema(
     current_user: CurrentUserDep,
     service: CustomSchemaServiceDep,
 ) -> CustomSchemaResponse:
+    """Duplicate an accessible custom schema under a new user-owned name."""
+
     try:
         result = service.duplicate(
             user_id=current_user.id,

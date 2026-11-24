@@ -1,3 +1,7 @@
+/**
+ * Render the publicly visible DocuEntitySeek feature overview.
+ */
+
 import FeatureCard from './FeatureCard'
 
 
@@ -6,22 +10,25 @@ const features = [
     id: 'entity-discovery',
     badge: 'NER',
     title: 'Entity Discovery',
-    description: 'Individua automaticamente organizzazioni, persone, importi, date, riferimenti normativi e altre entità nel documento.',
+    description: 'Riconosce automaticamente entità di interesse, come persone, organizzazioni, luoghi, date e importi, adattandosi a categorie semantiche personalizzabili e a diversi contesti linguistici e applicativi.',
   },
   {
     id: 'field-extraction',
     badge: 'IE',
     title: 'Field Extraction',
-    description: 'Estrae informazioni strutturate come stazione appaltante, CIG, importi, scadenze e criteri di aggiudicazione.',
+    description: 'Estrae informazioni complesse e contestualizzate, andando oltre il riconoscimento delle singole entità per individuare e strutturare contenuti di interesse attraverso schemi semantici personalizzabili.',
   },
   {
     id: 'annotated-document',
     badge: 'UI',
     title: 'Annotated Document',
-    description: 'Visualizza le entità direttamente nel documento tramite etichette colorate e una sidebar di navigazione.'
+    description: 'Visualizza le informazioni estratte direttamente nel documento tramite etichette colorate e una sidebar di navigazione.'
   }
 ]
 
+/**
+ * List the platform's user-facing capabilities.
+ */
 function FeaturesSection() {
   return (
     <section id="features" className="features-section">

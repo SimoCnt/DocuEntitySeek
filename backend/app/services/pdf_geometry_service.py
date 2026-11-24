@@ -14,6 +14,8 @@ import pymupdf
 
 @dataclass(frozen=True, slots=True)
 class TextRegionRequest:
+    """Text span that needs matching highlight rectangles on a PDF page."""
+
     kind: Literal["entity", "field"]
     id: str
     label: str
@@ -22,10 +24,19 @@ class TextRegionRequest:
 
 
 class PdfGeometryService:
+    """Find normalized PDF rectangles for verified page-local AI spans."""
+
     def __init__(self, *, sort_text: bool = False) -> None:
         self.sort_text = sort_text
 
     def map_page(self, *, pdf_path: Path, page_number: int, expected_text: str, regions: list[TextRegionRequest]) -> dict:
+        """Resolve normalized highlight rectangles for verified text spans.
+
+        Re-extracts text from the original page with PyMuPDF. If the page text
+        does not match the text used for inference, returns an unaligned result
+        rather than potentially incorrect highlight geometry.
+        """
+
         with pymupdf.open(pdf_path) as document:
             if not document.is_pdf or document.needs_pass or not 1 <= page_number <= document.page_count:
                 raise ValueError("Il PDF o il numero di pagina non sono validi.")

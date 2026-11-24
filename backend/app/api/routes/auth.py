@@ -1,3 +1,5 @@
+"""Expose account registration, bearer-token authentication, and current-user quota endpoints."""
+
 from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -19,6 +21,8 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
         summary="Register user"
         )
 def register(payload: RegisterRequest, service: AuthServiceDep) -> UserResponse:
+    """Register a new account and return its public profile."""
+
     user = service.register(email=str(payload.email), password=payload.password)
 
     return to_user_response(user)
@@ -30,6 +34,8 @@ def register(payload: RegisterRequest, service: AuthServiceDep) -> UserResponse:
         summary="Authenticate user"
         )
 def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], service: AuthServiceDep) -> TokenResponse:
+    """Authenticate credentials and issue a bearer access token."""
+
     user = service.authenticate(email=form_data.username, password=form_data.password)
     settings = get_settings()
     token = create_access_token(user.id)
@@ -47,6 +53,8 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], service: A
         summary="Get current user"
         )
 def read_current_user(current_user: CurrentUserDep) -> UserResponse:
+    """Return the authenticated account and plan metadata."""
+
     return to_user_response(current_user)
 
 
@@ -56,6 +64,8 @@ def read_current_user(current_user: CurrentUserDep) -> UserResponse:
     summary="Get current analysis quota",
 )
 def read_analysis_quota(current_user: CurrentUserDep, service: AnalysisQuotaServiceDep) -> AnalysisQuotaResponse:
+    """Return remaining daily analysis capacity and its UTC reset time."""
+
     quota = service.get_status(user_id=current_user.id)
 
     return AnalysisQuotaResponse(

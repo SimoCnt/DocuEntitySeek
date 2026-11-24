@@ -1,3 +1,7 @@
+/**
+ * Coordinate custom schema updates, archival, and duplication from the UI.
+ */
+
 import { useState } from 'react'
 
 import { archiveCustomSchema, duplicateCustomSchema, getCustomSchema, updateCustomSchema } from '../api/customSchemasApi'
@@ -6,6 +10,9 @@ import { useAuth } from '../auth/AuthContext'
 import type { CustomSchema, CustomSchemaCreateRequest } from '../types/customSchema'
 
 
+/**
+ * Coordinate updates, archival, and duplication of custom schemas.
+ */
 function useCustomSchemaActions() {
   const { accessToken, logout } = useAuth()
   const [isLoading, setIsLoading] = useState(false)

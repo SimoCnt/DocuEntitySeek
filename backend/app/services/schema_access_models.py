@@ -1,9 +1,13 @@
+"""Represent extraction-schema versions visible to a user."""
+
 from dataclasses import dataclass
 from uuid import UUID
 
 
 @dataclass(frozen=True, slots=True)
 class AvailableExtractionSchema:
+    """Authorized schema version exposed in the schema picker."""
+
     schema_id: UUID
     schema_version_id: UUID
     name: str

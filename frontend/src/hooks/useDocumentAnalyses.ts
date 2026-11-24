@@ -1,3 +1,7 @@
+/**
+ * Load document analysis history and support silent status polling.
+ */
+
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { getDocumentAnalyses } from '../api/analyses'
@@ -6,6 +10,9 @@ import { useAuth } from '../auth/AuthContext'
 import type { AnalysisSummary } from '../types/analysis'
 
 
+/**
+ * Fetch analysis history and support quiet background status refreshes.
+ */
 function useDocumentAnalyses(documentId: string | undefined) {
     const { accessToken, logout } = useAuth()
     const [analyses, setAnalyses] = useState<AnalysisSummary[]>([])

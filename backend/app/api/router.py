@@ -1,3 +1,7 @@
+"""Assemble the versioned API router from authentication, document, schema, analysis, and health
+routes.
+"""
+
 from fastapi import APIRouter
 
 from app.api.routes import documents, health, admin, auth, analyses, schemas

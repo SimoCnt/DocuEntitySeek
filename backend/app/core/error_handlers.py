@@ -1,3 +1,5 @@
+"""Convert domain and request failures into stable JSON error envelopes for the REST API."""
+
 import logging
 from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
@@ -12,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 def error_payload(*, code: str, message: str, details: object | None = None) -> dict:
+    """Build the consistent API error envelope used by exception handlers."""
+
     return {
         "error": {
             "code": code,
@@ -22,6 +26,8 @@ def error_payload(*, code: str, message: str, details: object | None = None) -> 
 
 
 def register_exception_handlers(app: FastAPI) -> None:
+    """Register domain, validation, HTTP, and unexpected-error handlers on FastAPI."""
+
     @app.exception_handler(DocumentNotFoundError)
     async def document_not_found(request: Request, exc: DocumentNotFoundError) -> JSONResponse:
         return JSONResponse(status_code=404, content=error_payload(code="DOCUMENT_NOT_FOUND", message=str(exc)))

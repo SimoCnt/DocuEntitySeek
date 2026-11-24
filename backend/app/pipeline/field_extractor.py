@@ -1,3 +1,6 @@
+"""Perform GLiNER2 structured field extraction and normalize model responses into typed candidates.
+"""
+
 from numbers import Real
 from time import perf_counter
 from uuid import UUID
@@ -14,6 +17,8 @@ logger = get_logger("pipeline.fields")
 
 
 class Gliner2FieldExtractor:
+    """Invoke GLiNER2 structured extraction and normalize candidate spans."""
+
     _RECORD_METADATA_KEYS = frozenset({"confidence"})
     
     def extract(
@@ -24,6 +29,8 @@ class Gliner2FieldExtractor:
         config: ResolvedAiConfiguration,
         model: LoadedAiModel,
     ) -> StructuredExtractionResult:
+        """Run GLiNER2 structured extraction and normalize returned field candidates."""
+
         started_at = perf_counter()
 
         if not config.schema.fields:
@@ -119,6 +126,8 @@ class Gliner2FieldExtractor:
 
 
     def _build_structures(self, config: ResolvedAiConfiguration) -> dict[str, list[str]]:
+        """Build model extraction structures from the active schema definitions."""
+
         structure_key = config.schema.structure_key.strip()
 
         if not structure_key:
@@ -149,6 +158,8 @@ class Gliner2FieldExtractor:
 
 
     def _normalize_dtype(self, data_type: str) -> str:
+        """Convert a raw field value into the expected structured data type."""
+
         normalized = data_type.strip().lower()
 
         if normalized in {"str", "string"}:
@@ -161,6 +172,8 @@ class Gliner2FieldExtractor:
 
 
     def _build_field_spec(self, definition: FieldExtractionDefinition) -> str:
+        """Build the GLiNER2 field specification from schema metadata."""
+
         field_key = definition.field_key.strip()
         dtype = self._normalize_dtype(definition.data_type)
         description = definition.description.strip() if definition.description else ""
@@ -179,6 +192,8 @@ class Gliner2FieldExtractor:
         raw_result: object,
         config: ResolvedAiConfiguration,
     ) -> StructuredExtractionResult:
+        """Validate and normalize raw structured extraction responses."""
+
         logger.debug("FIELD_EXTRACTION | phase=normalization_start | document_id=%s", document_id)
 
         if not isinstance(raw_result, dict):
@@ -250,6 +265,8 @@ class Gliner2FieldExtractor:
         raw_value: object,
         record_index: int,
     ) -> list[StructuredFieldCandidate]:
+        """Validate and normalize an extracted field value and its confidence."""
+
         dtype = self._normalize_dtype(definition.data_type)
 
         if raw_value is None:
@@ -290,6 +307,8 @@ class Gliner2FieldExtractor:
         record_index: int,
         item_index: int,
     ) -> StructuredFieldCandidate:
+        """Normalize a model-provided candidate into a typed structured field value."""
+
         if not isinstance(item, dict):
             raise AiInferenceError("Candidato IE in formato non valido.")
 

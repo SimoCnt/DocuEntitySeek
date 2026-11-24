@@ -1,3 +1,6 @@
+/**
+ * Load one owner-scoped document and expose retry/refresh state.
+ */
 
 import { useEffect, useState } from 'react'
 
@@ -7,6 +10,9 @@ import { useAuth } from '../auth/AuthContext'
 import type { DocumentDetailResponse } from '../types/document'
 
 
+/**
+ * Load an owned document's detail and expose its loading/error state.
+ */
 function useDocumentDetail(documentId: string) {
   const { accessToken, logout } = useAuth()
   const [data, setData] = useState<DocumentDetailResponse | null>(null)

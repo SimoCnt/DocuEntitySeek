@@ -1,3 +1,7 @@
+/**
+ * Coordinate document metadata, original PDF viewing, analysis selection, and schema-driven execution.
+ */
+
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 
@@ -12,6 +16,12 @@ import useDocumentDetail from '../hooks/useDocumentDetail'
 import useDocumentTitle from '../hooks/useDocumentTitle'
 import useStartAnalysis from '../hooks/useStartAnalysis'
 
+/**
+ * Coordinate the authenticated document-detail experience.
+ *
+ * Controls analysis selection and polling, launches the selected schema
+ * version, and switches between PDF-only and completed-result views.
+ */
 function DocumentDetailPage() {
     const { documentId = '' } = useParams<{ documentId: string }>()
     const { data, isLoading, error, reload: reloadDocument } = useDocumentDetail(documentId)

@@ -1,8 +1,15 @@
+/**
+ * Request confirmation before persisting an uploaded PDF.
+ */
+
 import { useEffect, useRef } from 'react'
 
 import UploadSummary from './UploadSummary'
 
 
+/**
+ * Properties configuring the confirm upload dialog component.
+ */
 type ConfirmUploadDialogProps = {
   isOpen: boolean
   file: File | null
@@ -12,6 +19,9 @@ type ConfirmUploadDialogProps = {
 }
 
 
+/**
+ * Confirm the PDF that will be uploaded to private storage.
+ */
 function ConfirmUploadDialog({
   isOpen,
   file,

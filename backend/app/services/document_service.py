@@ -1,3 +1,5 @@
+"""Create owner-scoped document records and coordinate PDF storage with database transactions."""
+
 from time import perf_counter
 from typing import BinaryIO
 from uuid import UUID
@@ -17,6 +19,8 @@ logger = get_logger("document")
 
 
 class DocumentService:
+    """Manage owner-scoped PDF metadata and coordinate transactional uploads."""
+
     def __init__(self, session: Session, storage: DocumentStorage) -> None:
         self.session = session
         self.storage = storage
@@ -24,11 +28,15 @@ class DocumentService:
 
 
     def list_documents(self, owner_user_id: UUID) -> list[DocumentSummary]:
+        """List document summaries belonging to the specified owner."""
+
         documents = self.documents.list_by_owner(owner_user_id)
         return [to_document_summary(document) for document in documents]
 
 
     def get_document(self, document_id: UUID, owner_user_id: UUID) -> DocumentDetailResponse:
+        """Read a document's metadata, rejecting non-owned or missing IDs."""
+
         document = self.documents.get_by_id_and_owner(document_id, owner_user_id)
 
         if document is None:
@@ -38,6 +46,8 @@ class DocumentService:
 
 
     def get_original_storage_key(self, document_id: UUID, owner_user_id: UUID) -> str:
+        """Resolve the private storage key only after checking document ownership."""
+
         document = self.documents.get_by_id_and_owner(document_id, owner_user_id)
         if document is None or not document.storage_key:
             raise DocumentNotFoundError(str(document_id))
@@ -53,6 +63,13 @@ class DocumentService:
         size_bytes: int | None,
         file_stream: BinaryIO,
     ) -> DocumentSummary:
+        """Persist an uploaded PDF across PostgreSQL and private object storage.
+
+        Counts pages before upload, creates the database record, stores the PDF,
+        then commits its storage key and page count. On failure, rolls back the
+        transaction and attempts to remove the uploaded object.
+        """
+
         started_at = perf_counter()
         storage_key: str | None = None
 

@@ -1,3 +1,7 @@
+/**
+ * Create or edit entity and field definitions with client-side schema validation.
+ */
+
 import { useEffect, useState, type FormEvent } from 'react'
 
 import type { CustomFieldDefinitionInput, CustomSchemaCreateRequest, CustomSchema, CustomSchemaSummary } from '../../types/customSchema'
@@ -16,6 +20,9 @@ type FieldDraft = CustomFieldDefinitionInput & {
 }
 
 
+/**
+ * Properties configuring the custom schema form component.
+ */
 type CustomSchemaFormProps = {
     isSubmitting: boolean
     errorMessage: string | null
@@ -29,6 +36,9 @@ type CustomSchemaFormProps = {
 }
 
 
+/**
+ * Return an empty entity row with a stable client-only identifier.
+ */
 function createEntityDraft(): EntityDraft {
     return {
         id: crypto.randomUUID(),
@@ -38,6 +48,9 @@ function createEntityDraft(): EntityDraft {
 }
 
 
+/**
+ * Return an empty field row with a stable client-only identifier.
+ */
 function createFieldDraft(): FieldDraft {
     return {
         id: crypto.randomUUID(),
@@ -49,6 +62,9 @@ function createFieldDraft(): FieldDraft {
 }
 
 
+/**
+ * Validate and edit versioned entity/field definitions before submission.
+ */
 function CustomSchemaForm({
     isSubmitting,
     errorMessage,

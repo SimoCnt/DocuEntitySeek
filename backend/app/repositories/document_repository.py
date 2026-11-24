@@ -1,3 +1,5 @@
+"""Store document metadata and enforce owner-scoped document queries."""
+
 from uuid import UUID
 
 from sqlalchemy import select
@@ -7,11 +9,15 @@ from app.db.models import DocumentModel
 
 
 class DocumentRepository:
+    """Persist document metadata and enforce owner-scoped queries."""
+
     def __init__(self, session: Session) -> None:
         self.session = session
 
 
     def list_by_owner(self, owner_user_id: UUID) -> list[DocumentModel]:
+        """List documents belonging to the specified user."""
+
         statement = (
             select(DocumentModel)
             .where(DocumentModel.owner_user_id == owner_user_id)
@@ -23,6 +29,8 @@ class DocumentRepository:
 
 
     def get_by_id_and_owner(self, document_id: UUID, owner_user_id: UUID) -> DocumentModel | None:
+        """Fetch a document only when its owner matches the caller."""
+
         statement = (
             select(DocumentModel)
             .where(
@@ -46,6 +54,8 @@ class DocumentRepository:
         mime_type: str | None,
         size_bytes: int | None,
     ) -> DocumentModel:
+        """Create an uploaded-document metadata row within the caller's transaction."""
+
         document = DocumentModel(
             owner_user_id=owner_user_id,
             original_name=original_name,

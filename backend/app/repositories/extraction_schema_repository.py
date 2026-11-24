@@ -1,3 +1,5 @@
+"""Fetch extraction schema versions with definitions and locate the built-in default version."""
+
 from uuid import UUID
 
 from sqlalchemy import select
@@ -10,10 +12,14 @@ DEFAULT_BUILTIN_SCHEMA_STRUCTURE_KEY = "general_document"
 
 
 class ExtractionSchemaRepository:
+    """Resolve schema versions and the built-in default extraction schema."""
+
     def __init__(self, session: Session) -> None:
         self.session = session
 
     def get_version(self, version_id: UUID) -> ExtractionSchemaVersionModel | None:
+        """Load a schema version and associated entity/field definitions."""
+
         statement = (
             select(ExtractionSchemaVersionModel)
             .where(ExtractionSchemaVersionModel.id == version_id)
@@ -27,6 +33,8 @@ class ExtractionSchemaRepository:
         return self.session.scalar(statement)
 
     def get_default_builtin_version(self) -> ExtractionSchemaVersionModel | None:
+        """Return the active version of the default built-in schema."""
+
         statement = (
             select(ExtractionSchemaVersionModel)
             .join(ExtractionSchemaModel)

@@ -1,3 +1,6 @@
+/**
+ * Restrict guest-only pages to unauthenticated visitors.
+ */
 
 import { Navigate, Outlet } from 'react-router'
 
@@ -5,6 +8,9 @@ import { useAuth } from '../../auth/AuthContext'
 import ErrorState from '../feedback/ErrorState'
 import LoadingState from '../feedback/LoadingState'
 
+/**
+ * Redirect authenticated users away from login and registration screens.
+ */
 function GuestRoute() {
   const { status, error, refreshUser } = useAuth()
 

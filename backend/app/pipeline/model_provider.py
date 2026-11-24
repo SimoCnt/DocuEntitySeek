@@ -1,3 +1,5 @@
+"""Load GLiNER2 models, choose execution devices, and cache thread-safe model instances."""
+
 import gc
 from dataclasses import dataclass, field
 from threading import RLock
@@ -15,6 +17,8 @@ logger = get_logger("pipeline.model")
 
 
 def resolve_device(requested_device: str) -> str:
+    """Choose a supported inference device from runtime preference and availability."""
+
     normalized = requested_device.strip().lower()
 
     if normalized != "auto":
@@ -34,6 +38,8 @@ def resolve_device(requested_device: str) -> str:
 
 @dataclass(frozen=True, slots=True)
 class AiExecutionEnvironment:
+    """Selected execution device and inference optimization flags."""
+
     device: str
     quantize: bool
     compile: bool
@@ -41,6 +47,8 @@ class AiExecutionEnvironment:
 
 @dataclass(frozen=True, slots=True)
 class ModelCacheKey:
+    """Runtime identity used to determine whether a loaded model can be reused."""
+
     engine: str
     model_id: str
     model_revision: str | None
@@ -51,23 +59,33 @@ class ModelCacheKey:
 
 @dataclass(slots=True)
 class LoadedAiModel:
+    """Loaded model wrapper, extractor interface, and inference synchronization lock."""
+
     cache_key: ModelCacheKey
     extractor: Any
     inference_lock: Any = field(default_factory=RLock, repr=False, compare=False)
 
 
 class AiModelLoader(Protocol):
+    """Interface for constructing an inference model from runtime configuration."""
+
     def load(
         self,
         *,
         runtime: RuntimeAiConfig,
         environment: AiExecutionEnvironment,
     ) -> Any:
+        """Define the model-loader interface used by runtime-specific providers."""
+
         ...
 
 
 class Gliner2ModelLoader:
+    """Concrete GLiNER2 model loader applying device/runtime settings."""
+
     def load(self, *, runtime: RuntimeAiConfig, environment: AiExecutionEnvironment) -> Any:
+        """Construct and configure a GLiNER2 extractor for the active model settings."""
+
         kwargs: dict[str, Any] = {
             "map_location": environment.device,
             "quantize": environment.quantize,
@@ -84,6 +102,8 @@ class Gliner2ModelLoader:
 
 
 class AiModelProvider:
+    """Cache and reuse loaded AI models with synchronized inference access."""
+
     def __init__(
         self,
         *,
@@ -105,6 +125,8 @@ class AiModelProvider:
 
 
     def _build_cache_key(self, runtime: RuntimeAiConfig) -> ModelCacheKey:
+        """Identify a loaded model by engine, revision, device, and optimization options."""
+
         return ModelCacheKey(
             engine=runtime.engine.strip().upper(),
             model_id=runtime.model_id,
@@ -122,6 +144,8 @@ class AiModelProvider:
         runtime: RuntimeAiConfig,
         cache_key: ModelCacheKey,
     ) -> LoadedAiModel:
+        """Instantiate and validate a new model under its requested execution environment."""
+
         started_at = perf_counter()
 
         logger.info(
@@ -166,6 +190,8 @@ class AiModelProvider:
 
 
     def get_model(self, runtime: RuntimeAiConfig) -> LoadedAiModel:
+        """Return a thread-safe cached model or load a new runtime-compatible instance."""
+
         cache_key = self._build_cache_key(runtime)
 
         with self._lock:
@@ -187,6 +213,8 @@ class AiModelProvider:
 
 
     def _release_cached_model(self) -> None:
+        """Release cached inference resources when replacing the active model."""
+
         if self._cached is None:
             return
 
@@ -212,5 +240,7 @@ class AiModelProvider:
 
 
     def clear(self) -> None:
+        """Explicitly clear the cached model and release associated resources."""
+
         with self._lock:
             self._release_cached_model()

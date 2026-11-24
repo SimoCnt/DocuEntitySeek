@@ -1,6 +1,13 @@
+/**
+ * Convert custom-schema API errors into actionable UI messages.
+ */
+
 import type { RequestError } from '../api/http'
 
 
+/**
+ * Produce an actionable message for custom schema API failures.
+ */
 export function getCustomSchemaErrorMessage(error: RequestError | null): string | null {
   if (!error) return null
 

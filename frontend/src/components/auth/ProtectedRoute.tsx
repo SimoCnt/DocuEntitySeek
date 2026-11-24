@@ -1,3 +1,7 @@
+/**
+ * Enforce login and optional subscription-based access for React routes.
+ */
+
 import { Navigate, Outlet, useLocation } from 'react-router'
 
 import ErrorState from '../feedback/ErrorState'
@@ -5,6 +9,9 @@ import LoadingState from '../feedback/LoadingState'
 import { useAuth } from '../../auth/AuthContext'
 
 
+/**
+ * Require authentication and enforce optional route-level plan restrictions.
+ */
 function ProtectedRoute() {
     const { status, error, refreshUser } = useAuth()
     const location = useLocation()

@@ -7,6 +7,8 @@ from app.services.document_storage import DocumentStorage
 
 
 def _parse_range(value: str | None, size: int) -> tuple[int, int] | None:
+    """Parse a supported single HTTP Range header against the object size."""
+
     if not value:
         return None
     match = re.fullmatch(r"bytes=(\d*)-(\d*)", value.strip())
@@ -26,6 +28,8 @@ def _parse_range(value: str | None, size: int) -> tuple[int, int] | None:
 
 
 def _read_chunks(stream, length: int) -> Iterator[bytes]:
+    """Yield bounded byte chunks from a stream without reading it all into memory."""
+
     remaining = length
     try:
         while remaining > 0:
@@ -39,6 +43,8 @@ def _read_chunks(stream, length: int) -> Iterator[bytes]:
 
 
 def build_pdf_response(storage: DocumentStorage, storage_key: str, byte_range: str | None):
+    """Stream an authenticated original PDF with correct byte-range headers."""
+
     try:
         size = storage.get_size(storage_key)
     except FileNotFoundError:

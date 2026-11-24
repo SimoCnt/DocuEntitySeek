@@ -1,3 +1,5 @@
+"""Handle password hashing and validation as well as JWT access-token issuance and verification."""
+
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 import jwt
@@ -16,18 +18,26 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_v1_prefix}/auth/to
 
 
 def hash_password(password: str) -> str:
+    """Hash a plaintext password using the configured recommended algorithm."""
+
     return password_hash.hash(password)
 
 
 def verify_dummy_password(password: str) -> None:
+    """Perform a constant-work verification path when an account does not exist."""
+
     password_hash.verify(password, dummy_hash)
 
 
 def verify_and_update_password(password: str, encoded_hash: str) -> tuple[bool, str | None]:
+    """Verify a password and optionally propose an upgraded encoded hash."""
+
     return password_hash.verify_and_update(password, encoded_hash)
 
 
 def create_access_token(user_id: UUID) -> str:
+    """Issue a signed JWT with subject, expiration, issuer, and audience claims."""
+
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(minutes=settings.jwt_access_token_expire_minutes)
 
@@ -44,6 +54,8 @@ def create_access_token(user_id: UUID) -> str:
 
 
 def decode_access_token(token: str) -> UUID:
+    """Verify JWT signature and required claims, returning the authenticated user ID."""
+
     try:
         payload = jwt.decode(
             token,

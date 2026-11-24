@@ -1,3 +1,6 @@
+"""Perform GLiNER2 named entity extraction and validate model-provided labels and character spans.
+"""
+
 from numbers import Real
 from time import perf_counter
 from uuid import UUID
@@ -14,6 +17,8 @@ logger = get_logger("pipeline.ner")
 
 
 class Gliner2NerExtractor:
+    """Run GLiNER2 NER and validate labels, scores, and text offsets."""
+
     def extract(
         self,
         *,
@@ -22,6 +27,8 @@ class Gliner2NerExtractor:
         config: ResolvedAiConfiguration,
         model: LoadedAiModel,
     ) -> NerExtractionResult:
+        """Run the configured GLiNER2 NER inference under the model's synchronization lock."""
+
         started_at = perf_counter()
 
         if not config.schema.entities:
@@ -114,6 +121,8 @@ class Gliner2NerExtractor:
 
 
     def _build_entity_types(self, config: ResolvedAiConfiguration) -> dict[str, str]:
+        """Build label/description definitions passed to the NER model."""
+
         entity_types: dict[str, str] = {}
 
         for definition in config.schema.entities:
@@ -139,6 +148,8 @@ class Gliner2NerExtractor:
         raw_result: object,
         allowed_labels: set[str],
     ) -> NerExtractionResult:
+        """Convert raw GLiNER2 output into validated, typed NER candidates."""
+
         logger.debug(
             "NER | phase=normalization_start | document_id=%s", document_id)
 
@@ -189,6 +200,8 @@ class Gliner2NerExtractor:
         label: str,
         item: object,
     ) -> NerCandidate:
+        """Validate a candidate's score, label, exact text, and character offsets."""
+
         if not isinstance(item, dict):
             raise AiInferenceError("Candidato NER in formato non valido.")
 

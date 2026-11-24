@@ -1,6 +1,13 @@
+/**
+ * Provide a reusable, consistently styled content panel.
+ */
+
 import type { ReactNode } from 'react'
 
 
+/**
+ * Properties configuring the panel component.
+ */
 type PanelProps = {
     title?: string
     description?: string
@@ -9,6 +16,9 @@ type PanelProps = {
 }
 
 
+/**
+ * Render a reusable panel surface with consistent spacing and borders.
+ */
 function Panel({ title, description, actions, children }: PanelProps) {
     return (
         <section className="panel">

@@ -1,8 +1,15 @@
+/**
+ * Collect PDF input and validate its metadata prior to upload.
+ */
+
 import type { ChangeEvent, FormEvent } from 'react'
 
 import type { AvailableExtractionSchema } from '../../types/extractionSchema'
 
 
+/**
+ * Properties configuring the document upload form component.
+ */
 type DocumentUploadFormProps = {
   selectedFile: File | null
   errorMessage: string | null
@@ -17,6 +24,9 @@ type DocumentUploadFormProps = {
 }
 
 
+/**
+ * Validate PDF selection and gather upload metadata.
+ */
 function DocumentUploadForm({
   selectedFile,
   errorMessage,

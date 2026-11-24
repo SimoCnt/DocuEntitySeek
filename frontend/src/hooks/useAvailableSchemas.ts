@@ -1,3 +1,7 @@
+/**
+ * Fetch authorized extraction schemas for the analysis version picker.
+ */
+
 import { useEffect, useState } from 'react'
 
 import { getAvailableSchemas } from '../api/schemasApi'
@@ -6,6 +10,9 @@ import { useAuth } from '../auth/AuthContext'
 import type { AvailableExtractionSchema } from '../types/extractionSchema'
 
 
+/**
+ * Load schema versions that the active account may select for analysis.
+ */
 function useAvailableSchemas(enabled: boolean) {
     const { accessToken, logout } = useAuth()
     const [schemas, setSchemas] = useState<AvailableExtractionSchema[]>([])

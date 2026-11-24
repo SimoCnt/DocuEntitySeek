@@ -1,3 +1,6 @@
+/**
+ * Render navigation links conditionally based on authentication and subscription plan.
+ */
 
 import { Link, NavLink, useNavigate } from 'react-router'
 
@@ -8,6 +11,9 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   isActive ? 'app-header__link app-header__link--active' : 'app-header__link'
 
 
+/**
+ * Render navigation links appropriate to authentication and plan capabilities.
+ */
 function Header() {
   const { user, analysisQuota, status, logout, refreshUser } = useAuth()
   const navigate = useNavigate()

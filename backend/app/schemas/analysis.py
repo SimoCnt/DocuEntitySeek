@@ -1,3 +1,6 @@
+"""Define Pydantic contracts for analysis execution, history, extraction results, and PDF geometry.
+"""
+
 from uuid import UUID
 from enum import Enum
 from datetime import datetime
@@ -7,16 +10,22 @@ from app.schemas.base import ApiModel
 
 
 class EntityDefinition(ApiModel):
+    """Define the typed API contract for entity definition."""
+
     label: str
     color: str
 
 
 class TextOnlySegment(ApiModel):
+    """Define the typed API contract for text only segment."""
+
     type: Literal["text"]
     text: str
 
 
 class EntitySegment(ApiModel):
+    """Define the typed API contract for entity segment."""
+
     type: Literal["entity"]
     id: UUID
     text: str
@@ -27,11 +36,15 @@ TextSegment = Annotated[TextOnlySegment | EntitySegment, Field(discriminator="ty
 
 
 class DocumentPage(ApiModel):
+    """Define the typed API contract for document page."""
+
     page_number: int = Field(ge=1)
     segments: list[TextSegment]
 
 
 class ExtractedFieldStatus(str, Enum):
+    """Constrain accepted values for extracted field status."""
+
     EXTRACTED = "EXTRACTED"
     AMBIGUOUS = "AMBIGUOUS"
     NOT_FOUND = "NOT_FOUND"
@@ -39,6 +52,8 @@ class ExtractedFieldStatus(str, Enum):
 
 
 class ExtractedField(ApiModel):
+    """Define the typed API contract for extracted field."""
+
     id: UUID
     label: str
     value: str | None = None
@@ -48,12 +63,16 @@ class ExtractedField(ApiModel):
 
 
 class DocumentAnalysis(ApiModel):
+    """Define the typed API contract for document analysis."""
+
     entity_definitions: list[EntityDefinition]
     pages: list[DocumentPage]
     extracted_fields: list[ExtractedField]
 
 
 class AnalysisPipelineSummaryResponse(ApiModel):
+    """Serialize the analysis pipeline summary data returned by the REST API."""
+
     page_count: int
     document_characters: int
 
@@ -73,12 +92,16 @@ class AnalysisPipelineSummaryResponse(ApiModel):
 
 
 class AnalysisStartResponse(ApiModel):
+    """Serialize the analysis start data returned by the REST API."""
+
     analysis_id: UUID
     status: str
     pipeline: AnalysisPipelineSummaryResponse
 
 
 class AnalysisSummaryResponse(ApiModel):
+    """Serialize the analysis summary data returned by the REST API."""
+
     id: UUID
     document_id: UUID
     status: str
@@ -93,6 +116,8 @@ class AnalysisSummaryResponse(ApiModel):
 
 
 class DocumentPageResponse(ApiModel):
+    """Serialize the document page data returned by the REST API."""
+
     page_number: int
     text: str
     global_start: int
@@ -100,6 +125,8 @@ class DocumentPageResponse(ApiModel):
 
 
 class EntityOccurrenceResponse(ApiModel):
+    """Serialize the entity occurrence data returned by the REST API."""
+
     id: UUID
     label: str
     text: str
@@ -113,6 +140,8 @@ class EntityOccurrenceResponse(ApiModel):
 
 
 class FieldCandidateResponse(ApiModel):
+    """Serialize the field candidate data returned by the REST API."""
+
     id: UUID
     value: str
     confidence: float
@@ -123,6 +152,8 @@ class FieldCandidateResponse(ApiModel):
 
 
 class ExtractedFieldResponse(ApiModel):
+    """Serialize the extracted field data returned by the REST API."""
+
     id: UUID
     field_key: str
     status: str
@@ -135,6 +166,8 @@ class ExtractedFieldResponse(ApiModel):
 
 
 class AnalysisEntityDefinitionResponse(ApiModel):
+    """Serialize the analysis entity definition data returned by the REST API."""
+
     label: str
     description: str
     color: str
@@ -142,6 +175,8 @@ class AnalysisEntityDefinitionResponse(ApiModel):
 
 
 class AnalysisFieldDefinitionResponse(ApiModel):
+    """Serialize the analysis field definition data returned by the REST API."""
+
     field_key: str
     label: str
     description: str
@@ -151,6 +186,8 @@ class AnalysisFieldDefinitionResponse(ApiModel):
 
 
 class AnalysisSchemaResponse(ApiModel):
+    """Serialize the analysis schema data returned by the REST API."""
+
     schema_id: UUID
     schema_version_id: UUID
     name: str
@@ -161,6 +198,8 @@ class AnalysisSchemaResponse(ApiModel):
 
 
 class AnalysisResultResponse(ApiModel):
+    """Serialize the analysis result data returned by the REST API."""
+
     schema: AnalysisSchemaResponse
     pages: list[DocumentPageResponse]
     entities: list[EntityOccurrenceResponse]
@@ -168,6 +207,8 @@ class AnalysisResultResponse(ApiModel):
 
 
 class AnalysisDetailResponse(ApiModel):
+    """Serialize the analysis detail data returned by the REST API."""
+
     id: UUID
     document_id: UUID
     status: str
@@ -181,10 +222,14 @@ class AnalysisDetailResponse(ApiModel):
 
 
 class AnalysisStartRequest(ApiModel):
+    """Validate the analysis start request payload exposed by the REST API."""
+
     schema_version_id: UUID | None = None
 
 
 class PdfHighlightRect(ApiModel):
+    """Define the typed API contract for pdf highlight rect."""
+
     x: float = Field(ge=0, le=1)
     y: float = Field(ge=0, le=1)
     width: float = Field(gt=0, le=1)
@@ -192,6 +237,8 @@ class PdfHighlightRect(ApiModel):
 
 
 class PdfHighlightRegion(ApiModel):
+    """Define the typed API contract for pdf highlight region."""
+
     kind: Literal["entity", "field"]
     id: UUID
     label: str
@@ -199,6 +246,8 @@ class PdfHighlightRegion(ApiModel):
 
 
 class PdfPageGeometryResponse(ApiModel):
+    """Serialize the pdf page geometry data returned by the REST API."""
+
     page_number: int = Field(ge=1)
     aligned: bool
     regions: list[PdfHighlightRegion]

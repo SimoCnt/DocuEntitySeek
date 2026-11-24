@@ -1,3 +1,5 @@
+"""Persist extracted field values and their analysis-scoped provenance."""
+
 from decimal import Decimal
 from uuid import UUID
 
@@ -9,11 +11,15 @@ from app.pipeline.field_resolution_models import FieldResolutionResult
 
 
 class ExtractedFieldRepository:
+    """Persist resolved field values and their extraction status."""
+
     def __init__(self, session: Session) -> None:
         self.session = session
 
 
     def replace_for_analysis(self, *, analysis_id: UUID, result: FieldResolutionResult) -> list[ExtractedFieldModel]:
+        """Replace stored field resolutions and their nested candidate values."""
+
         self.session.execute(
             delete(ExtractedFieldModel).where(ExtractedFieldModel.analysis_id == analysis_id)
         )
@@ -57,6 +63,8 @@ class ExtractedFieldRepository:
         return models
 
     def list_for_analysis(self, analysis_id: UUID) -> list[ExtractedFieldModel]:
+        """Load resolved fields belonging to a particular analysis."""
+
         statement = (
             select(ExtractedFieldModel)
             .where(ExtractedFieldModel.analysis_id == analysis_id)

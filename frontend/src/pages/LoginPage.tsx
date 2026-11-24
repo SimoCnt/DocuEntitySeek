@@ -1,3 +1,6 @@
+/**
+ * Collect login credentials and initialize the authenticated session.
+ */
 
 import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
@@ -8,6 +11,9 @@ import { useAuth } from '../auth/AuthContext'
 import useDocumentTitle from '../hooks/useDocumentTitle'
 
 
+/**
+ * Authenticate an existing user and surface credential errors.
+ */
 function LoginPage() {
     useDocumentTitle('Accedi | DocuEntitySeek')
 

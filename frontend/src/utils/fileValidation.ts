@@ -1,6 +1,13 @@
+/**
+ * Validate selected PDF type and size before network submission.
+ */
+
 const MAX_PDF_SIZE_BYTES = 25 * 1024 * 1024
 
 
+/**
+ * Reject unsupported PDF selection by type or file size.
+ */
 export function validatePdfFile(file: File | null): string | null {
     if (!file) {
         return 'Seleziona un documento PDF.'

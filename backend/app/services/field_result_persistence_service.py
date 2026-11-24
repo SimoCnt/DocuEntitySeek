@@ -1,3 +1,5 @@
+"""Persist resolved structured field values and ranked candidates."""
+
 from collections import Counter
 from time import perf_counter
 from uuid import UUID
@@ -13,11 +15,15 @@ logger = get_logger("pipeline.field_persistence")
 
 
 class FieldResultPersistenceService:
+    """Persist resolved structured fields and ranked candidates."""
+
     def __init__(self, session: Session) -> None:
         self.repository = ExtractedFieldRepository(session)
         
 
     def persist(self, *, analysis_id: UUID, result: FieldResolutionResult) -> list[ExtractedFieldModel]:
+        """Persist resolved structured fields and ranked candidate alternatives."""
+
         started_at = perf_counter()
         status_counts = Counter(field.status.value for field in result.fields)
 

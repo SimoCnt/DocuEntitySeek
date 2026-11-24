@@ -1,3 +1,5 @@
+"""Implement user-owned schema creation, listing, editing, archival, and duplication."""
+
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
@@ -24,6 +26,8 @@ ENTITY_COLOR_PALETTE = (
 
 
 class CustomSchemaService:
+    """Manage lifecycle and versioning of user-owned extraction schemas."""
+
     def __init__(self, *, session: Session, schema_access_service: SchemaAccessService) -> None:
         self.session = session
         self.repository = CustomSchemaRepository(session)
@@ -31,6 +35,8 @@ class CustomSchemaService:
 
 
     def create(self, *, user_id: UUID, command: CustomSchemaCreateCommand) -> CustomSchemaResult:
+        """Validate and persist a new custom extraction schema and its initial version."""
+
         self.schema_access_service.assert_custom_schemas_enabled(user_id=user_id)
 
         if self.repository.name_exists_for_owner(user_id=user_id, name=command.name):
@@ -127,6 +133,8 @@ class CustomSchemaService:
 
 
     def list_owned(self, *, user_id: UUID) -> list[CustomSchemaSummary]:
+        """List active and archived schema summaries for the requesting owner."""
+
         self.schema_access_service.assert_custom_schemas_enabled(user_id=user_id)
 
         versions = self.repository.list_active_owned_versions(user_id=user_id)
@@ -148,6 +156,8 @@ class CustomSchemaService:
 
 
     def get_owned(self, *, user_id: UUID, schema_id: UUID) -> CustomSchemaResult:
+        """Load a complete user-owned schema with versioned definitions."""
+
         self.schema_access_service.assert_custom_schemas_enabled(user_id=user_id)
 
         version = self.repository.get_owned_active_version_with_definitions(
@@ -198,6 +208,8 @@ class CustomSchemaService:
         schema_id: UUID,
         command: CustomSchemaCreateCommand,
     ) -> CustomSchemaResult:
+        """Create a new schema version without rewriting existing historical versions."""
+
         self.schema_access_service.assert_custom_schemas_enabled(user_id=user_id)
 
         try:
@@ -313,6 +325,8 @@ class CustomSchemaService:
             user_id: UUID, 
             schema_id: UUID
             ) -> datetime:
+        """Mark a schema archived while preserving existing references."""
+
         self.schema_access_service.assert_custom_schemas_enabled(user_id=user_id)
 
         try:
@@ -335,6 +349,8 @@ class CustomSchemaService:
 
 
     def duplicate(self, *, user_id: UUID, schema_id: UUID, name: str) -> CustomSchemaResult:
+        """Copy definitions into a new user-owned schema with its own version history."""
+
         self.schema_access_service.assert_custom_schemas_enabled(user_id=user_id)
 
         if self.repository.name_exists_for_owner(user_id=user_id, name=name):

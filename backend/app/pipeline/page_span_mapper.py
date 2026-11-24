@@ -1,3 +1,5 @@
+"""Map global NER and field offsets onto document pages with strict text-boundary checks."""
+
 from time import perf_counter
 from uuid import UUID
 
@@ -13,6 +15,8 @@ logger = get_logger("pipeline.page_mapping")
 
 
 class PageSpanMapper:
+    """Validate and translate global AI text spans to PDF page offsets."""
+
     def map_ner(
         self,
         *,
@@ -20,6 +24,8 @@ class PageSpanMapper:
         document: PreparedDocumentText,
         selection: ViewerNerSelectionResult,
     ) -> NerPageMappingResult:
+        """Associate valid global NER spans with a single PDF page and local offsets."""
+
         started_at = perf_counter()
 
         logger.info(
@@ -106,6 +112,8 @@ class PageSpanMapper:
         document: PreparedDocumentText,
         result: StructuredExtractionResult,
     ) -> FieldPageMappingResult:
+        """Associate structured field candidates with pages; reject invalid spans."""
+
         started_at = perf_counter()
 
         logger.info(
@@ -188,6 +196,8 @@ class PageSpanMapper:
         start: int,
         end: int,
     ) -> tuple[PageSpanCoordinates | None, SpanMappingFailureReason | None]:
+        """Find the page containing an entire global span, or return a failure reason."""
+
         if start < 0 or end <= start or end > len(document.text):
             raise SpanMappingError(f"Span globale non valido: [{start}, {end}).")
 
@@ -219,6 +229,8 @@ class PageSpanMapper:
         pages: tuple[PreparedDocumentPage, ...],
         position: int,
     ) -> PreparedDocumentPage | None:
+        """Find the source PDF page containing the global character offset."""
+
         for page in pages:
             if page.global_start <= position < page.global_end:
                 return page
@@ -235,6 +247,8 @@ class PageSpanMapper:
         global_end: int,
         expected_text: str,
     ) -> None:
+        """Ensure the mapped page slice matches the candidate's source text exactly."""
+
         page = next(
             (item for item in document.pages if item.page_number == coordinates.page_number),
             None,

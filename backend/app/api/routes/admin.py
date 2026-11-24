@@ -1,3 +1,5 @@
+"""Expose administrator-only user metadata endpoints."""
+
 from fastapi import APIRouter
 
 from app.dependencies import AdminUserDep, DbSessionDep
@@ -15,6 +17,8 @@ router = APIRouter(prefix="/admin", tags=["admin"])
         summary="List user metadata"
         )
 def list_users(admin_user: AdminUserDep, session: DbSessionDep) -> list[UserResponse]:
+    """List account metadata for an authenticated administrator."""
+
     users = UserRepository(session).list_all()
     
     return [to_user_response(user) for user in users]

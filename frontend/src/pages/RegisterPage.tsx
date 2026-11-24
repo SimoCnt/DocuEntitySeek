@@ -1,3 +1,7 @@
+/**
+ * Register new users with password and email validation feedback.
+ */
+
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 
@@ -7,6 +11,9 @@ import Panel from '../components/common/Panel'
 import useDocumentTitle from '../hooks/useDocumentTitle'
 
 
+/**
+ * Validate account input and register a Base-plan user.
+ */
 function RegisterPage() {
     useDocumentTitle('Registrati | DocuEntitySeek')
 

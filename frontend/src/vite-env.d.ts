@@ -1,3 +1,7 @@
+/**
+ * Declare frontend environment variables used by Vite and application configuration.
+ */
+
 // <reference types="vite/client" />
 
 interface ImportMetaEnv {

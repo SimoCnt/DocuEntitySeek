@@ -1,9 +1,13 @@
+"""Describe the aggregate metrics returned after a complete AI pipeline run."""
+
 from dataclasses import dataclass
 from uuid import UUID
 
 
 @dataclass(frozen=True, slots=True)
 class AiPipelineExecutionResult:
+    """Pipeline metrics and outcome returned to the application service."""
+
     runtime_config_id: UUID
     schema_version_id: UUID
     page_count: int

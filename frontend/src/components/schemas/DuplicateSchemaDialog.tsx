@@ -1,6 +1,13 @@
+/**
+ * Collect a new name when duplicating a custom schema.
+ */
+
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 
+/**
+ * Properties configuring the duplicate schema dialog component.
+ */
 type DuplicateSchemaDialogProps = {
   isOpen: boolean
   schemaName: string
@@ -11,6 +18,9 @@ type DuplicateSchemaDialogProps = {
 }
 
 
+/**
+ * Collect a name before duplicating an existing extraction schema.
+ */
 function DuplicateSchemaDialog({
   isOpen,
   schemaName,

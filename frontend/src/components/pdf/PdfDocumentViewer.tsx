@@ -1,3 +1,7 @@
+/**
+ * Load an authenticated PDF via PDF.js, render pages, and overlay aligned AI highlight rectangles.
+ */
+
 import { useEffect, useRef, useState } from 'react'
 import { GlobalWorkerOptions, getDocument, type PDFDocumentProxy, type RenderTask } from 'pdfjs-dist'
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
@@ -7,10 +11,22 @@ import { useAuth } from '../../auth/AuthContext'
 
 GlobalWorkerOptions.workerSrc = workerSrc
 
+/**
+ * Normalized PDF-page rectangle with coordinates in the [0, 1] range.
+ */
 type GeometryRect = { x: number; y: number; width: number; height: number }
+/**
+ * Entity or field reference and its corresponding highlight rectangles.
+ */
 type GeometryRegion = { kind: 'entity' | 'field'; id: string; label: string; rects: GeometryRect[] }
+/**
+ * Server-validated geometry for one PDF page; unaligned responses must not be highlighted.
+ */
 type GeometryResponse = { pageNumber: number; aligned: boolean; regions: GeometryRegion[] }
 
+/**
+ * Properties configuring the pdf document viewer component.
+ */
 type PdfDocumentViewerProps = {
   documentId: string
   analysisId?: string
@@ -23,6 +39,13 @@ type PdfDocumentViewerProps = {
   onPageChange?: (page: number) => void
 }
 
+/**
+ * Render a private PDF using PDF.js and overlay page-aligned AI highlights.
+ *
+ * Fetches the original PDF with bearer authentication and supports byte-range
+ * loading. Rendering tasks and geometry requests are cancelled on navigation,
+ * resizing, or unmount to prevent stale canvas or highlight updates.
+ */
 function PdfDocumentViewer({ documentId, analysisId, activeLabels, entityColors, selectedEntityId, selectedFieldId, onRegionSelect, pageNumber, onPageChange }: PdfDocumentViewerProps) {
   const { accessToken } = useAuth()
   const viewportRef = useRef<HTMLDivElement | null>(null)

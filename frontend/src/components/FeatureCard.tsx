@@ -1,3 +1,10 @@
+/**
+ * Render a short product capability description on the public homepage.
+ */
+
+/**
+ * Properties configuring the feature card component.
+ */
 type FeatureCardProps = {
   title: string
   description: string
@@ -5,6 +12,9 @@ type FeatureCardProps = {
 }
 
 
+/**
+ * Present one platform capability with a brief explanation.
+ */
 function FeatureCard({title, description, badge}: FeatureCardProps) {
   return (
     <article className="feature-card">

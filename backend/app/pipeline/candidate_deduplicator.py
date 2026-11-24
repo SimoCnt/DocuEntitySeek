@@ -1,3 +1,5 @@
+"""Deduplicate repeated NER candidates while preserving meaningful span distinctions."""
+
 from time import perf_counter
 from uuid import UUID
 
@@ -10,7 +12,11 @@ logger = get_logger("pipeline.deduplication")
 
 
 class CandidateDeduplicator:
+    """Remove redundant NER candidates while preserving valid distinct spans."""
+
     def deduplicate_ner(self, *, document_id: UUID, result: NerExtractionResult) -> NerExtractionResult:
+        """Deduplicate repeated NER spans across overlapping inference chunks."""
+
         started_at = perf_counter()
 
         logger.info(
@@ -71,6 +77,8 @@ class CandidateDeduplicator:
         document_id: UUID,
         result: StructuredExtractionResult,
     ) -> StructuredExtractionResult:
+        """Deduplicate structured field candidates returned by overlapping chunks."""
+
         started_at = perf_counter()
 
         logger.info(

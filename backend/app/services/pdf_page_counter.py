@@ -9,6 +9,12 @@ from app.core.exceptions import InvalidDocumentFileError
 
 
 def count_pdf_pages(source: BinaryIO) -> int:
+    """Count pages in a seekable uploaded PDF stream without extracting text.
+
+    The operation restores the original stream position so that subsequent
+    storage writes can reuse the same input.
+    """
+
     try:
         source.seek(0)
         pdf_bytes = source.read()

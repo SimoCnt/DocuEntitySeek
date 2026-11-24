@@ -1,3 +1,5 @@
+"""Expose analysis execution, history, results, and original-PDF highlight geometry endpoints."""
+
 from uuid import UUID
 from typing import Annotated
 
@@ -48,6 +50,13 @@ def start_analysis(
     service: AnalysisServiceDep,
     payload: AnalysisStartRequest | None = None,
 ) -> AnalysisStartResponse:
+    """Authorize a schema and execute a document analysis in the HTTP request.
+
+    The current implementation is synchronous despite initially recording
+    the analysis in QUEUED state. Quota, authorization, AI, and execution
+    failures are translated to stable HTTP error codes.
+    """
+
     try:
         result = service.run(
             document_id=document_id,
@@ -145,6 +154,8 @@ def list_analyses(
     current_user: CurrentUserDep,
     service: AnalysisQueryServiceDep,
 ) -> list[AnalysisSummaryResponse]:
+    """Return owner-authorized analysis history with schema names and versions."""
+
     analyses = service.list_for_document(
         document_id=document_id,
         owner_user_id=current_user.id,
@@ -178,6 +189,8 @@ def get_analysis(
     current_user: CurrentUserDep,
     service: AnalysisQueryServiceDep,
 ) -> AnalysisDetailResponse:
+    """Return analysis metadata and, for READY analyses, persisted extraction results."""
+
     try:
         (
             analysis,
@@ -323,6 +336,12 @@ def get_pdf_page_geometry(
     storage: DocumentStorageDep,
     session: DbSessionDep,
 ) -> PdfPageGeometryResponse:
+    """Map visible AI spans to verified rectangles on an original PDF page.
+
+    The service compares persisted extracted text with actual PDF text
+    before returning geometry; unaligned results are not highlighted.
+    """
+
     try:
         analysis, _, pages, entities, fields, _ = service.get_detail(
             analysis_id=analysis_id, document_id=document_id, owner_user_id=current_user.id

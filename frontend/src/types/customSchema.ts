@@ -1,9 +1,19 @@
+/**
+ * Define custom extraction schema commands, versions, and response types.
+ */
+
+/**
+ * TypeScript contract for custom entity definition input values.
+ */
 export type CustomEntityDefinitionInput = {
     label: string
     description: string
 }
 
 
+/**
+ * TypeScript contract for custom field definition input values.
+ */
 export type CustomFieldDefinitionInput = {
     fieldKey: string
     label: string
@@ -12,6 +22,9 @@ export type CustomFieldDefinitionInput = {
 }
 
 
+/**
+ * Request payload for custom schema create operations.
+ */
 export type CustomSchemaCreateRequest = {
     name: string
     domain: string
@@ -20,6 +33,9 @@ export type CustomSchemaCreateRequest = {
 }
 
 
+/**
+ * TypeScript contract for custom entity definition values.
+ */
 export type CustomEntityDefinition = {
     id: string
     label: string
@@ -29,6 +45,9 @@ export type CustomEntityDefinition = {
 }
 
 
+/**
+ * TypeScript contract for custom field definition values.
+ */
 export type CustomFieldDefinition = {
     id: string
     fieldKey: string
@@ -40,6 +59,9 @@ export type CustomFieldDefinition = {
 }
 
 
+/**
+ * User-owned schema version with entity/field definitions.
+ */
 export type CustomSchema = {
     schemaId: string
     schemaVersionId: string
@@ -54,6 +76,9 @@ export type CustomSchema = {
 }
 
 
+/**
+ * Schema metadata used in the management listing.
+ */
 export type CustomSchemaSummary = {
     schemaId: string
     schemaVersionId: string
@@ -68,12 +93,18 @@ export type CustomSchemaSummary = {
 }
 
 
+/**
+ * API response for custom schema archive operations.
+ */
 export type CustomSchemaArchiveResponse = {
     schemaId: string
     archivedAt: string
 }
 
 
+/**
+ * Request payload for custom schema duplicate operations.
+ */
 export type CustomSchemaDuplicateRequest = {
     name: string
 }

@@ -1,9 +1,13 @@
+"""Define immutable runtime and extraction-schema configuration values used by the AI pipeline."""
+
 from dataclasses import dataclass
 from uuid import UUID
 
 
 @dataclass(frozen=True, slots=True)
 class RuntimeAiConfig:
+    """Resolved runtime settings for model inference and extraction thresholds."""
+
     id: UUID
     name: str
     version: int
@@ -21,6 +25,8 @@ class RuntimeAiConfig:
 
 @dataclass(frozen=True, slots=True)
 class EntityExtractionDefinition:
+    """Entity label and description supplied to the AI extractor."""
+
     id: UUID
     label: str
     description: str
@@ -28,6 +34,8 @@ class EntityExtractionDefinition:
 
 @dataclass(frozen=True, slots=True)
 class FieldExtractionDefinition:
+    """Structured field specification supplied to the AI extractor."""
+
     id: UUID
     field_key: str
     label: str
@@ -38,6 +46,8 @@ class FieldExtractionDefinition:
 
 @dataclass(frozen=True, slots=True)
 class ResolvedExtractionSchema:
+    """Authorized, versioned extraction structure used for a single analysis."""
+
     schema_id: UUID
     schema_name: str
     schema_domain: str
@@ -48,6 +58,8 @@ class ResolvedExtractionSchema:
     fields: tuple[FieldExtractionDefinition, ...]
 
     def to_snapshot(self) -> dict[str, object]:
+        """Serialize a versioned extraction schema into an immutable analysis snapshot."""
+
         return {
             "runtimeConfig": {
                 "id": str(self.runtime.id),
@@ -78,11 +90,15 @@ class ResolvedExtractionSchema:
 
 @dataclass(frozen=True, slots=True)
 class ResolvedAiConfiguration:
+    """Immutable snapshot combining AI runtime settings with a schema version."""
+
     runtime: RuntimeAiConfig
     schema: ResolvedExtractionSchema
     text_layout_version: str
 
     def to_snapshot(self) -> dict[str, object]:
+        """Serialize the AI runtime and extraction schema for reproducible analysis history."""
+
         return {
             "runtimeConfig": {
                 "id": str(self.runtime.id),

@@ -1,3 +1,7 @@
+/**
+ * Define application routes, authentication gates, and the shared layout.
+ */
+
 import { Route, Routes } from 'react-router'
 
 import GuestRoute from './components/auth/GuestRoute'
@@ -14,6 +18,9 @@ import SchemasPage from './pages/SchemasPage'
 import UpgradeToPremiumPage from './pages/UpgradeToPremiumPage'
 
 
+/**
+ * Configure public and protected routes, including Base-only Premium upgrade navigation.
+ */
 function App() {
   return (
     <Routes>

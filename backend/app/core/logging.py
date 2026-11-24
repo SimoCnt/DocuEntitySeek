@@ -1,3 +1,5 @@
+"""Configure namespaced application loggers writing structured text to standard output."""
+
 import logging
 import sys
 
@@ -8,6 +10,8 @@ LOGGER_NAME = "docuentityseek"
 
 
 def configure_logging() -> None:
+    """Configure the application logger once, writing timestamped messages to stdout."""
+
     settings = get_settings()
     level = getattr(logging, settings.app_log_level.upper(), logging.INFO)
     logger = logging.getLogger(LOGGER_NAME)
@@ -31,4 +35,6 @@ def configure_logging() -> None:
 
 
 def get_logger(name: str) -> logging.Logger:
+    """Return a logger beneath the DocuEntitySeek logging namespace."""
+
     return logging.getLogger(f"{LOGGER_NAME}.{name}")

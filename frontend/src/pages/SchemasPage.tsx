@@ -1,3 +1,7 @@
+/**
+ * Manage custom schema listing, editing, duplication, and archival.
+ */
+
 import { useState } from 'react'
 
 import ErrorState from '../components/feedback/ErrorState'
@@ -14,6 +18,9 @@ import DuplicateSchemaDialog from '../components/schemas/DuplicateSchemaDialog'
 import { getCustomSchemaErrorMessage } from '../utils/customSchemaErrors'
 
 
+/**
+ * Provide the custom schema manager for authorized subscribers.
+ */
 function SchemasPage() {
   const { user } = useAuth()
   const customSchemasEnabled = user?.plan.customSchemasEnabled === true

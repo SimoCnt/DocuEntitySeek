@@ -1,3 +1,7 @@
+/**
+ * Manage the document listing and perform bounded polling for pending status changes.
+ */
+
 import { useEffect, useState } from 'react'
 
 import { getDocuments } from '../api/documentsApi'
@@ -8,6 +12,12 @@ import type { DocumentSummary } from '../types/document'
 const REFRESH_INTERVAL_MS = 2000
 const UPLOADED_GRACE_REFRESH_LIMIT = 5
 
+/**
+ * Fetch document summaries and poll while status changes remain possible.
+ *
+ * Polling continues for PROCESSING documents, and briefly after UPLOADED,
+ * without permanently refreshing a stable document listing.
+ */
 function useDocuments() {
   const { accessToken, logout } = useAuth()
   const [documents, setDocuments] = useState<DocumentSummary[]>([])

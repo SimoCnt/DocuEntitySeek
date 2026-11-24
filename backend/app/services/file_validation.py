@@ -1,3 +1,4 @@
+"""Validate PDF uploads against content-type, file-signature, and size constraints."""
 
 from fastapi import UploadFile
 
@@ -10,6 +11,8 @@ logger = get_logger("validation")
 
 
 def validate_pdf_upload(file: UploadFile) -> None:
+    """Reject oversized, mislabeled, or invalid PDF uploads before persistence."""
+
     logger.info(
         "PDF_VALIDATION | "
         "phase=start | "

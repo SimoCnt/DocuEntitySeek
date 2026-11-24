@@ -1,3 +1,5 @@
+"""Extract per-page PDF text using PyMuPDF, tracking empty pages and extraction failures."""
+
 from pathlib import Path
 from time import perf_counter
 from uuid import UUID
@@ -12,6 +14,8 @@ logger = get_logger("pipeline.pdf")
 
 
 class PdfTextExtractor:
+    """Extract PDF page text with PyMuPDF and preserve page numbering."""
+
     def __init__(self, *, sort_text: bool = False) -> None:
         self.sort_text = sort_text
 
@@ -22,6 +26,8 @@ class PdfTextExtractor:
             document_id: UUID, 
             pdf_path: Path
             ) -> PdfExtractionResult:
+        """Read text from every PDF page, preserving page order and extraction diagnostics."""
+
         started_at = perf_counter()
         resolved_path = pdf_path.resolve()
 
