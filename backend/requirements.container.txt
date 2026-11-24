@@ -1,0 +1,14 @@
+# Curated Linux runtime dependencies. Deliberately separate from the Windows UTF-16 freeze.
+fastapi==0.162.2
+uvicorn==0.54.0
+pydantic==2.14.3
+pydantic-settings==2.16.2
+SQLAlchemy==2.1.8
+psycopg[binary]==3.3.8
+PyJWT==2.15.1
+pwdlib[argon2]==0.3.1
+python-multipart==0.0.33
+email-validator==2.3.0
+PyMuPDF==2.1
+boto3>=1.35,<2
+gliner2[local]==2.1.0

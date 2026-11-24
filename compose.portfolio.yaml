@@ -1,0 +1,139 @@
+# Independent portfolio stack. It does not reuse the volumes of compose.yaml.
+name: docuentityseek-portfolio
+
+services:
+  db:
+    image: postgres:18.6
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Set POSTGRES_ADMIN_PASSWORD in .env.portfolio}
+      POSTGRES_DB: postgres
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in .env.portfolio}
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - portfolio_postgres_data:/var/lib/postgresql
+      - ./docker/postgres/00_init_portfolio.sh:/docker-entrypoint-initdb.d/00_init_portfolio.sh:ro
+      - ./backend/sql:/docker-init:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          pg_isready -U docuentityseek_app -d docuentityseek &&
+          psql -U docuentityseek_app -d docuentityseek -tAc
+          'SELECT 1 FROM plans LIMIT 1' | grep -q 1
+      interval: 8s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    restart: unless-stopped
+
+  silo:
+    image: docker.io/pgsty/silo:RELEASE.2026-11-12T00-00-00Z
+    command: server /data --console-address ':9001'
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER in .env.portfolio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env.portfolio}
+    ports:
+      - "127.0.0.1:9003:9000"
+      - "127.0.0.1:9004:9001"
+    volumes:
+      - portfolio_s3_data:/data
+    restart: unless-stopped
+
+  silo-init:
+    image: docker.io/pgsty/mc:RELEASE.2026-11-12T00-00-00Z
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        until mc alias set local http://silo:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do
+          sleep 2
+        done
+        mc mb --ignore-existing local/docuentityseek-documents
+        mc anonymous set none local/docuentityseek-documents
+    depends_on:
+      - silo
+    restart: "no"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.portfolio
+    environment:
+      APP_NAME: DocuEntitySeek API
+      APP_VERSION: 0.1.0
+      APP_ENV: portfolio
+      DEBUG: "false"
+      APP_LOG_LEVEL: INFO
+      API_V1_PREFIX: /api/v1
+      CORS_ORIGINS: '["http://localhost:8080","http://127.0.0.1:8080"]'
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: docuentityseek
+      DB_USER: docuentityseek_app
+      DB_PASSWORD: ${APP_DB_PASSWORD:?}
+      SQL_ECHO: "false"
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env.portfolio}
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      JWT_ISSUER: docuentityseek-api
+      JWT_AUDIENCE: docuentityseek-web
+      DOCUMENT_STORAGE_BACKEND: s3
+      DOCUMENT_STORAGE_ROOT: /app/storage/documents
+      DOCUMENT_S3_ENDPOINT_URL: http://silo:9000
+      DOCUMENT_S3_BUCKET: docuentityseek-documents
+      DOCUMENT_S3_REGION: us-east-1
+      DOCUMENT_S3_ACCESS_KEY: ${MINIO_ROOT_USER:?}
+      DOCUMENT_S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?}
+      AI_MODEL_DEVICE: cpu
+      AI_MODEL_QUANTIZE: "false"
+      AI_MODEL_COMPILE: "false"
+      HF_HOME: /home/app/.cache/huggingface
+      OMP_NUM_THREADS: "2"
+    volumes:
+      - portfolio_ai_cache:/home/app/.cache/huggingface
+    shm_size: 512mb
+    depends_on:
+      db:
+        condition: service_healthy
+      silo-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3).read()"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.portfolio
+      args:
+        VITE_API_BASE_URL: /api/v1
+        VITE_PREMIUM_CONTACT_EMAIL: ${VITE_PREMIUM_CONTACT_EMAIL:-}
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  portfolio_postgres_data:
+  portfolio_s3_data:
+  portfolio_ai_cache:
